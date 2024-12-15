@@ -33,10 +33,10 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token metadata
+    // First, get the token metadata using the Enhanced API
     console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/enhanced/getTokenMetadata`,
       {
         method: 'POST',
         headers: {
@@ -44,12 +44,7 @@ serve(async (req) => {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getTokenMetadata',
-          params: {
-            mintAddresses: [address]
-          }
+          mintAddresses: [address]
         })
       }
     )
@@ -63,12 +58,12 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    if (!metadataResult.result || !metadataResult.result[0]) {
+    if (!metadataResult.tokens || !metadataResult.tokens[0]) {
       console.error('No metadata found in response:', metadataResult)
       throw new Error('No metadata found for token')
     }
 
-    const tokenMetadata = metadataResult.result[0]
+    const tokenMetadata = metadataResult.tokens[0]
     console.log('Parsed token metadata:', tokenMetadata)
 
     const metadata = {
