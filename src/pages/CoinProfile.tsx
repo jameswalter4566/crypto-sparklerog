@@ -20,29 +20,41 @@ const CoinProfile = () => {
   const { data: tokenMetadata, isLoading: isLoadingMetadata } = useQuery({
     queryKey: ['token-metadata', id],
     queryFn: async () => {
+      console.log("Fetching metadata for token:", id);
       const response = await supabase.functions.invoke('fetch-prices', {
         body: { address: id },
       });
       
-      if (response.error) throw response.error;
+      if (response.error) {
+        console.error("Error fetching metadata:", response.error);
+        throw response.error;
+      }
+      console.log("Received metadata:", response.data);
       return response.data;
     },
     enabled: !!id,
+    retry: 1,
   });
 
   const { data: coin, isLoading: isLoadingCoin } = useQuery({
     queryKey: ['coin', id],
     queryFn: async () => {
+      console.log("Fetching coin data for:", id);
       const { data, error } = await supabase
         .from('coins')
         .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching coin:", error);
+        throw error;
+      }
+      console.log("Received coin data:", data);
       return data;
     },
     enabled: !!id,
+    retry: 1,
   });
 
   const isLoading = isLoadingMetadata || isLoadingCoin;
@@ -80,19 +92,19 @@ const CoinProfile = () => {
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-6">
-        {tokenMetadata.data.image_url && (
+        {tokenMetadata.image && (
           <img 
-            src={tokenMetadata.data.image_url} 
-            alt={tokenMetadata.data.name} 
+            src={tokenMetadata.image} 
+            alt={tokenMetadata.name} 
             className="w-12 h-12 rounded-full"
           />
         )}
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            {tokenMetadata.data.name} ({tokenMetadata.data.symbol})
+            {tokenMetadata.name} ({tokenMetadata.symbol})
           </h1>
           <p className="text-2xl font-bold">
-            Price data not available
+            ${coin.price?.toFixed(4) ?? "Price not available"}
           </p>
         </div>
       </div>
