@@ -33,7 +33,7 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token metadata using getToken method
+    // Fetch token metadata using getTokenMetadata method
     console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
@@ -46,7 +46,7 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "getToken",
+          method: "getTokenMetadata",
           params: [address]
         })
       }
@@ -70,9 +70,9 @@ serve(async (req) => {
     
     // Extract token metadata from the token data
     const tokenMetadata = {
-      name: tokenData.name || tokenData.tokenInfo?.name || "Unknown Token",
-      symbol: tokenData.symbol || tokenData.tokenInfo?.symbol || "???",
-      logo: null // Solana tokens typically don't have logos in their on-chain metadata
+      name: tokenData.name || "Unknown Token",
+      symbol: tokenData.symbol || "???",
+      image: tokenData.logo || null // Use logo if available
     }
 
     // For demonstration, using mock data since we don't have real-time price data
@@ -92,7 +92,7 @@ serve(async (req) => {
         id: address,
         name: tokenMetadata.name,
         symbol: tokenMetadata.symbol,
-        image_url: tokenMetadata.logo,
+        image_url: tokenMetadata.image,
         price: mockData.price,
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,
@@ -113,7 +113,7 @@ serve(async (req) => {
       JSON.stringify({
         name: tokenMetadata.name,
         symbol: tokenMetadata.symbol,
-        image: tokenMetadata.logo,
+        image: tokenMetadata.image,
         price: mockData.price,
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,
