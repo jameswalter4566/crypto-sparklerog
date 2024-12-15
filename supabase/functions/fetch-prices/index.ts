@@ -62,26 +62,29 @@ serve(async (req) => {
     const tokenMetadata = metadataResult.tokens[0]
     console.log('Parsed token metadata:', tokenMetadata)
 
-    const metadata = {
-      name: tokenMetadata.name || "Unknown Token",
-      symbol: tokenMetadata.symbol || "???",
-      logo: tokenMetadata.logo || null,
-      decimals: tokenMetadata.decimals || 9
+    // For demonstration, using mock data since we don't have real-time price data
+    const mockData = {
+      price: Math.random() * 100,
+      change_24h: (Math.random() * 20) - 10,
+      market_cap: Math.random() * 1000000,
+      volume_24h: Math.random() * 500000,
+      liquidity: Math.random() * 200000
     }
 
-    // For demonstration, using a mock price
-    const price = 1.0 // Mock price in USD
-
     // Update the token data in Supabase
-    console.log('Updating Supabase database with token data:', metadata)
+    console.log('Updating Supabase database with token data')
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
         id: address,
-        name: metadata.name,
-        symbol: metadata.symbol,
-        image_url: metadata.logo,
-        price: price,
+        name: tokenMetadata.name || "Unknown Token",
+        symbol: tokenMetadata.symbol || "???",
+        image_url: tokenMetadata.logo || null,
+        price: mockData.price,
+        change_24h: mockData.change_24h,
+        market_cap: mockData.market_cap,
+        volume_24h: mockData.volume_24h,
+        liquidity: mockData.liquidity,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -95,11 +98,14 @@ serve(async (req) => {
     console.log('Successfully processed token data')
     return new Response(
       JSON.stringify({
-        name: metadata.name,
-        symbol: metadata.symbol,
-        image: metadata.logo,
-        decimals: metadata.decimals,
-        price: price
+        name: tokenMetadata.name,
+        symbol: tokenMetadata.symbol,
+        image: tokenMetadata.logo,
+        price: mockData.price,
+        change_24h: mockData.change_24h,
+        market_cap: mockData.market_cap,
+        volume_24h: mockData.volume_24h,
+        liquidity: mockData.liquidity
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
