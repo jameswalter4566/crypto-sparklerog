@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
-import { Network, Alchemy } from 'npm:alchemy-sdk'
+import * as web3 from 'npm:@solana/web3.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,27 +34,56 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Initialize Alchemy SDK
-    const settings = {
-      apiKey: ALCHEMY_API_KEY,
-      network: Network.ETH_MAINNET,
-    };
-    const alchemy = new Alchemy(settings);
+    // Initialize Solana connection using Alchemy endpoint
+    const connection = new web3.Connection(
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      'confirmed'
+    );
 
     console.log('Fetching token metadata for:', address)
-    const metadata = await alchemy.core.getTokenMetadata(address)
-    console.log('Token metadata response:', JSON.stringify(metadata, null, 2))
+    
+    // Fetch token metadata using Alchemy's REST API
+    const metadataResponse = await fetch(
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "getTokenMetadata",
+          params: [address]
+        })
+      }
+    );
 
-    if (!metadata) {
-      throw new Error('No token metadata found')
+    if (!metadataResponse.ok) {
+      const errorText = await metadataResponse.text()
+      console.error('Failed to fetch token metadata:', errorText)
+      throw new Error(`Failed to fetch token metadata: ${errorText}`)
     }
 
-    // Extract token metadata
+    const metadataResult = await metadataResponse.json()
+    console.log('Token metadata response:', JSON.stringify(metadataResult, null, 2))
+
+    // Get token supply and other on-chain information
+    try {
+      const tokenMint = new web3.PublicKey(address);
+      const tokenSupply = await connection.getTokenSupply(tokenMint);
+      console.log('Token supply:', tokenSupply);
+    } catch (error) {
+      console.error('Error fetching token supply:', error);
+    }
+
+    // Extract token metadata from the response
     const tokenMetadata = {
-      name: metadata.name || "Unknown Token",
-      symbol: metadata.symbol || "???",
-      image: metadata.logo || null,
-      decimals: metadata.decimals
+      name: metadataResult.result?.name || "Unknown Token",
+      symbol: metadataResult.result?.symbol || "???",
+      image: metadataResult.result?.logo || null,
+      decimals: metadataResult.result?.decimals
     }
 
     // For demonstration, using mock data since we don't have real-time price data
