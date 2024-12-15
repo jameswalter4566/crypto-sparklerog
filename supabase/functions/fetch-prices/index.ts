@@ -38,38 +38,52 @@ serve(async (req) => {
     // Initialize Supabase client
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error('Missing Supabase environment variables')
+    const SOLSCAN_API_KEY = Deno.env.get('SOLSCAN_API_KEY')
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SOLSCAN_API_KEY) {
+      throw new Error('Missing environment variables')
     }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Fetch token metadata from Solscan
-    console.log('Fetching token metadata from Solscan API')
-    const metadataUrl = `https://public-api.solscan.io/token/meta?tokenAddress=${address}`
-    const metadataResponse = await fetchWithRetry(metadataUrl)
+    // Common headers for Solscan Pro API
+    const headers = {
+      'token': SOLSCAN_API_KEY,
+      'accept': 'application/json',
+    }
+
+    // Fetch token metadata from Solscan Pro API
+    console.log('Fetching token metadata from Solscan Pro API')
+    const metadataUrl = `https://pro-api.solscan.io/v2/token/meta?address=${address}`
+    const metadataResponse = await fetchWithRetry(metadataUrl, { headers })
     const metadataResult = await metadataResponse.json()
     console.log('Metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    // Fetch market data from Solscan
-    console.log('Fetching market data from Solscan API')
-    const marketUrl = `https://public-api.solscan.io/market?tokenAddress=${address}`
-    const marketResponse = await fetchWithRetry(marketUrl)
+    // Fetch market data from Solscan Pro API
+    console.log('Fetching market data from Solscan Pro API')
+    const marketUrl = `https://pro-api.solscan.io/v2/token/market?address=${address}`
+    const marketResponse = await fetchWithRetry(marketUrl, { headers })
     const marketData = await marketResponse.json()
     console.log('Market data response:', JSON.stringify(marketData, null, 2))
 
     // Process and combine the data
     const metadata = {
-      name: metadataResult?.symbol || `Unknown Token (${address.slice(0, 6)}...)`,
-      symbol: metadataResult?.symbol || 'UNKNOWN',
-      decimals: metadataResult?.decimals || 9,
-      image: metadataResult?.icon || null,
-      description: metadataResult?.description || null,
+      name: metadataResult?.data?.symbol || `Unknown Token (${address.slice(0, 6)}...)`,
+      symbol: metadataResult?.data?.symbol || 'UNKNOWN',
+      decimals: metadataResult?.data?.decimals || 9,
+      image: metadataResult?.data?.icon || null,
+      description: metadataResult?.data?.description || null,
       tokenStandard: 'SPL Token',
-      price: marketData?.priceUsdt || null,
-      marketCap: marketData?.marketCapFD || null,
-      volume24h: marketData?.volume24h || null,
-      liquidity: marketData?.liquidity || null,
-      change24h: marketData?.priceChange24h || null
+      supply: {
+        total: metadataResult?.data?.supply?.total || null,
+        circulating: metadataResult?.data?.supply?.circulating || null,
+        nonCirculating: metadataResult?.data?.supply?.nonCirculating || null,
+      },
+      price: marketData?.data?.priceUsdt || null,
+      marketCap: marketData?.data?.marketCapFD || null,
+      volume24h: marketData?.data?.volume24h || null,
+      liquidity: marketData?.data?.liquidity || null,
+      change24h: marketData?.data?.priceChange24h || null
     }
 
     console.log('Final processed metadata:', metadata)
