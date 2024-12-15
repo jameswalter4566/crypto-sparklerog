@@ -13,6 +13,7 @@ import {
   Area,
   ResponsiveContainer
 } from 'recharts';
+import { fetchJupiterPrices } from "@/lib/jupiter";
 
 const CoinProfile = () => {
   const { id } = useParams();
@@ -20,15 +21,8 @@ const CoinProfile = () => {
   const { data: jupiterData, isLoading: isLoadingJupiter } = useQuery({
     queryKey: ['jupiter-price', id],
     queryFn: async () => {
-      const response = await fetch(`${supabase.functions.url}/fetch-prices?address=${id}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch Jupiter price data');
-      }
-      return response.json();
+      if (!id) throw new Error('No coin ID provided');
+      return fetchJupiterPrices();
     },
   });
 
