@@ -13,14 +13,20 @@ import {
   Area,
   ResponsiveContainer
 } from 'recharts';
-import { fetchTokenData } from "@/lib/jupiter";
 
 const CoinProfile = () => {
   const { id } = useParams();
 
-  const { data: tokenData, isLoading: isLoadingToken } = useQuery({
-    queryKey: ['token-data', id],
-    queryFn: fetchTokenData,
+  const { data: tokenMetadata, isLoading: isLoadingMetadata } = useQuery({
+    queryKey: ['token-metadata', id],
+    queryFn: async () => {
+      const response = await supabase.functions.invoke('fetch-prices', {
+        body: { address: id },
+      });
+      
+      if (response.error) throw response.error;
+      return response.data;
+    },
     enabled: !!id,
   });
 
@@ -39,7 +45,7 @@ const CoinProfile = () => {
     enabled: !!id,
   });
 
-  const isLoading = isLoadingToken || isLoadingCoin;
+  const isLoading = isLoadingMetadata || isLoadingCoin;
 
   if (isLoading) {
     return (
@@ -55,7 +61,7 @@ const CoinProfile = () => {
     );
   }
 
-  if (!coin || !tokenData) {
+  if (!coin || !tokenMetadata) {
     return (
       <div className="p-6 flex flex-col items-center justify-center">
         <CandlestickChart className="h-16 w-16 text-muted-foreground mb-4" />
@@ -65,33 +71,28 @@ const CoinProfile = () => {
     );
   }
 
-  // Generate mock price data for the chart - replace with real data when available
+  // Generate mock price data for the chart
   const priceData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    price: Math.random() * 100, // Mock price since Helius doesn't provide price data
+    price: Math.random() * 100,
   }));
 
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-6">
-        {coin.image_url && (
+        {tokenMetadata.data.image_url && (
           <img 
-            src={coin.image_url} 
-            alt={coin.name} 
+            src={tokenMetadata.data.image_url} 
+            alt={tokenMetadata.data.name} 
             className="w-12 h-12 rounded-full"
           />
         )}
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            {coin.name} ({coin.symbol})
+            {tokenMetadata.data.name} ({tokenMetadata.data.symbol})
           </h1>
           <p className="text-2xl font-bold">
             Price data not available
-            {coin.change_24h && (
-              <span className={coin.change_24h > 0 ? "text-green-500" : "text-red-500"}>
-                {" "}({coin.change_24h > 0 ? "+" : ""}{coin.change_24h.toFixed(2)}%)
-              </span>
-            )}
           </p>
         </div>
       </div>

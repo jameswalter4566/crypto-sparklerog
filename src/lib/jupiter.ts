@@ -1,12 +1,21 @@
-import { supabase } from "@/integrations/supabase/client";
-
-export async function fetchTokenData(context: { queryKey: string[] }) {
-  const [_key, address] = context.queryKey;
+export const fetchTokenData = async (context: { queryKey: string[] }) => {
+  const [_, address] = context.queryKey;
   
-  const { data, error } = await supabase.functions.invoke('fetch-prices', {
-    body: { address }
+  if (!address) {
+    throw new Error('Address is required');
+  }
+
+  const response = await fetch(`/api/fetch-prices`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ address }),
   });
 
-  if (error) throw error;
-  return data;
-}
+  if (!response.ok) {
+    throw new Error('Failed to fetch token data');
+  }
+
+  return response.json();
+};

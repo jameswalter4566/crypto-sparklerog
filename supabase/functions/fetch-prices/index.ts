@@ -46,16 +46,11 @@ serve(async (req) => {
     const heliusData = await response.json()
     console.log('Successfully fetched Helius data:', heliusData)
 
-    // Transform Helius data to match our expected format
     const tokenData = heliusData[0] || {}
     const data = {
       name: tokenData.onChainMetadata?.metadata?.name || 'Unknown',
       symbol: tokenData.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
-      price: null, // Helius doesn't provide price directly
       image_url: tokenData.offChainMetadata?.metadata?.image || null,
-      market_cap: null,
-      volume_24h: null,
-      liquidity: null,
     }
 
     return new Response(
