@@ -7,13 +7,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the token address from the request body
     const { address } = await req.json()
     if (!address) {
       throw new Error('Token address is required')
@@ -27,14 +25,14 @@ serve(async (req) => {
     }
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Get Alchemy API key from environment variables
+    // Get Alchemy API key
     const ALCHEMY_API_KEY = Deno.env.get('ALCHEMY_API_KEY')
     if (!ALCHEMY_API_KEY) {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata from Solana network
-    console.log('Fetching metadata from Solana network...')
+    // Fetch token metadata using getTokenMetadata
+    console.log('Fetching token metadata from Solana network...')
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
@@ -45,7 +43,7 @@ serve(async (req) => {
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
-          method: 'getTokenSupply',
+          method: 'getTokenMetadata',
           params: [address]
         })
       }
@@ -59,49 +57,15 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Metadata response:', metadataResult)
 
-    // For now, we'll use a simplified metadata structure
+    const tokenMetadata = metadataResult.result || {}
     const metadata = {
-      name: "Solana Token",
-      symbol: "SOL",
-      logo: null,
-      decimals: 9 // Default for Solana tokens
+      name: tokenMetadata.name || "Unknown Token",
+      symbol: tokenMetadata.symbol || "???",
+      logo: tokenMetadata.logo || null,
+      decimals: tokenMetadata.decimals || 9
     }
 
-    // Fetch token account balance as a proxy for price data
-    console.log('Fetching token data...')
-    const tokenResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getTokenAccountsByOwner',
-          params: [
-            address,
-            {
-              programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            },
-            {
-              encoding: "jsonParsed"
-            }
-          ]
-        })
-      }
-    )
-
-    if (!tokenResponse.ok) {
-      console.error('Failed to fetch token data:', await tokenResponse.text())
-      throw new Error('Failed to fetch token data')
-    }
-
-    const tokenData = await tokenResponse.json()
-    console.log('Token response:', tokenData)
-
-    // For demonstration, we'll use a mock price
+    // For demonstration, using a mock price
     const price = 1.0 // Mock price in USD
 
     // Update the token data in Supabase
