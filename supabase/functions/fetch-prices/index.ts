@@ -33,9 +33,46 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token account info
-    console.log('Fetching token account info for:', address)
-    const accountResponse = await fetch(
+    // First, get the token accounts
+    console.log('Fetching token accounts for:', address)
+    const accountsResponse = await fetch(
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "getTokenAccounts",
+          params: [
+            address,
+            {
+              encoding: "jsonParsed",
+              commitment: "finalized"
+            }
+          ]
+        })
+      }
+    )
+
+    if (!accountsResponse.ok) {
+      const errorText = await accountsResponse.text()
+      console.error('Failed to fetch token accounts:', errorText)
+      throw new Error(`Failed to fetch token accounts: ${errorText}`)
+    }
+
+    const accountsResult = await accountsResponse.json()
+    console.log('Token accounts response:', JSON.stringify(accountsResult, null, 2))
+
+    if (!accountsResult.result?.value?.[0]) {
+      throw new Error('No token accounts found')
+    }
+
+    // Get the mint info
+    const mintResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
         method: 'POST',
@@ -57,25 +94,24 @@ serve(async (req) => {
       }
     )
 
-    if (!accountResponse.ok) {
-      const errorText = await accountResponse.text()
-      console.error('Failed to fetch account info:', errorText)
-      throw new Error(`Failed to fetch token account info: ${errorText}`)
+    if (!mintResponse.ok) {
+      const errorText = await mintResponse.text()
+      console.error('Failed to fetch mint info:', errorText)
+      throw new Error(`Failed to fetch mint info: ${errorText}`)
     }
 
-    const accountResult = await accountResponse.json()
-    console.log('Account info response:', JSON.stringify(accountResult, null, 2))
+    const mintResult = await mintResponse.json()
+    console.log('Mint info response:', JSON.stringify(mintResult, null, 2))
 
-    if (!accountResult.result?.value) {
-      throw new Error('No account data found')
+    const mintData = mintResult.result?.value?.data?.parsed?.info
+    if (!mintData) {
+      throw new Error('No mint data found')
     }
 
-    const accountData = accountResult.result.value.data.parsed.info
-    
-    // Extract token metadata from the account data
+    // Extract token metadata from the mint data
     const tokenMetadata = {
-      name: accountData.name || "Unknown Token",
-      symbol: accountData.symbol || "???",
+      name: mintData.name || "Unknown Token",
+      symbol: mintData.symbol || "???",
       image: null // We'll need to source this from elsewhere if needed
     }
 
