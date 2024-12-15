@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    // Parse the request body if it exists
     const { address } = await req.json()
     console.log('Fetching price data for address:', address)
 
+    // If no address provided, fetch all prices
     let jupiterUrl = 'https://price.jup.ag/v4/price'
     if (address) {
       jupiterUrl += `?ids=${address}`
@@ -23,15 +23,20 @@ serve(async (req) => {
 
     console.log('Making request to Jupiter API:', jupiterUrl)
     
-    const response = await fetch(jupiterUrl)
+    const response = await fetch(jupiterUrl, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
     
     if (!response.ok) {
-      console.error('Jupiter API error:', response.status, response.statusText)
-      throw new Error(`Jupiter API responded with status ${response.status}`)
+      const errorText = await response.text()
+      console.error('Jupiter API error:', response.status, response.statusText, errorText)
+      throw new Error(`Jupiter API responded with status ${response.status}: ${errorText}`)
     }
 
     const data = await response.json()
-    console.log('Successfully fetched Jupiter data')
+    console.log('Successfully fetched Jupiter data:', data)
 
     return new Response(
       JSON.stringify({ data }),

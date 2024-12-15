@@ -20,10 +20,8 @@ const CoinProfile = () => {
 
   const { data: jupiterData, isLoading: isLoadingJupiter } = useQuery({
     queryKey: ['jupiter-price', id],
-    queryFn: async () => {
-      if (!id) throw new Error('No coin ID provided');
-      return fetchJupiterPrices(id);
-    },
+    queryFn: fetchJupiterPrices,
+    enabled: !!id,
   });
 
   const { data: coin, isLoading: isLoadingCoin } = useQuery({
@@ -38,6 +36,7 @@ const CoinProfile = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!id,
   });
 
   const isLoading = isLoadingJupiter || isLoadingCoin;

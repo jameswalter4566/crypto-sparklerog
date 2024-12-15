@@ -6,7 +6,7 @@ import { fetchJupiterPrices } from "@/lib/jupiter";
 const Index = () => {
   // Fetch and sync Jupiter prices
   const { data: syncedData } = useQuery({
-    queryKey: ["jupiter-sync"],
+    queryKey: ["jupiter-sync", undefined],
     queryFn: fetchJupiterPrices,
     refetchInterval: 60000, // Refresh every minute
   });
