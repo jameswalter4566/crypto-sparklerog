@@ -13,31 +13,7 @@ const CoinProfile = () => {
   const { id } = useParams();
   const { toast } = useToast();
 
-  const { data: tokenMetadata, isLoading: isLoadingMetadata } = useQuery({
-    queryKey: ['token-metadata', id],
-    queryFn: async () => {
-      console.log("Fetching metadata for token:", id);
-      const response = await supabase.functions.invoke('fetch-prices', {
-        body: { address: id },
-      });
-      
-      if (response.error) {
-        console.error("Error fetching metadata:", response.error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch token metadata",
-          variant: "destructive",
-        });
-        throw response.error;
-      }
-      console.log("Received metadata:", response.data);
-      return response.data;
-    },
-    enabled: !!id,
-    retry: 1,
-  });
-
-  const { data: coin, isLoading: isLoadingCoin } = useQuery({
+  const { data: coin, isLoading } = useQuery({
     queryKey: ['coin', id],
     queryFn: async () => {
       console.log("Fetching coin data for:", id);
@@ -63,8 +39,6 @@ const CoinProfile = () => {
     retry: 1,
   });
 
-  const isLoading = isLoadingMetadata || isLoadingCoin;
-
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -84,7 +58,7 @@ const CoinProfile = () => {
     );
   }
 
-  if (!coin || !tokenMetadata) {
+  if (!coin) {
     return (
       <div className="p-6 flex flex-col items-center justify-center">
         <CandlestickChart className="h-16 w-16 text-muted-foreground mb-4" />
@@ -103,13 +77,13 @@ const CoinProfile = () => {
   return (
     <div className="p-6">
       <TokenHeader
-        name={tokenMetadata.name}
-        symbol={tokenMetadata.symbol}
-        image={tokenMetadata.image}
+        name={coin.name}
+        symbol={coin.symbol}
+        image={coin.image_url}
         price={coin.price}
-        description={tokenMetadata.description}
-        tokenStandard={tokenMetadata.tokenStandard}
-        decimals={tokenMetadata.decimals}
+        description={null}
+        tokenStandard={null}
+        decimals={null}
       />
       
       <TokenStats
@@ -119,9 +93,9 @@ const CoinProfile = () => {
       />
 
       <TokenSupply
-        total={tokenMetadata.supply?.total}
-        circulating={tokenMetadata.supply?.circulating}
-        nonCirculating={tokenMetadata.supply?.nonCirculating}
+        total={null}
+        circulating={null}
+        nonCirculating={null}
       />
 
       <PriceChart data={priceData} />

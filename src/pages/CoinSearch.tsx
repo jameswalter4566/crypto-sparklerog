@@ -24,31 +24,44 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      console.log('Fetching metadata for contract address:', address);
-      
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
-        body: { contractAddress: address }
-      });
-      
-      if (functionError) {
-        console.error('Function error:', functionError);
-        throw functionError;
+      // Check if the coin already exists in our database
+      const { data: existingCoin } = await supabase
+        .from('coins')
+        .select('*')
+        .eq('id', address)
+        .single();
+
+      if (existingCoin) {
+        navigate(`/coin/${address}`);
+        return;
       }
-      
-      console.log('Received function data:', functionData);
+
+      // If coin doesn't exist, create a new entry with minimal data
+      const { error: insertError } = await supabase
+        .from('coins')
+        .insert([
+          {
+            id: address,
+            name: `Token (${address.slice(0, 6)}...)`,
+            symbol: 'UNKNOWN',
+          }
+        ]);
+
+      if (insertError) {
+        throw insertError;
+      }
 
       toast({
         title: "Success",
-        description: "Token found and data has been stored",
+        description: "Token has been added to the database",
       });
 
-      // Navigate to the coin profile page
       navigate(`/coin/${address}`);
     } catch (error) {
       console.error('Search error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to search for token",
+        description: "Failed to add token to database",
         variant: "destructive",
       });
     } finally {
