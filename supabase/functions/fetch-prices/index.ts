@@ -1,7 +1,17 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 import { serve } from 'https://deno.fresh.dev/std@v9.6.1/http/server.ts'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     // Get the token address from the request body
     const { address } = await req.json()
@@ -124,7 +134,7 @@ serve(async (req) => {
         price: price
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       },
     )
@@ -136,7 +146,7 @@ serve(async (req) => {
         details: error.toString()
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       },
     )
