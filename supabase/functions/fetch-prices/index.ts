@@ -30,29 +30,35 @@ serve(async (req) => {
 
     const solscan = new SolscanAPI({ apiKey: SOLSCAN_API_KEY });
 
-    // Fetch token metadata and transfers
+    // Fetch all token data in parallel
     console.log('Fetching token data from Solscan...');
     
-    const [metadataResponse, transfersResponse, marketResponse] = await Promise.all([
+    const [metadataResponse, transfersResponse, marketResponse, priceResponse] = await Promise.all([
       solscan.fetchTokenMetadata(contractAddress),
       solscan.fetchTokenTransfers(contractAddress),
-      solscan.fetchTokenMarket(contractAddress)
+      solscan.fetchTokenMarket(contractAddress),
+      solscan.fetchTokenPrice(contractAddress)
     ]);
 
-    console.log('Metadata response status:', metadataResponse.status);
-    console.log('Transfers response status:', transfersResponse.status);
-    console.log('Market response status:', marketResponse.status);
+    console.log('API Response statuses:', {
+      metadata: metadataResponse.status,
+      transfers: transfersResponse.status,
+      market: marketResponse.status,
+      price: priceResponse.status
+    });
 
-    const [metadata, transfers, market] = await Promise.all([
+    const [metadata, transfers, market, price] = await Promise.all([
       metadataResponse.json(),
       transfersResponse.json(),
-      marketResponse.json()
+      marketResponse.json(),
+      priceResponse.json()
     ]);
 
     console.log('API Responses:', {
       metadata,
       transfers,
-      market
+      market,
+      price
     });
 
     // Check for successful responses
@@ -80,6 +86,7 @@ serve(async (req) => {
       volume24h: market.data?.volume24h || null,
       liquidity: market.data?.liquidity || null,
       change24h: market.data?.priceChange24h || null,
+      priceHistory: price.data || [],
       recentTransfers: transfers.data || [],
       success: true
     };
