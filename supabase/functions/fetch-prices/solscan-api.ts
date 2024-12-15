@@ -16,24 +16,28 @@ export class SolscanAPI {
 
   async fetchTokenMetadata(address: string) {
     console.log('Fetching token metadata for address:', address);
-    return await this.makeRequest(`/token/meta?address=${address}`);
+    const response = await this.makeRequest(`/token/meta?address=${address}`);
+    return await response.json();
   }
 
   async fetchTokenTransfers(address: string) {
     console.log('Fetching token transfers for address:', address);
-    return await this.makeRequest(
+    const response = await this.makeRequest(
       `/account/transfer?token=${address}&page=1&page_size=10&sort_by=block_time&sort_order=desc`
     );
+    return await response.json();
   }
 
   async fetchTokenMarket(address: string) {
     console.log('Fetching token market data for address:', address);
-    return await this.makeRequest(`/token/market?address=${address}`);
+    const response = await this.makeRequest(`/token/market?address=${address}`);
+    return await response.json();
   }
 
   async fetchTokenPrice(address: string) {
     console.log('Fetching token price data for address:', address);
-    return await this.makeRequest(`/token/price?address=${address}`);
+    const response = await this.makeRequest(`/token/price?address=${address}`);
+    return await response.json();
   }
 
   private async makeRequest(path: string, retries = 3): Promise<Response> {
@@ -59,6 +63,7 @@ export class SolscanAPI {
             await new Promise(res => setTimeout(res, 5000));
             continue;
           }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         return response;
