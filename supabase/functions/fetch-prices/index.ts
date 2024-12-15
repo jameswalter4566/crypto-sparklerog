@@ -42,8 +42,8 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mintAccounts: [address],
-        includeOffChain: true, // This ensures we get both on-chain and off-chain metadata
-        disableCache: false    // Set to true if you need real-time data
+        includeOffChain: true,
+        disableCache: false
       })
     });
 
@@ -60,8 +60,25 @@ serve(async (req) => {
 
     const tokenMetadata = heliusData[0]
 
+    // Fetch DAS (Digital Asset Standard) data which includes price and market data
+    const dasResponse = await fetch(`https://api.helius.xyz/v0/token-metadata?api-key=${HELIUS_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mintAccounts: [address],
+        includeOffChain: true,
+        disableCache: false
+      })
+    });
+
+    if (!dasResponse.ok) {
+      throw new Error(`DAS API error: ${dasResponse.statusText}`)
+    }
+
+    const dasData = await dasResponse.json()
+    console.log('Received DAS data:', dasData)
+
     // Fetch supply information
-    console.log('Fetching supply information from Helius')
     const supplyResponse = await fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,28 +100,21 @@ serve(async (req) => {
     const supplyData = await supplyResponse.json()
     console.log('Received supply data:', supplyData)
 
-    // For demonstration, using mock data since we don't have real-time price data
-    const mockData = {
-      price: Math.random() * 100,
-      change_24h: (Math.random() * 20) - 10,
-      market_cap: Math.random() * 1000000,
-      volume_24h: Math.random() * 500000,
-      liquidity: Math.random() * 200000
-    }
-
-    // Extract comprehensive metadata
+    // Extract token data from responses
     const metadata = {
-      name: tokenMetadata.onChainMetadata?.metadata?.name || `Token ${address.slice(0, 6)}...`,
+      name: tokenMetadata.onChainMetadata?.metadata?.name || tokenMetadata.offChainMetadata?.metadata?.name || `Token ${address.slice(0, 6)}...`,
       symbol: tokenMetadata.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
       decimals: tokenMetadata.onChainMetadata?.metadata?.decimals || 9,
-      image: tokenMetadata.onChainMetadata?.metadata?.uri || null,
+      image: tokenMetadata.offChainMetadata?.metadata?.image || tokenMetadata.onChainMetadata?.metadata?.uri || null,
       description: tokenMetadata.offChainMetadata?.metadata?.description || null,
-      externalUrl: tokenMetadata.offChainMetadata?.metadata?.external_url || null,
-      attributes: tokenMetadata.offChainMetadata?.metadata?.attributes || [],
       tokenStandard: tokenMetadata.onChainMetadata?.tokenStandard || null,
-      creators: tokenMetadata.onChainMetadata?.metadata?.creators || [],
-      collection: tokenMetadata.offChainMetadata?.metadata?.collection || null,
-      uses: tokenMetadata.onChainMetadata?.metadata?.uses || null,
+      supply: supplyData.result?.value || null,
+      // Extract market data from DAS response
+      price: dasData[0]?.price || null,
+      marketCap: dasData[0]?.marketCap || null,
+      volume24h: dasData[0]?.volume24h || null,
+      liquidity: dasData[0]?.liquidity || null,
+      change24h: dasData[0]?.priceChange24h || null
     }
 
     // Update the token data in Supabase
@@ -116,11 +126,11 @@ serve(async (req) => {
         name: metadata.name,
         symbol: metadata.symbol,
         image_url: metadata.image,
-        price: mockData.price,
-        change_24h: mockData.change_24h,
-        market_cap: mockData.market_cap,
-        volume_24h: mockData.volume_24h,
-        liquidity: mockData.liquidity,
+        price: metadata.price,
+        change_24h: metadata.change24h,
+        market_cap: metadata.marketCap,
+        volume_24h: metadata.volume24h,
+        liquidity: metadata.liquidity,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -133,15 +143,7 @@ serve(async (req) => {
 
     console.log('Successfully processed token data')
     return new Response(
-      JSON.stringify({
-        ...metadata,
-        price: mockData.price,
-        change_24h: mockData.change_24h,
-        market_cap: mockData.market_cap,
-        volume_24h: mockData.volume_24h,
-        liquidity: mockData.liquidity,
-        supply: supplyData.result.value
-      }),
+      JSON.stringify(metadata),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
