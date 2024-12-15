@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { WalletConnect } from "@/components/WalletConnect";
 import Index from "./pages/Index";
 import CoinProfile from "./pages/CoinProfile";
+import CoinSearch from "./pages/CoinSearch";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
+                <Route path="/search" element={<CoinSearch />} />
               </Routes>
             </main>
           </div>
