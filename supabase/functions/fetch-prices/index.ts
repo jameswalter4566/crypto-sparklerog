@@ -33,9 +33,9 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata using getTokenMetadata method
-    console.log('Fetching token metadata for:', address)
-    const metadataResponse = await fetch(
+    // First, get the token account info
+    console.log('Fetching token account info for:', address)
+    const accountResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
         method: 'POST',
@@ -46,33 +46,37 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "getTokenMetadata",
-          params: [address]
+          method: "getAccountInfo",
+          params: [
+            address,
+            {
+              encoding: "jsonParsed"
+            }
+          ]
         })
       }
     )
 
-    if (!metadataResponse.ok) {
-      const errorText = await metadataResponse.text()
-      console.error('Failed to fetch metadata:', errorText)
-      throw new Error(`Failed to fetch token metadata: ${errorText}`)
+    if (!accountResponse.ok) {
+      const errorText = await accountResponse.text()
+      console.error('Failed to fetch account info:', errorText)
+      throw new Error(`Failed to fetch token account info: ${errorText}`)
     }
 
-    const metadataResult = await metadataResponse.json()
-    console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
+    const accountResult = await accountResponse.json()
+    console.log('Account info response:', JSON.stringify(accountResult, null, 2))
 
-    if (!metadataResult.result) {
-      console.error('No metadata found in response:', metadataResult)
-      throw new Error('No metadata found for token')
+    if (!accountResult.result?.value) {
+      throw new Error('No account data found')
     }
 
-    const tokenData = metadataResult.result
+    const accountData = accountResult.result.value.data.parsed.info
     
-    // Extract token metadata from the token data
+    // Extract token metadata from the account data
     const tokenMetadata = {
-      name: tokenData.name || "Unknown Token",
-      symbol: tokenData.symbol || "???",
-      image: tokenData.logo || null // Use logo if available
+      name: accountData.name || "Unknown Token",
+      symbol: accountData.symbol || "???",
+      image: null // We'll need to source this from elsewhere if needed
     }
 
     // For demonstration, using mock data since we don't have real-time price data
