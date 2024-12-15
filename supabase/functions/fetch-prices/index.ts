@@ -17,6 +17,8 @@ serve(async (req) => {
       throw new Error('Token address is required')
     }
 
+    console.log('Processing request for token address:', address)
+
     // Initialize Supabase client
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
@@ -53,18 +55,22 @@ serve(async (req) => {
     )
 
     if (!metadataResponse.ok) {
-      console.error('Failed to fetch metadata:', await metadataResponse.text())
-      throw new Error('Failed to fetch token metadata')
+      const errorText = await metadataResponse.text()
+      console.error('Failed to fetch metadata:', errorText)
+      throw new Error(`Failed to fetch token metadata: ${errorText}`)
     }
 
     const metadataResult = await metadataResponse.json()
-    console.log('Metadata response:', metadataResult)
+    console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
     if (!metadataResult.result || !metadataResult.result[0]) {
+      console.error('No metadata found in response:', metadataResult)
       throw new Error('No metadata found for token')
     }
 
     const tokenMetadata = metadataResult.result[0]
+    console.log('Parsed token metadata:', tokenMetadata)
+
     const metadata = {
       name: tokenMetadata.name || "Unknown Token",
       symbol: tokenMetadata.symbol || "???",
@@ -76,7 +82,7 @@ serve(async (req) => {
     const price = 1.0 // Mock price in USD
 
     // Update the token data in Supabase
-    console.log('Updating Supabase database...')
+    console.log('Updating Supabase database with token data:', metadata)
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
