@@ -31,20 +31,23 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata using getTokenMetadata
-    console.log('Fetching token metadata from Solana network...')
+    // First, get the token metadata
+    console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
           method: 'getTokenMetadata',
-          params: [address]
+          params: {
+            mintAddresses: [address]
+          }
         })
       }
     )
@@ -57,7 +60,11 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Metadata response:', metadataResult)
 
-    const tokenMetadata = metadataResult.result || {}
+    if (!metadataResult.result || !metadataResult.result[0]) {
+      throw new Error('No metadata found for token')
+    }
+
+    const tokenMetadata = metadataResult.result[0]
     const metadata = {
       name: tokenMetadata.name || "Unknown Token",
       symbol: tokenMetadata.symbol || "???",
