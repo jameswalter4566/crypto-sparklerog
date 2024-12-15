@@ -1,15 +1,38 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { CandlestickChart } from "lucide-react";
+import {
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  AreaChart,
+  Area,
+  ResponsiveContainer
+} from 'recharts';
 
 const CoinProfile = () => {
   const { id } = useParams();
 
-  const { data: coin, isLoading } = useQuery({
+  const { data: jupiterData, isLoading: isLoadingJupiter } = useQuery({
+    queryKey: ['jupiter-price', id],
+    queryFn: async () => {
+      const response = await fetch(`${supabase.functions.url}/fetch-prices?address=${id}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch Jupiter price data');
+      }
+      return response.json();
+    },
+  });
+
+  const { data: coin, isLoading: isLoadingCoin } = useQuery({
     queryKey: ['coin', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,6 +45,8 @@ const CoinProfile = () => {
       return data;
     },
   });
+
+  const isLoading = isLoadingJupiter || isLoadingCoin;
 
   if (isLoading) {
     return (
@@ -37,14 +62,20 @@ const CoinProfile = () => {
     );
   }
 
-  if (!coin) {
-    return <div className="p-6">Coin not found</div>;
+  if (!coin || !jupiterData) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center">
+        <CandlestickChart className="h-16 w-16 text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-bold">Coin not found</h2>
+        <p className="text-muted-foreground">The requested coin data could not be loaded.</p>
+      </div>
+    );
   }
 
-  // Mock price data for the chart - replace with real data when available
+  // Generate mock price data for the chart - replace with real data when available
   const priceData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    price: coin.price * (1 + Math.random() * 0.2 - 0.1),
+    price: jupiterData.data.price * (1 + Math.random() * 0.2 - 0.1),
   }));
 
   return (
@@ -62,7 +93,7 @@ const CoinProfile = () => {
             {coin.name} ({coin.symbol})
           </h1>
           <p className="text-2xl font-bold">
-            ${coin.price?.toFixed(8)}
+            ${jupiterData.data.price?.toFixed(8)}
             {coin.change_24h && (
               <span className={coin.change_24h > 0 ? "text-green-500" : "text-red-500"}>
                 {" "}({coin.change_24h > 0 ? "+" : ""}{coin.change_24h.toFixed(2)}%)
@@ -121,8 +152,16 @@ const CoinProfile = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
+              <XAxis 
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `$${value.toFixed(2)}`}
+              />
               <Tooltip />
               <Area 
                 type="monotone" 
