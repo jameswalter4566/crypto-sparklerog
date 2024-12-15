@@ -51,50 +51,50 @@ serve(async (req) => {
 
     console.log('Fetching token metadata from Helius API')
     
-    // Fetch token metadata with retry logic
-    const metadataResponse = await fetchWithRetry(
-      `https://api.helius.xyz/v1/token-metadata?api-key=${HELIUS_API_KEY}&tokenAddress=${address}`
-    );
+    // Test both v0 and v1 endpoints for metadata
+    const v1MetadataUrl = `https://api.helius.xyz/v1/token-metadata?api-key=${HELIUS_API_KEY}&tokenAddress=${address}`
+    const v0MetadataUrl = `https://api.helius.xyz/v0/token-metadata/${address}?api-key=${HELIUS_API_KEY}`
+    
+    console.log('Trying v1 endpoint...')
+    const v1Response = await fetchWithRetry(v1MetadataUrl)
+    const v1Data = await v1Response.json()
+    console.log('V1 Metadata response:', JSON.stringify(v1Data, null, 2))
+    
+    console.log('Trying v0 endpoint...')
+    const v0Response = await fetchWithRetry(v0MetadataUrl)
+    const v0Data = await v0Response.json()
+    console.log('V0 Metadata response:', JSON.stringify(v0Data, null, 2))
 
-    const metadataResult = await metadataResponse.json()
-    console.log('Raw metadata response:', metadataResult)
-
-    // Fetch token supply using RPC
-    console.log('Fetching token supply data')
-    const supplyResponse = await fetchWithRetry(
-      `https://api.helius.xyz/v0/token-metadata/${address}?api-key=${HELIUS_API_KEY}`
-    );
-
-    const supplyData = await supplyResponse.json()
-    console.log('Raw supply data:', supplyData)
-
-    // Fetch DAS data for market information
+    // Try DAS endpoint for market data
     console.log('Fetching DAS market data')
-    const dasResponse = await fetchWithRetry(
-      `https://api.helius.xyz/v0/token-metadata/DAS/${address}?api-key=${HELIUS_API_KEY}`
-    );
-
+    const dasUrl = `https://api.helius.xyz/v0/token-metadata/DAS/${address}?api-key=${HELIUS_API_KEY}`
+    const dasResponse = await fetchWithRetry(dasUrl)
     const dasData = await dasResponse.json()
-    console.log('Raw DAS data:', dasData)
+    console.log('DAS response:', JSON.stringify(dasData, null, 2))
 
-    // Extract and format token data with careful null checking
+    // Extract metadata prioritizing v1 over v0 response
     const metadata = {
-      name: metadataResult?.onChainMetadata?.metadata?.name || 
-            metadataResult?.offChainMetadata?.metadata?.name || 
-            `Token ${address.slice(0, 6)}...`,
-      symbol: metadataResult?.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
-      decimals: metadataResult?.onChainMetadata?.metadata?.decimals || 9,
-      image: metadataResult?.offChainMetadata?.metadata?.image || 
-             metadataResult?.onChainMetadata?.metadata?.uri || 
+      name: v1Data?.onChainMetadata?.metadata?.name || 
+            v1Data?.offChainMetadata?.metadata?.name ||
+            v0Data?.name || 
+            `Unknown Token (${address.slice(0, 6)}...)`,
+      symbol: v1Data?.onChainMetadata?.metadata?.symbol || 
+              v0Data?.symbol || 
+              'UNKNOWN',
+      decimals: v1Data?.onChainMetadata?.metadata?.decimals || 
+                v0Data?.decimals || 
+                9,
+      image: v1Data?.offChainMetadata?.metadata?.image || 
+             v1Data?.onChainMetadata?.metadata?.uri ||
+             v0Data?.image ||
              null,
-      description: metadataResult?.offChainMetadata?.metadata?.description || null,
-      tokenStandard: metadataResult?.onChainMetadata?.tokenStandard || null,
-      supply: {
-        total: supplyData?.supply?.total || null,
-        circulating: supplyData?.supply?.circulating || null,
-        nonCirculating: supplyData?.supply?.nonCirculating || null
-      },
-      // Market data from DAS with careful null checking
+      description: v1Data?.offChainMetadata?.metadata?.description || 
+                   v0Data?.description ||
+                   null,
+      tokenStandard: v1Data?.onChainMetadata?.tokenStandard || 
+                     v0Data?.tokenStandard ||
+                     null,
+      // Market data from DAS
       price: dasData?.price || null,
       marketCap: dasData?.marketCap || null,
       volume24h: dasData?.volume24h || null,
@@ -102,20 +102,21 @@ serve(async (req) => {
       change24h: dasData?.priceChange24h || null
     }
 
-    // Update Supabase database with null-safe values
-    console.log('Updating Supabase database with token data')
+    console.log('Final processed metadata:', metadata)
+
+    // Update Supabase database
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
         id: address,
-        name: metadata.name || 'Unknown Token',
-        symbol: metadata.symbol || 'UNKNOWN',
-        image_url: metadata.image || null,
-        price: metadata.price || null,
-        change_24h: metadata.change24h || null,
-        market_cap: metadata.marketCap || null,
-        volume_24h: metadata.volume24h || null,
-        liquidity: metadata.liquidity || null,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        image_url: metadata.image,
+        price: metadata.price,
+        change_24h: metadata.change24h,
+        market_cap: metadata.marketCap,
+        volume_24h: metadata.volume24h,
+        liquidity: metadata.liquidity,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -126,7 +127,6 @@ serve(async (req) => {
       throw upsertError
     }
 
-    console.log('Successfully processed token data:', metadata)
     return new Response(
       JSON.stringify(metadata),
       {
