@@ -7,12 +7,32 @@ const corsHeaders = {
 }
 
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3) {
+  const timeout = 10000; // 10 seconds timeout
+  
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, options);
-      if (response.ok) return response;
-      console.log(`Attempt ${i + 1} failed with status: ${response.status}`);
-      await new Promise((res) => setTimeout(res, 1000 * Math.pow(2, i)));
+      console.log(`Attempt ${i + 1} - Fetching URL: ${url}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.log(`Attempt ${i + 1} failed with status: ${response.status}`);
+        const errorText = await response.text();
+        console.log(`Error response: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`Successful response from ${url}`);
+      return data;
     } catch (error) {
       console.error(`Attempt ${i + 1} failed with error:`, error);
       if (i === retries - 1) throw error;
@@ -54,16 +74,18 @@ serve(async (req) => {
 
     // Fetch token metadata from Solscan Pro API
     console.log('Fetching token metadata from Solscan Pro API')
-    const metadataUrl = `https://pro-api.solscan.io/v2/token/meta?address=${address}`
-    const metadataResponse = await fetchWithRetry(metadataUrl, { headers })
-    const metadataResult = await metadataResponse.json()
+    const metadataResult = await fetchWithRetry(
+      `https://pro-api.solscan.io/v2/token/meta?address=${address}`,
+      { headers }
+    );
     console.log('Metadata response:', JSON.stringify(metadataResult, null, 2))
 
     // Fetch market data from Solscan Pro API
     console.log('Fetching market data from Solscan Pro API')
-    const marketUrl = `https://pro-api.solscan.io/v2/token/market?address=${address}`
-    const marketResponse = await fetchWithRetry(marketUrl, { headers })
-    const marketData = await marketResponse.json()
+    const marketData = await fetchWithRetry(
+      `https://pro-api.solscan.io/v2/token/market?address=${address}`,
+      { headers }
+    );
     console.log('Market data response:', JSON.stringify(marketData, null, 2))
 
     // Process and combine the data
