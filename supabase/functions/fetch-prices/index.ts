@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 import * as web3 from 'npm:@solana/web3.js'
+import * as token from 'npm:@solana/spl-token'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,111 +35,82 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Initialize Solana connection using Alchemy endpoint
+    // Initialize Solana connection
     const connection = new web3.Connection(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      `https://api.mainnet-beta.solana.com`,
       'confirmed'
     );
 
-    console.log('Fetching token metadata for:', address)
+    console.log('Fetching token information for:', address)
     
-    // Get token supply and other on-chain information
     try {
       const tokenMint = new web3.PublicKey(address);
-      const tokenSupply = await connection.getTokenSupply(tokenMint);
-      console.log('Token supply:', tokenSupply);
-    } catch (error) {
-      console.error('Error fetching token supply:', error);
-    }
+      
+      // Get token mint info
+      const mintInfo = await token.getMint(connection, tokenMint);
+      console.log('Mint info:', mintInfo);
 
-    // Fetch token metadata using Alchemy's Enhanced API
-    const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: 1,
-          jsonrpc: "2.0",
-          method: "alchemy_getTokenMetadata",
-          params: {
-            mint: address
-          }
-        })
+      // For demonstration, using mock data since we don't have real-time price data
+      const mockData = {
+        price: Math.random() * 100,
+        change_24h: (Math.random() * 20) - 10,
+        market_cap: Math.random() * 1000000,
+        volume_24h: Math.random() * 500000,
+        liquidity: Math.random() * 200000
       }
-    );
 
-    if (!metadataResponse.ok) {
-      const errorText = await metadataResponse.text()
-      console.error('Failed to fetch token metadata:', errorText)
-      throw new Error(`Failed to fetch token metadata: ${errorText}`)
+      // Extract token metadata
+      const tokenMetadata = {
+        name: `Token ${address.slice(0, 6)}...`,
+        symbol: `TKN`,
+        decimals: mintInfo.decimals,
+        supply: Number(mintInfo.supply)
+      }
+
+      // Update the token data in Supabase
+      console.log('Updating Supabase database with token data')
+      const { error: upsertError } = await supabase
+        .from('coins')
+        .upsert({
+          id: address,
+          name: tokenMetadata.name,
+          symbol: tokenMetadata.symbol,
+          price: mockData.price,
+          change_24h: mockData.change_24h,
+          market_cap: mockData.market_cap,
+          volume_24h: mockData.volume_24h,
+          liquidity: mockData.liquidity,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        })
+
+      if (upsertError) {
+        console.error('Failed to update database:', upsertError)
+        throw upsertError
+      }
+
+      console.log('Successfully processed token data')
+      return new Response(
+        JSON.stringify({
+          name: tokenMetadata.name,
+          symbol: tokenMetadata.symbol,
+          decimals: tokenMetadata.decimals,
+          price: mockData.price,
+          change_24h: mockData.change_24h,
+          market_cap: mockData.market_cap,
+          volume_24h: mockData.volume_24h,
+          liquidity: mockData.liquidity
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    } catch (error) {
+      console.error('Error processing token:', error)
+      throw new Error(`Failed to process token: ${error.message}`)
     }
-
-    const metadataResult = await metadataResponse.json()
-    console.log('Token metadata response:', JSON.stringify(metadataResult, null, 2))
-
-    // Extract token metadata from the response
-    const tokenMetadata = {
-      name: metadataResult.result?.name || "Unknown Token",
-      symbol: metadataResult.result?.symbol || "???",
-      image: metadataResult.result?.logo || null,
-      decimals: metadataResult.result?.decimals
-    }
-
-    // For demonstration, using mock data since we don't have real-time price data
-    const mockData = {
-      price: Math.random() * 100,
-      change_24h: (Math.random() * 20) - 10,
-      market_cap: Math.random() * 1000000,
-      volume_24h: Math.random() * 500000,
-      liquidity: Math.random() * 200000
-    }
-
-    // Update the token data in Supabase
-    console.log('Updating Supabase database with token data')
-    const { error: upsertError } = await supabase
-      .from('coins')
-      .upsert({
-        id: address,
-        name: tokenMetadata.name,
-        symbol: tokenMetadata.symbol,
-        image_url: tokenMetadata.image,
-        price: mockData.price,
-        change_24h: mockData.change_24h,
-        market_cap: mockData.market_cap,
-        volume_24h: mockData.volume_24h,
-        liquidity: mockData.liquidity,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id'
-      })
-
-    if (upsertError) {
-      console.error('Failed to update database:', upsertError)
-      throw upsertError
-    }
-
-    console.log('Successfully processed token data')
-    return new Response(
-      JSON.stringify({
-        name: tokenMetadata.name,
-        symbol: tokenMetadata.symbol,
-        image: tokenMetadata.image,
-        decimals: tokenMetadata.decimals,
-        price: mockData.price,
-        change_24h: mockData.change_24h,
-        market_cap: mockData.market_cap,
-        volume_24h: mockData.volume_24h,
-        liquidity: mockData.liquidity
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
   } catch (error) {
     console.error('Error processing request:', error)
     return new Response(
