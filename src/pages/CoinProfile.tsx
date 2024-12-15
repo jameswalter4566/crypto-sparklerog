@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { CandlestickChart } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";

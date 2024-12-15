@@ -24,36 +24,17 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      // Check if the coin already exists in our database
-      const { data: existingCoin } = await supabase
-        .from('coins')
-        .select('*')
-        .eq('id', address)
-        .single();
-
-      if (existingCoin) {
-        navigate(`/coin/${address}`);
-        return;
-      }
-
-      // If coin doesn't exist, create a new entry with minimal data
-      const { error: insertError } = await supabase
-        .from('coins')
-        .insert([
-          {
-            id: address,
-            name: `Token (${address.slice(0, 6)}...)`,
-            symbol: 'UNKNOWN',
-          }
-        ]);
-
-      if (insertError) {
-        throw insertError;
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-token-info', {
+        body: { address }
+      });
+      
+      if (functionError) {
+        throw functionError;
       }
 
       toast({
         title: "Success",
-        description: "Token has been added to the database",
+        description: "Token information has been fetched and stored",
       });
 
       navigate(`/coin/${address}`);
@@ -61,7 +42,7 @@ const CoinSearch = () => {
       console.error('Search error:', error);
       toast({
         title: "Error",
-        description: "Failed to add token to database",
+        description: error.message || "Failed to fetch token information",
         variant: "destructive",
       });
     } finally {
