@@ -68,7 +68,7 @@ serve(async (req) => {
 
     // Process and combine the data
     const metadata = {
-      name: metadataResult?.data?.symbol || `Unknown Token (${address.slice(0, 6)}...)`,
+      name: metadataResult?.data?.name || `Unknown Token (${address.slice(0, 6)}...)`,
       symbol: metadataResult?.data?.symbol || 'UNKNOWN',
       decimals: metadataResult?.data?.decimals || 9,
       image: metadataResult?.data?.icon || null,
