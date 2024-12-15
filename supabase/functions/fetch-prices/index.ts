@@ -6,12 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Validate Solana address format
-const isValidSolanaAddress = (address: string): boolean => {
-  const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-  return solanaAddressRegex.test(address);
-};
-
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3) {
   const timeout = 10000; // 10 seconds timeout
   
@@ -36,16 +30,7 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
         continue;
       }
       
-      if (!response.ok) {
-        console.log(`Attempt ${i + 1} failed with status: ${response.status}`);
-        const errorText = await response.text();
-        console.log(`Error response: ${errorText}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log(`Successful response from ${url}`);
-      return data;
+      return response;
     } catch (error) {
       console.error(`Attempt ${i + 1} failed with error:`, error);
       if (i === retries - 1) throw error;
@@ -63,61 +48,81 @@ serve(async (req) => {
   try {
     const { address } = await req.json();
     
-    // Validate input
     if (!address) {
-      throw new Error('Token address is required');
-    }
-
-    if (!isValidSolanaAddress(address)) {
-      throw new Error('Invalid Solana token address format');
+      return new Response(
+        JSON.stringify({ error: 'Token address is required' }),
+        { headers: corsHeaders, status: 400 }
+      );
     }
 
     console.log('Processing request for token address:', address);
 
-    // Initialize Supabase client
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-    const SOLSCAN_API_KEY = Deno.env.get('SOLSCAN_API_KEY');
-
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SOLSCAN_API_KEY) {
-      throw new Error('Missing environment variables');
+    // Validate Solana address format
+    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    if (!solanaAddressRegex.test(address)) {
+      console.error('Invalid Solana token address:', address);
+      return new Response(
+        JSON.stringify({ error: 'Invalid Solana address format', address }),
+        { headers: corsHeaders, status: 400 }
+      );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SOLSCAN_API_KEY = Deno.env.get('SOLSCAN_API_KEY');
+    if (!SOLSCAN_API_KEY) {
+      throw new Error('Missing SOLSCAN_API_KEY environment variable');
+    }
 
-    // Common headers for Solscan Pro API
     const headers = {
       'token': SOLSCAN_API_KEY,
       'accept': 'application/json',
     };
 
     // Fetch token metadata from Solscan Pro API
-    console.log('Fetching token metadata from Solscan Pro API');
-    const metadataResult = await fetchWithRetry(
-      `https://pro-api.solscan.io/v1/token/meta?address=${address}`,
-      { headers }
-    );
-    
+    const solscanMetaURL = `https://pro-api.solscan.io/v1/token/meta?address=${address}`;
+    console.log('Fetching Solscan metadata with URL:', solscanMetaURL);
+
+    const metadataResponse = await fetchWithRetry(solscanMetaURL, { headers });
+    if (!metadataResponse.ok) {
+      const errorText = await metadataResponse.text();
+      console.error(`Solscan API Error ${metadataResponse.status}: ${errorText}`);
+
+      return new Response(
+        JSON.stringify({
+          error: `Solscan API returned ${metadataResponse.status}`,
+          details: errorText,
+          address,
+        }),
+        { headers: corsHeaders, status: metadataResponse.status }
+      );
+    }
+
+    const metadataResult = await metadataResponse.json();
+    console.log('Solscan Metadata Response:', metadataResult);
+
     if (!metadataResult?.data) {
       throw new Error('Invalid metadata response from Solscan API');
     }
-    
-    console.log('Metadata response:', JSON.stringify(metadataResult, null, 2));
 
     // Fetch market data from Solscan Pro API
-    console.log('Fetching market data from Solscan Pro API');
-    const marketData = await fetchWithRetry(
+    const marketResponse = await fetchWithRetry(
       `https://pro-api.solscan.io/v1/token/market?address=${address}`,
       { headers }
     );
-    
+
+    if (!marketResponse.ok) {
+      const errorText = await marketResponse.text();
+      console.error(`Market API Error ${marketResponse.status}: ${errorText}`);
+      throw new Error(`Market API returned ${marketResponse.status}: ${errorText}`);
+    }
+
+    const marketData = await marketResponse.json();
+    console.log('Market data response:', marketData);
+
     if (!marketData?.data) {
       throw new Error('Invalid market data response from Solscan API');
     }
-    
-    console.log('Market data response:', JSON.stringify(marketData, null, 2));
 
-    // Process and combine the data with fallback values
+    // Process and combine the data
     const metadata = {
       name: metadataResult.data.name || `Unknown Token (${address.slice(0, 6)}...)`,
       symbol: metadataResult.data.symbol || 'UNKNOWN',
@@ -137,9 +142,17 @@ serve(async (req) => {
       change24h: marketData.data.priceChange24h || null
     };
 
-    console.log('Final processed metadata:', metadata);
+    // Initialize Supabase client
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
-    // Update Supabase database with null-safe values
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Update Supabase database
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
@@ -147,11 +160,11 @@ serve(async (req) => {
         name: metadata.name,
         symbol: metadata.symbol,
         image_url: metadata.image,
-        price: metadata.price,
-        change_24h: metadata.change24h,
-        market_cap: metadata.marketCap,
-        volume_24h: metadata.volume24h,
-        liquidity: metadata.liquidity,
+        price: metadata.price || 0,
+        change_24h: metadata.change24h || 0,
+        market_cap: metadata.marketCap || 0,
+        volume_24h: metadata.volume24h || 0,
+        liquidity: metadata.liquidity || 0,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -164,11 +177,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(metadata),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Error processing request:', error);
     return new Response(
@@ -179,7 +190,7 @@ serve(async (req) => {
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-      },
+      }
     );
   }
 });
