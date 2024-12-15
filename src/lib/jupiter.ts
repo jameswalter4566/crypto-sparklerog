@@ -1,32 +1,12 @@
-import { supabase } from "@/integrations/supabase/client";
-
-export async function fetchJupiterPrices() {
+export const fetchJupiterPrices = async () => {
   try {
-    // Fetch prices from our Edge Function
-    const response = await fetch(`${process.env.VITE_SUPABASE_URL}/functions/v1/fetch-prices`);
+    const response = await fetch('https://price.jup.ag/v4/price');
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error('Failed to fetch Jupiter prices');
     }
-    const { data: updates, error: fetchError } = await response.json();
-    
-    if (fetchError) {
-      console.error('Error fetching prices:', fetchError);
-      return null;
-    }
-
-    // Update Supabase database
-    const { error: upsertError } = await supabase
-      .from('coins')
-      .upsert(updates, { onConflict: 'id' });
-
-    if (upsertError) {
-      console.error('Error updating coins:', upsertError);
-      return null;
-    }
-
-    return updates;
+    return await response.json();
   } catch (error) {
     console.error('Error fetching Jupiter prices:', error);
-    return null;
+    throw error;
   }
-}
+};

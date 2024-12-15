@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const CoinSearch = () => {
@@ -22,12 +22,18 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-prices?address=${address}`);
+      const response = await fetch(
+        `${window.location.origin}/functions/fetch-prices?address=${address}`
+      );
+      
       if (!response.ok) {
         throw new Error("Failed to fetch coin data");
       }
 
-      const { data } = await response.json();
+      const { data, error: dataError } = await response.json();
+      
+      if (dataError) throw new Error(dataError);
+      
       if (!data || data.length === 0) {
         toast({
           title: "Not Found",
@@ -37,23 +43,21 @@ const CoinSearch = () => {
         return;
       }
 
-      // Store the coin data in Supabase
       const { error } = await supabase
         .from("coins")
         .upsert(data[0], { onConflict: "id" });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Coin data has been fetched and stored",
       });
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to search for coin",
         variant: "destructive",
       });
     } finally {
