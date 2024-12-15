@@ -33,21 +33,17 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token metadata using the Enhanced API
+    // First, get the token metadata using the Enhanced API with GET method
     console.log('Fetching token metadata for:', address)
-    const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/enhanced/getTokenMetadata`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          mintAddresses: [address]
-        })
+    const metadataUrl = new URL(`https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/enhanced/getTokenMetadata`)
+    metadataUrl.searchParams.append('contractAddresses', address)
+    
+    const metadataResponse = await fetch(metadataUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
       }
-    )
+    })
 
     if (!metadataResponse.ok) {
       const errorText = await metadataResponse.text()
