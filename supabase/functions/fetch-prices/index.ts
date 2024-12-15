@@ -33,9 +33,9 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token accounts
-    console.log('Fetching token accounts for:', address)
-    const accountsResponse = await fetch(
+    // Fetch token metadata using alchemy_getTokenMetadata
+    console.log('Fetching token metadata for:', address)
+    const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
         method: 'POST',
@@ -46,73 +46,30 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "getTokenAccounts",
-          params: [
-            address,
-            {
-              encoding: "jsonParsed",
-              commitment: "finalized"
-            }
-          ]
+          method: "alchemy_getTokenMetadata",
+          params: [address]
         })
       }
     )
 
-    if (!accountsResponse.ok) {
-      const errorText = await accountsResponse.text()
-      console.error('Failed to fetch token accounts:', errorText)
-      throw new Error(`Failed to fetch token accounts: ${errorText}`)
+    if (!metadataResponse.ok) {
+      const errorText = await metadataResponse.text()
+      console.error('Failed to fetch token metadata:', errorText)
+      throw new Error(`Failed to fetch token metadata: ${errorText}`)
     }
 
-    const accountsResult = await accountsResponse.json()
-    console.log('Token accounts response:', JSON.stringify(accountsResult, null, 2))
+    const metadataResult = await metadataResponse.json()
+    console.log('Token metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    if (!accountsResult.result?.value?.[0]) {
-      throw new Error('No token accounts found')
+    if (!metadataResult.result) {
+      throw new Error('No token metadata found')
     }
 
-    // Get the mint info
-    const mintResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: 1,
-          jsonrpc: "2.0",
-          method: "getAccountInfo",
-          params: [
-            address,
-            {
-              encoding: "jsonParsed"
-            }
-          ]
-        })
-      }
-    )
-
-    if (!mintResponse.ok) {
-      const errorText = await mintResponse.text()
-      console.error('Failed to fetch mint info:', errorText)
-      throw new Error(`Failed to fetch mint info: ${errorText}`)
-    }
-
-    const mintResult = await mintResponse.json()
-    console.log('Mint info response:', JSON.stringify(mintResult, null, 2))
-
-    const mintData = mintResult.result?.value?.data?.parsed?.info
-    if (!mintData) {
-      throw new Error('No mint data found')
-    }
-
-    // Extract token metadata from the mint data
+    // Extract token metadata from the response
     const tokenMetadata = {
-      name: mintData.name || "Unknown Token",
-      symbol: mintData.symbol || "???",
-      image: null // We'll need to source this from elsewhere if needed
+      name: metadataResult.result.name || "Unknown Token",
+      symbol: metadataResult.result.symbol || "???",
+      image: metadataResult.result.logo || null
     }
 
     // For demonstration, using mock data since we don't have real-time price data
