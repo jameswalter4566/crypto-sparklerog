@@ -22,13 +22,13 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-prices', {
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
         body: { address }
       });
       
-      if (error) throw error;
+      if (functionError) throw functionError;
       
-      if (!data || data.length === 0) {
+      if (!functionData || !functionData.data) {
         toast({
           title: "Not Found",
           description: "No coin found with this address",
@@ -37,9 +37,22 @@ const CoinSearch = () => {
         return;
       }
 
+      // Ensure we're sending a properly formatted object that matches our table schema
+      const coinData = {
+        id: address,
+        name: functionData.data.name || "Unknown",
+        symbol: functionData.data.symbol || "UNKNOWN",
+        price: functionData.data.price || null,
+        change_24h: functionData.data.change_24h || null,
+        market_cap: functionData.data.market_cap || null,
+        volume_24h: functionData.data.volume_24h || null,
+        liquidity: functionData.data.liquidity || null,
+        image_url: functionData.data.image_url || null,
+      };
+
       const { error: upsertError } = await supabase
         .from("coins")
-        .upsert(data[0], { onConflict: "id" });
+        .upsert(coinData);
 
       if (upsertError) throw upsertError;
 
