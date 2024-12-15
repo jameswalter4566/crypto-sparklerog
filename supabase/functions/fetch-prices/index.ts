@@ -42,7 +42,7 @@ serve(async (req) => {
 
     console.log('Fetching token metadata for:', address)
     
-    // Fetch token metadata using Alchemy's REST API
+    // Fetch token metadata using Alchemy's REST API with correct method name
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
@@ -54,7 +54,7 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "getTokenMetadata",
+          method: "alchemy_getTokenMetadata",  // Updated method name
           params: [address]
         })
       }
