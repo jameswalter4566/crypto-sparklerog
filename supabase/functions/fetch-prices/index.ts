@@ -16,28 +16,25 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      
+      const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
+
+      if (response.ok) return response;
 
       // Handle rate limiting
       if (response.status === 429) {
         console.warn('Rate limit hit. Waiting before retry...');
-        await new Promise((res) => setTimeout(res, 5000)); // Wait 5 seconds
+        await new Promise((res) => setTimeout(res, 5000));
         continue;
       }
-      
+
+      console.error(`Non-OK response: ${response.status} - ${response.statusText}`);
       return response;
     } catch (error) {
-      console.error(`Attempt ${i + 1} failed with error:`, error);
-      if (i === retries - 1) throw error;
-      await new Promise((res) => setTimeout(res, 1000 * Math.pow(2, i)));
+      console.error(`Attempt ${i + 1} failed:`, error.message);
+      if (i === retries - 1) throw new Error(`Failed after ${retries} retries: ${error.message}`);
     }
   }
-  throw new Error(`Failed to fetch after ${retries} retries`);
 }
 
 serve(async (req) => {
@@ -55,8 +52,6 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing request for token address:', address);
-
     // Validate Solana address format
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     if (!solanaAddressRegex.test(address)) {
@@ -66,6 +61,8 @@ serve(async (req) => {
         { headers: corsHeaders, status: 400 }
       );
     }
+
+    console.log('Processing request for token address:', address);
 
     const SOLSCAN_API_KEY = Deno.env.get('SOLSCAN_API_KEY');
     if (!SOLSCAN_API_KEY) {
@@ -77,18 +74,17 @@ serve(async (req) => {
       'accept': 'application/json',
     };
 
-    // Fetch token metadata from Solscan Pro API
+    // Fetch token metadata
     const solscanMetaURL = `https://pro-api.solscan.io/v1/token/meta?address=${address}`;
-    console.log('Fetching Solscan metadata with URL:', solscanMetaURL);
+    console.log('Fetching token metadata from Solscan:', solscanMetaURL);
 
     const metadataResponse = await fetchWithRetry(solscanMetaURL, { headers });
     if (!metadataResponse.ok) {
       const errorText = await metadataResponse.text();
-      console.error(`Solscan API Error ${metadataResponse.status}: ${errorText}`);
-
+      console.error(`Solscan Metadata API Error: ${metadataResponse.status} - ${errorText}`);
       return new Response(
         JSON.stringify({
-          error: `Solscan API returned ${metadataResponse.status}`,
+          error: `Token not found or unsupported (${metadataResponse.status})`,
           details: errorText,
           address,
         }),
@@ -97,13 +93,13 @@ serve(async (req) => {
     }
 
     const metadataResult = await metadataResponse.json();
-    console.log('Solscan Metadata Response:', metadataResult);
+    console.log('Metadata Result:', metadataResult);
 
     if (!metadataResult?.data) {
-      throw new Error('Invalid metadata response from Solscan API');
+      throw new Error('Token metadata is empty or invalid.');
     }
 
-    // Fetch market data from Solscan Pro API
+    // Fetch market data
     const marketResponse = await fetchWithRetry(
       `https://pro-api.solscan.io/v1/token/market?address=${address}`,
       { headers }
@@ -111,16 +107,26 @@ serve(async (req) => {
 
     if (!marketResponse.ok) {
       const errorText = await marketResponse.text();
-      console.error(`Market API Error ${marketResponse.status}: ${errorText}`);
-      throw new Error(`Market API returned ${marketResponse.status}: ${errorText}`);
+      console.error(`Solscan Market API Error: ${marketResponse.status} - ${errorText}`);
+      throw new Error(`Market data fetch failed (${marketResponse.status})`);
     }
 
     const marketData = await marketResponse.json();
-    console.log('Market data response:', marketData);
+    console.log('Market Data Result:', marketData);
 
     if (!marketData?.data) {
-      throw new Error('Invalid market data response from Solscan API');
+      throw new Error('Market data is empty or invalid');
     }
+
+    // Initialize Supabase client
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Process and combine the data
     const metadata = {
@@ -141,16 +147,6 @@ serve(async (req) => {
       liquidity: marketData.data.liquidity || null,
       change24h: marketData.data.priceChange24h || null
     };
-
-    // Initialize Supabase client
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error('Missing Supabase environment variables');
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Update Supabase database
     const { error: upsertError } = await supabase
