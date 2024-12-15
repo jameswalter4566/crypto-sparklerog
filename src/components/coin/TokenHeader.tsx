@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TokenHeaderProps {
   name: string;
@@ -39,11 +39,18 @@ export const TokenHeader = ({
               </Badge>
             )}
             {decimals !== undefined && (
-              <Tooltip content={`${decimals} decimals`}>
-                <Badge variant="secondary" className="h-6">
-                  d{decimals}
-                </Badge>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="secondary" className="h-6">
+                      d{decimals}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{decimals} decimals</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           <p className="text-2xl font-bold">
