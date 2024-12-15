@@ -31,20 +31,18 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata from Alchemy
+    // Fetch token metadata from Alchemy using the token API endpoint
     console.log('Fetching metadata from Alchemy...')
     const metadataResponse = await fetch(
-      `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      `https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getContractMetadata`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'alchemy_getTokenMetadata',
-          params: [address],
-          id: 1
+          contractAddress: address
         })
       }
     )
@@ -58,24 +56,22 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Metadata response:', metadataResult)
 
-    const metadata = metadataResult.result || {}
+    const metadata = {
+      name: metadataResult.name || "Unknown Token",
+      symbol: metadataResult.symbol || "UNKNOWN",
+      logo: metadataResult.openSea?.imageUrl || null,
+      decimals: metadataResult.tokenType === 'ERC20' ? 18 : 0
+    }
 
-    // Fetch token price from Alchemy
+    // Fetch token price from Alchemy's token API
     console.log('Fetching price data from Alchemy...')
     const priceResponse = await fetch(
-      `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/getTokenMetadata`,
+      `https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getFloorPrice`,
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'accept': 'application/json',
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          addresses: [{
-            network: 'eth-mainnet',
-            address: address
-          }]
-        })
+          'Accept': 'application/json'
+        }
       }
     )
 
@@ -88,8 +84,7 @@ serve(async (req) => {
     const priceData = await priceResponse.json()
     console.log('Price response:', priceData)
 
-    const tokenData = priceData.data?.[0] || {}
-    const price = tokenData.prices?.[0]?.value || null
+    const price = priceData.openSea?.floorPrice || null
 
     // Update the token data in Supabase
     console.log('Updating Supabase database...')
@@ -102,10 +97,10 @@ serve(async (req) => {
       .from('coins')
       .upsert({
         id: address,
-        name: metadata.name || "Unknown Token",
-        symbol: metadata.symbol || "UNKNOWN",
-        image_url: metadata.logo || null,
-        price: price ? parseFloat(price) : null,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        image_url: metadata.logo,
+        price: price,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -119,11 +114,11 @@ serve(async (req) => {
     console.log('Successfully processed token data')
     return new Response(
       JSON.stringify({
-        name: metadata.name || "Unknown Token",
-        symbol: metadata.symbol || "UNKNOWN",
-        image: metadata.logo || null,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        image: metadata.logo,
         decimals: metadata.decimals,
-        price: price ? parseFloat(price) : null
+        price: price
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
