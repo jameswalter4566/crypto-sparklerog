@@ -22,7 +22,7 @@ const CoinProfile = () => {
     queryKey: ['jupiter-price', id],
     queryFn: async () => {
       if (!id) throw new Error('No coin ID provided');
-      return fetchJupiterPrices();
+      return fetchJupiterPrices(id);
     },
   });
 

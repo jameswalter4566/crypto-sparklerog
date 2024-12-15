@@ -6,50 +6,33 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const url = new URL(req.url)
-    const coinAddress = url.searchParams.get('address')
+    // Parse the request body if it exists
+    const { address } = await req.json()
+    console.log('Fetching price data for address:', address)
 
-    if (coinAddress) {
-      console.log('Fetching specific coin data from Jupiter:', coinAddress)
-      const response = await fetch(`https://price.jup.ag/v4/price?ids=${coinAddress}`, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Jupiter API responded with status ${response.status}`)
-      }
-
-      const data = await response.json()
-      return new Response(
-        JSON.stringify({ data }),
-        { 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
+    let jupiterUrl = 'https://price.jup.ag/v4/price'
+    if (address) {
+      jupiterUrl += `?ids=${address}`
     }
 
-    // Fetch all prices as fallback
-    const response = await fetch('https://price.jup.ag/v4/price', {
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-
+    console.log('Making request to Jupiter API:', jupiterUrl)
+    
+    const response = await fetch(jupiterUrl)
+    
     if (!response.ok) {
+      console.error('Jupiter API error:', response.status, response.statusText)
       throw new Error(`Jupiter API responded with status ${response.status}`)
     }
 
     const data = await response.json()
+    console.log('Successfully fetched Jupiter data')
+
     return new Response(
       JSON.stringify({ data }),
       { 
