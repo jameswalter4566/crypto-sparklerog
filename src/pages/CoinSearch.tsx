@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ const CoinSearch = () => {
   const [address, setAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSearch = async () => {
     if (!address) {
@@ -37,7 +39,6 @@ const CoinSearch = () => {
         return;
       }
 
-      // Ensure we're sending a properly formatted object that matches our table schema
       const coinData = {
         id: address,
         name: functionData.data.name || "Unknown",
@@ -60,6 +61,9 @@ const CoinSearch = () => {
         title: "Success",
         description: "Coin data has been fetched and stored",
       });
+
+      // Navigate to the coin profile page
+      navigate(`/coin/${address}`);
     } catch (error) {
       console.error('Search error:', error);
       toast({
