@@ -28,7 +28,7 @@ const CoinSearch = () => {
       
       if (functionError) throw functionError;
       
-      if (!functionData || !functionData.data) {
+      if (!functionData?.data) {
         toast({
           title: "Not Found",
           description: "No coin found with this address",
@@ -42,11 +42,11 @@ const CoinSearch = () => {
         id: address,
         name: functionData.data.name || "Unknown",
         symbol: functionData.data.symbol || "UNKNOWN",
-        price: functionData.data.price || null,
-        change_24h: functionData.data.change_24h || null,
-        market_cap: functionData.data.market_cap || null,
-        volume_24h: functionData.data.volume_24h || null,
-        liquidity: functionData.data.liquidity || null,
+        price: functionData.data.price ? Number(functionData.data.price) : null,
+        change_24h: functionData.data.change_24h ? Number(functionData.data.change_24h) : null,
+        market_cap: functionData.data.market_cap ? Number(functionData.data.market_cap) : null,
+        volume_24h: functionData.data.volume_24h ? Number(functionData.data.volume_24h) : null,
+        liquidity: functionData.data.liquidity ? Number(functionData.data.liquidity) : null,
         image_url: functionData.data.image_url || null,
       };
 
