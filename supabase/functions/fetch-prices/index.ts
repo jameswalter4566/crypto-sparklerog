@@ -6,37 +6,57 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { address } = await req.json()
-    console.log('Fetching price data for address:', address)
+    console.log('Fetching token data from Helius for address:', address)
 
-    // If no address provided, fetch all prices
-    let jupiterUrl = 'https://price.jup.ag/v4/price'
-    if (address) {
-      jupiterUrl += `?ids=${address}`
+    if (!address) {
+      throw new Error('Address is required')
     }
 
-    console.log('Making request to Jupiter API:', jupiterUrl)
+    const HELIUS_API_KEY = Deno.env.get('HELIUS_API_KEY')
+    if (!HELIUS_API_KEY) {
+      throw new Error('HELIUS_API_KEY is not set')
+    }
+
+    const heliusUrl = `https://api.helius.xyz/v0/token-metadata?api-key=${HELIUS_API_KEY}`
     
-    const response = await fetch(jupiterUrl, {
+    const response = await fetch(heliusUrl, {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mintAccounts: [address],
+        includeOffChain: true,
+        disableCache: false,
+      }),
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Jupiter API error:', response.status, response.statusText, errorText)
-      throw new Error(`Jupiter API responded with status ${response.status}: ${errorText}`)
+      console.error('Helius API error:', response.status, response.statusText, errorText)
+      throw new Error(`Helius API responded with status ${response.status}: ${errorText}`)
     }
 
-    const data = await response.json()
-    console.log('Successfully fetched Jupiter data:', data)
+    const heliusData = await response.json()
+    console.log('Successfully fetched Helius data:', heliusData)
+
+    // Transform Helius data to match our expected format
+    const tokenData = heliusData[0] || {}
+    const data = {
+      name: tokenData.onChainMetadata?.metadata?.name || 'Unknown',
+      symbol: tokenData.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
+      price: null, // Helius doesn't provide price directly
+      image_url: tokenData.offChainMetadata?.metadata?.image || null,
+      market_cap: null,
+      volume_24h: null,
+      liquidity: null,
+    }
 
     return new Response(
       JSON.stringify({ data }),
@@ -51,7 +71,7 @@ serve(async (req) => {
     console.error('Error in fetch-prices function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An error occurred while fetching prices'
+        error: error.message || 'An error occurred while fetching token data'
       }),
       { 
         status: 500,

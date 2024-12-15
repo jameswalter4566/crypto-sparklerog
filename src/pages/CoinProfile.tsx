@@ -13,14 +13,14 @@ import {
   Area,
   ResponsiveContainer
 } from 'recharts';
-import { fetchJupiterPrices } from "@/lib/jupiter";
+import { fetchTokenData } from "@/lib/jupiter";
 
 const CoinProfile = () => {
   const { id } = useParams();
 
-  const { data: jupiterData, isLoading: isLoadingJupiter } = useQuery({
-    queryKey: ['jupiter-price', id],
-    queryFn: fetchJupiterPrices,
+  const { data: tokenData, isLoading: isLoadingToken } = useQuery({
+    queryKey: ['token-data', id],
+    queryFn: fetchTokenData,
     enabled: !!id,
   });
 
@@ -39,7 +39,7 @@ const CoinProfile = () => {
     enabled: !!id,
   });
 
-  const isLoading = isLoadingJupiter || isLoadingCoin;
+  const isLoading = isLoadingToken || isLoadingCoin;
 
   if (isLoading) {
     return (
@@ -55,12 +55,12 @@ const CoinProfile = () => {
     );
   }
 
-  if (!coin || !jupiterData) {
+  if (!coin || !tokenData) {
     return (
       <div className="p-6 flex flex-col items-center justify-center">
         <CandlestickChart className="h-16 w-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold">Coin not found</h2>
-        <p className="text-muted-foreground">The requested coin data could not be loaded.</p>
+        <h2 className="text-2xl font-bold">Token not found</h2>
+        <p className="text-muted-foreground">The requested token data could not be loaded.</p>
       </div>
     );
   }
@@ -68,7 +68,7 @@ const CoinProfile = () => {
   // Generate mock price data for the chart - replace with real data when available
   const priceData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    price: jupiterData.data.price * (1 + Math.random() * 0.2 - 0.1),
+    price: Math.random() * 100, // Mock price since Helius doesn't provide price data
   }));
 
   return (
@@ -86,7 +86,7 @@ const CoinProfile = () => {
             {coin.name} ({coin.symbol})
           </h1>
           <p className="text-2xl font-bold">
-            ${jupiterData.data.price?.toFixed(8)}
+            Price data not available
             {coin.change_24h && (
               <span className={coin.change_24h > 0 ? "text-green-500" : "text-red-500"}>
                 {" "}({coin.change_24h > 0 ? "+" : ""}{coin.change_24h.toFixed(2)}%)
