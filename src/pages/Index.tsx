@@ -10,7 +10,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('coins')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(10);
       
       if (error) throw error;
