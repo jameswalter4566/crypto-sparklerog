@@ -75,7 +75,7 @@ serve(async (req) => {
     // Fetch token metadata from Solscan Pro API
     console.log('Fetching token metadata from Solscan Pro API')
     const metadataResult = await fetchWithRetry(
-      `https://pro-api.solscan.io/v2/token/meta?address=${address}`,
+      `https://pro-api.solscan.io/v1/token/meta?address=${address}`,
       { headers }
     );
     console.log('Metadata response:', JSON.stringify(metadataResult, null, 2))
@@ -83,7 +83,7 @@ serve(async (req) => {
     // Fetch market data from Solscan Pro API
     console.log('Fetching market data from Solscan Pro API')
     const marketData = await fetchWithRetry(
-      `https://pro-api.solscan.io/v2/token/market?address=${address}`,
+      `https://pro-api.solscan.io/v1/token/market?address=${address}`,
       { headers }
     );
     console.log('Market data response:', JSON.stringify(marketData, null, 2))
