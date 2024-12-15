@@ -33,36 +33,8 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // First, get the token mint info
-    console.log('Fetching token mint info for:', address)
-    const mintInfoResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: 1,
-          jsonrpc: "2.0",
-          method: "getTokenSupply",
-          params: [address]
-        })
-      }
-    )
-
-    if (!mintInfoResponse.ok) {
-      const errorText = await mintInfoResponse.text()
-      console.error('Failed to fetch mint info:', errorText)
-      throw new Error(`Failed to fetch token mint info: ${errorText}`)
-    }
-
-    const mintInfoResult = await mintInfoResponse.json()
-    console.log('Raw mint info response:', JSON.stringify(mintInfoResult, null, 2))
-
-    // Now fetch metadata account
-    console.log('Fetching metadata account for:', address)
+    // First, get the token metadata using getToken method
+    console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
@@ -74,13 +46,8 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "getAccountInfo",
-          params: [
-            address,
-            {
-              encoding: "jsonParsed"
-            }
-          ]
+          method: "getToken",
+          params: [address]
         })
       }
     )
@@ -94,18 +61,18 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    if (!metadataResult.result?.value) {
+    if (!metadataResult.result) {
       console.error('No metadata found in response:', metadataResult)
       throw new Error('No metadata found for token')
     }
 
-    const accountData = metadataResult.result.value
+    const tokenData = metadataResult.result
     
-    // Extract token metadata from the parsed account data
+    // Extract token metadata from the token data
     const tokenMetadata = {
-      name: accountData.data?.parsed?.info?.name || "Unknown Token",
-      symbol: accountData.data?.parsed?.info?.symbol || "???",
-      logo: null, // Solana tokens don't have logos in their on-chain metadata
+      name: tokenData.name || tokenData.tokenInfo?.name || "Unknown Token",
+      symbol: tokenData.symbol || tokenData.tokenInfo?.symbol || "???",
+      logo: null // Solana tokens typically don't have logos in their on-chain metadata
     }
 
     // For demonstration, using mock data since we don't have real-time price data
