@@ -15,11 +15,13 @@ export class SolscanAPI {
   }
 
   async fetchTokenMetadata(address: string) {
+    console.log('Fetching token metadata for address:', address);
     const response = await this.makeRequest(`/token/meta?address=${address}`);
     return response;
   }
 
   async fetchTokenTransfers(address: string) {
+    console.log('Fetching token transfers for address:', address);
     const response = await this.makeRequest(
       `/account/transfer?token=${address}&page=1&page_size=10&sort_by=block_time&sort_order=desc`
     );
@@ -27,26 +29,24 @@ export class SolscanAPI {
   }
 
   async fetchTokenMarket(address: string) {
+    console.log('Fetching token market data for address:', address);
     const response = await this.makeRequest(`/token/market?address=${address}`);
     return response;
   }
 
-  private async makeRequest(path: string, retries = 3) {
+  private async makeRequest(path: string, retries = 3): Promise<Response> {
     const url = `${SOLSCAN_API_BASE}${path}`;
     console.log(`Making request to: ${url}`);
     
     for (let i = 0; i < retries; i++) {
       try {
         const response = await fetch(url, { 
-          headers: this.headers,
-          timeout: 10000
+          method: 'GET',
+          headers: this.headers
         });
 
-        if (response.status === 404) {
-          console.log('Resource not found:', url);
-          return response;
-        }
-
+        console.log(`Response status for ${path}:`, response.status);
+        
         if (response.ok) {
           return response;
         }
@@ -57,12 +57,17 @@ export class SolscanAPI {
           continue;
         }
 
-        console.error(`Non-OK response: ${response.status} - ${response.statusText}`);
+        // For other error status codes, log the response body for debugging
+        const errorBody = await response.text();
+        console.error(`Error response body for ${path}:`, errorBody);
+        
         return response;
       } catch (error) {
-        console.error(`Attempt ${i + 1} failed:`, error.message);
-        if (i === retries - 1) throw new Error(`Failed after ${retries} retries: ${error.message}`);
+        console.error(`Attempt ${i + 1} failed for ${path}:`, error.message);
+        if (i === retries - 1) throw error;
       }
     }
+
+    throw new Error(`Failed after ${retries} retries`);
   }
 }

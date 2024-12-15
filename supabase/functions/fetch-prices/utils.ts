@@ -4,20 +4,25 @@ export const corsHeaders = {
 };
 
 export const validateSolanaAddress = (address: string): boolean => {
-  const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-  return solanaAddressRegex.test(address);
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 };
 
-export const createErrorResponse = (error: string, details: any = null, status = 400) => {
+export const createErrorResponse = (
+  message: string,
+  details: any = {},
+  status = 400
+): Response => {
+  console.error('Error:', message, details);
+  
   return new Response(
     JSON.stringify({
-      error,
+      error: message,
       details,
       success: false
     }),
     {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     }
   );
 };

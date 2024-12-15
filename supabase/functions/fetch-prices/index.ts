@@ -3,6 +3,7 @@ import { corsHeaders, validateSolanaAddress, createErrorResponse } from './utils
 import { SolscanAPI } from './solscan-api.ts';
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -30,19 +31,17 @@ serve(async (req) => {
     const solscan = new SolscanAPI({ apiKey: SOLSCAN_API_KEY });
 
     // Fetch token metadata and transfers
+    console.log('Fetching token data from Solscan...');
+    
     const [metadataResponse, transfersResponse, marketResponse] = await Promise.all([
       solscan.fetchTokenMetadata(contractAddress),
       solscan.fetchTokenTransfers(contractAddress),
       solscan.fetchTokenMarket(contractAddress)
     ]);
 
-    if (metadataResponse.status === 404 || transfersResponse.status === 404) {
-      return createErrorResponse(
-        'Token not found on Solscan. Please verify the address is correct.',
-        { contractAddress },
-        404
-      );
-    }
+    console.log('Metadata response status:', metadataResponse.status);
+    console.log('Transfers response status:', transfersResponse.status);
+    console.log('Market response status:', marketResponse.status);
 
     const [metadata, transfers, market] = await Promise.all([
       metadataResponse.json(),
@@ -56,7 +55,9 @@ serve(async (req) => {
       market
     });
 
+    // Check for successful responses
     if (!metadata.success || !transfers.success) {
+      console.error('Failed responses:', { metadata, transfers });
       return createErrorResponse('Failed to fetch token data', {
         metadata: metadata.error,
         transfers: transfers.error
@@ -91,7 +92,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing request:', error);
     return createErrorResponse(
-      error.message,
+      'Failed to process request',
       error.toString(),
       500
     );
