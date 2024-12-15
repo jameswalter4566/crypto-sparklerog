@@ -36,7 +36,7 @@ serve(async (req) => {
     // Fetch token metadata using Alchemy's token API with the correct endpoint
     console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getTokenMetadata?contractAddresses=${address}`,
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/getTokenMetadata?address=${address}`,
       {
         method: 'GET',
         headers: {
@@ -54,6 +54,11 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
+    if (!metadataResult.data) {
+      console.error('No metadata found in response:', metadataResult)
+      throw new Error('No metadata found for token')
+    }
+
     // For demonstration, using mock data since we don't have real-time price data
     const mockData = {
       price: Math.random() * 100,
@@ -63,11 +68,12 @@ serve(async (req) => {
       liquidity: Math.random() * 200000
     }
 
-    // Extract token metadata with fallbacks
+    // Extract token metadata
+    const tokenData = metadataResult.data
     const tokenMetadata = {
-      name: metadataResult?.name || "Unknown Token",
-      symbol: metadataResult?.symbol || "???",
-      logo: metadataResult?.logo || null,
+      name: tokenData.name || "Unknown Token",
+      symbol: tokenData.symbol || "???",
+      logo: tokenData.logo || null,
     }
 
     // Update the token data in Supabase
