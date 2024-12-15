@@ -31,18 +31,20 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata from Alchemy using the token API endpoint
-    console.log('Fetching metadata from Alchemy...')
+    // Fetch token metadata from Solana network
+    console.log('Fetching metadata from Solana network...')
     const metadataResponse = await fetch(
-      `https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getContractMetadata`,
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          contractAddress: address
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenMetadata',
+          params: [address]
         })
       }
     )
@@ -56,22 +58,23 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Metadata response:', metadataResult)
 
-    const metadata = {
-      name: metadataResult.name || "Unknown Token",
-      symbol: metadataResult.symbol || "UNKNOWN",
-      logo: metadataResult.openSea?.imageUrl || null,
-      decimals: metadataResult.tokenType === 'ERC20' ? 18 : 0
-    }
+    const metadata = metadataResult.result || {}
 
-    // Fetch token price from Alchemy's token API
-    console.log('Fetching price data from Alchemy...')
+    // Fetch token price data
+    console.log('Fetching price data...')
     const priceResponse = await fetch(
-      `https://eth-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getFloorPrice`,
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenPrice',
+          params: [address]
+        })
       }
     )
 
@@ -84,7 +87,7 @@ serve(async (req) => {
     const priceData = await priceResponse.json()
     console.log('Price response:', priceData)
 
-    const price = priceData.openSea?.floorPrice || null
+    const price = priceData.result?.price || null
 
     // Update the token data in Supabase
     console.log('Updating Supabase database...')
@@ -97,9 +100,9 @@ serve(async (req) => {
       .from('coins')
       .upsert({
         id: address,
-        name: metadata.name,
-        symbol: metadata.symbol,
-        image_url: metadata.logo,
+        name: metadata.name || "Unknown Token",
+        symbol: metadata.symbol || "UNKNOWN",
+        image_url: metadata.logo || null,
         price: price,
         updated_at: new Date().toISOString()
       }, {
@@ -114,10 +117,10 @@ serve(async (req) => {
     console.log('Successfully processed token data')
     return new Response(
       JSON.stringify({
-        name: metadata.name,
-        symbol: metadata.symbol,
-        image: metadata.logo,
-        decimals: metadata.decimals,
+        name: metadata.name || "Unknown Token",
+        symbol: metadata.symbol || "UNKNOWN",
+        image: metadata.logo || null,
+        decimals: metadata.decimals || 9, // Solana tokens typically use 9 decimals
         price: price
       }),
       { 
