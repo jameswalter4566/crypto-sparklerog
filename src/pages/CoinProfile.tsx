@@ -13,9 +13,11 @@ import {
   Area,
   ResponsiveContainer
 } from 'recharts';
+import { useToast } from "@/components/ui/use-toast";
 
 const CoinProfile = () => {
   const { id } = useParams();
+  const { toast } = useToast();
 
   const { data: tokenMetadata, isLoading: isLoadingMetadata } = useQuery({
     queryKey: ['token-metadata', id],
@@ -27,6 +29,11 @@ const CoinProfile = () => {
       
       if (response.error) {
         console.error("Error fetching metadata:", response.error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch token metadata",
+          variant: "destructive",
+        });
         throw response.error;
       }
       console.log("Received metadata:", response.data);
@@ -48,6 +55,11 @@ const CoinProfile = () => {
       
       if (error) {
         console.error("Error fetching coin:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch coin data",
+          variant: "destructive",
+        });
         throw error;
       }
       console.log("Received coin data:", data);
@@ -96,12 +108,15 @@ const CoinProfile = () => {
           <img 
             src={tokenMetadata.image} 
             alt={tokenMetadata.name} 
-            className="w-12 h-12 rounded-full"
+            className="w-12 h-12 rounded-full bg-background border"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg";
+            }}
           />
         )}
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            {tokenMetadata.name} ({tokenMetadata.symbol})
+            {tokenMetadata.name || "Unknown Token"} ({tokenMetadata.symbol || "???"})
           </h1>
           <p className="text-2xl font-bold">
             ${coin.price?.toFixed(4) ?? "Price not available"}
