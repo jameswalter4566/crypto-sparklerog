@@ -26,7 +26,7 @@ const CoinSearch = () => {
     try {
       console.log('Fetching metadata for:', address);
       const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
-        body: { address }
+        body: { contractAddress: address } // Updated to use contractAddress
       });
       
       if (functionError) {
