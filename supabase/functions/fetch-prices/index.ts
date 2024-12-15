@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3) {
-  const timeout = 10000; // 10 seconds timeout
+  const timeout = 10000;
   
   for (let i = 0; i < retries; i++) {
     try {
@@ -21,7 +21,6 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
 
       if (response.ok) return response;
 
-      // Handle rate limiting
       if (response.status === 429) {
         console.warn('Rate limit hit. Waiting before retry...');
         await new Promise((res) => setTimeout(res, 5000));
@@ -38,31 +37,38 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
 }
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { address } = await req.json();
-    
-    if (!address) {
+    const requestData = await req.json();
+    console.log('Received request data:', requestData);
+
+    const contractAddress = requestData.contractAddress;
+    console.log('Contract address from request:', contractAddress);
+
+    if (!contractAddress) {
+      console.error('Missing contract address in request');
       return new Response(
         JSON.stringify({ error: 'Token address is required' }),
-        { headers: corsHeaders, status: 400 }
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
       );
     }
 
     // Validate Solana address format
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-    if (!solanaAddressRegex.test(address)) {
-      console.error('Invalid Solana token address:', address);
+    if (!solanaAddressRegex.test(contractAddress)) {
+      console.error('Invalid Solana contract address:', contractAddress);
       return new Response(
-        JSON.stringify({ error: 'Invalid Solana address format', address }),
+        JSON.stringify({ error: 'Invalid Solana address format', contractAddress }),
         { headers: corsHeaders, status: 400 }
       );
     }
-
-    console.log('Processing request for token address:', address);
 
     const SOLSCAN_API_KEY = Deno.env.get('SOLSCAN_API_KEY');
     if (!SOLSCAN_API_KEY) {
@@ -75,7 +81,7 @@ serve(async (req) => {
     };
 
     // Fetch token metadata
-    const solscanMetaURL = `https://pro-api.solscan.io/v1/token/meta?address=${address}`;
+    const solscanMetaURL = `https://pro-api.solscan.io/v1/token/meta?address=${contractAddress}`;
     console.log('Fetching token metadata from Solscan:', solscanMetaURL);
 
     const metadataResponse = await fetchWithRetry(solscanMetaURL, { headers });
@@ -86,7 +92,7 @@ serve(async (req) => {
         JSON.stringify({
           error: `Token not found or unsupported (${metadataResponse.status})`,
           details: errorText,
-          address,
+          contractAddress,
         }),
         { headers: corsHeaders, status: metadataResponse.status }
       );
@@ -101,7 +107,7 @@ serve(async (req) => {
 
     // Fetch market data
     const marketResponse = await fetchWithRetry(
-      `https://pro-api.solscan.io/v1/token/market?address=${address}`,
+      `https://pro-api.solscan.io/v1/token/market?address=${contractAddress}`,
       { headers }
     );
 
@@ -130,16 +136,14 @@ serve(async (req) => {
 
     // Process and combine the data
     const metadata = {
-      name: metadataResult.data.name || `Unknown Token (${address.slice(0, 6)}...)`,
+      name: metadataResult.data.name || `Unknown Token (${contractAddress.slice(0, 6)}...)`,
       symbol: metadataResult.data.symbol || 'UNKNOWN',
       decimals: metadataResult.data.decimals ?? 9,
       image: metadataResult.data.icon || null,
       description: metadataResult.data.description || null,
-      tokenStandard: 'SPL Token',
       supply: {
         total: metadataResult.data.supply?.total || null,
         circulating: metadataResult.data.supply?.circulating || null,
-        nonCirculating: metadataResult.data.supply?.nonCirculating || null,
       },
       price: marketData.data.priceUsdt || null,
       marketCap: marketData.data.marketCapFD || null,
@@ -152,7 +156,7 @@ serve(async (req) => {
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
-        id: address,
+        id: contractAddress,
         name: metadata.name,
         symbol: metadata.symbol,
         image_url: metadata.image,
