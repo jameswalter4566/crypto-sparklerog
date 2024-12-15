@@ -19,6 +19,11 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
       const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
 
+      // For 404s, we want to handle them specially since they're expected when tokens don't exist
+      if (response.status === 404) {
+        return response;
+      }
+
       if (response.ok) return response;
 
       if (response.status === 429) {
@@ -52,7 +57,10 @@ serve(async (req) => {
     if (!contractAddress) {
       console.error('Missing contract address in request');
       return new Response(
-        JSON.stringify({ error: 'Token address is required' }),
+        JSON.stringify({ 
+          error: 'Token address is required',
+          success: false 
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
@@ -65,7 +73,11 @@ serve(async (req) => {
     if (!solanaAddressRegex.test(contractAddress)) {
       console.error('Invalid Solana contract address:', contractAddress);
       return new Response(
-        JSON.stringify({ error: 'Invalid Solana address format', contractAddress }),
+        JSON.stringify({ 
+          error: 'Invalid Solana address format', 
+          contractAddress,
+          success: false 
+        }),
         { headers: corsHeaders, status: 400 }
       );
     }
@@ -85,14 +97,31 @@ serve(async (req) => {
     console.log('Fetching token metadata from Solscan:', solscanMetaURL);
 
     const metadataResponse = await fetchWithRetry(solscanMetaURL, { headers });
+    
+    // Special handling for 404 - token not found
+    if (metadataResponse.status === 404) {
+      return new Response(
+        JSON.stringify({
+          error: 'Token not found on Solscan. Please verify the address is correct.',
+          success: false,
+          contractAddress,
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404 
+        }
+      );
+    }
+
     if (!metadataResponse.ok) {
       const errorText = await metadataResponse.text();
       console.error(`Solscan Metadata API Error: ${metadataResponse.status} - ${errorText}`);
       return new Response(
         JSON.stringify({
-          error: `Token not found or unsupported (${metadataResponse.status})`,
+          error: `Failed to fetch token data (${metadataResponse.status})`,
           details: errorText,
           contractAddress,
+          success: false
         }),
         { headers: corsHeaders, status: metadataResponse.status }
       );
@@ -176,7 +205,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify(metadata),
+      JSON.stringify({ ...metadata, success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -185,7 +214,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: error.message,
-        details: error.toString()
+        details: error.toString(),
+        success: false
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
