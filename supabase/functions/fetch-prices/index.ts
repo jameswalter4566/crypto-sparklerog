@@ -59,6 +59,29 @@ serve(async (req) => {
 
     const tokenMetadata = heliusData[0]
 
+    // Fetch supply information
+    console.log('Fetching supply information from Helius')
+    const supplyResponse = await fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getSupply',
+        params: [{
+          commitment: 'finalized',
+          excludeNonCirculatingAccountsList: true
+        }]
+      })
+    });
+
+    if (!supplyResponse.ok) {
+      throw new Error(`Supply API error: ${supplyResponse.statusText}`)
+    }
+
+    const supplyData = await supplyResponse.json()
+    console.log('Received supply data:', supplyData)
+
     // For demonstration, using mock data since we don't have real-time price data
     const mockData = {
       price: Math.random() * 100,
@@ -102,7 +125,8 @@ serve(async (req) => {
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,
         volume_24h: mockData.volume_24h,
-        liquidity: mockData.liquidity
+        liquidity: mockData.liquidity,
+        supply: supplyData.result.value
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -6,6 +6,7 @@ import { CandlestickChart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
+import { TokenSupply } from "@/components/coin/TokenSupply";
 import { PriceChart } from "@/components/coin/PriceChart";
 
 const CoinProfile = () => {
@@ -73,6 +74,11 @@ const CoinProfile = () => {
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
         <Skeleton className="h-[600px]" />
       </div>
     );
@@ -107,6 +113,12 @@ const CoinProfile = () => {
         marketCap={coin.market_cap}
         volume24h={coin.volume_24h}
         liquidity={coin.liquidity}
+      />
+
+      <TokenSupply
+        total={tokenMetadata.supply?.total}
+        circulating={tokenMetadata.supply?.circulating}
+        nonCirculating={tokenMetadata.supply?.nonCirculating}
       />
 
       <PriceChart data={priceData} />
