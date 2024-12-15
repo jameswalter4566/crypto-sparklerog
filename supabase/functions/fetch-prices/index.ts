@@ -12,15 +12,24 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url)
-    const address = url.searchParams.get('address')
+    // Parse request body if it exists
+    let body = {}
+    if (req.body) {
+      const reader = req.body.getReader()
+      const decoder = new TextDecoder()
+      const chunk = await reader.read()
+      const text = decoder.decode(chunk.value)
+      if (text) {
+        body = JSON.parse(text)
+      }
+    }
 
-    // If address is provided, fetch specific coin data
-    if (address) {
+    // If address is provided in the body, fetch specific coin data
+    if (body.address) {
       // Here you would implement the logic to fetch specific coin data
       // For now, returning a mock response
       const coinData = {
-        id: address,
+        id: body.address,
         name: "Test Coin",
         symbol: "TEST",
         price: 1.0,
@@ -42,11 +51,20 @@ serve(async (req) => {
     }
 
     // Otherwise fetch all prices from Jupiter
-    const response = await fetch('https://price.jup.ag/v4/price')
+    console.log('Fetching prices from Jupiter API...')
+    const response = await fetch('https://price.jup.ag/v4/price', {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+
     if (!response.ok) {
-      throw new Error('Failed to fetch Jupiter prices')
+      console.error('Jupiter API response not OK:', response.status, response.statusText)
+      throw new Error(`Jupiter API responded with status ${response.status}`)
     }
+
     const data = await response.json()
+    console.log('Successfully fetched Jupiter prices')
 
     return new Response(
       JSON.stringify({ data }),
