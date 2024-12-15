@@ -107,6 +107,9 @@ const CoinProfile = () => {
         symbol={tokenMetadata.symbol}
         image={tokenMetadata.image}
         price={coin.price}
+        description={tokenMetadata.description}
+        tokenStandard={tokenMetadata.tokenStandard}
+        decimals={tokenMetadata.decimals}
       />
       
       <TokenStats

@@ -36,13 +36,14 @@ serve(async (req) => {
 
     console.log('Fetching token information from Helius for:', address)
     
-    // Fetch token metadata from Helius
+    // Fetch detailed token metadata from Helius
     const heliusResponse = await fetch(`https://api.helius.xyz/v0/token-metadata?api-key=${HELIUS_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mintAccounts: [address],
-        includeOffChain: true,
+        includeOffChain: true, // This ensures we get both on-chain and off-chain metadata
+        disableCache: false    // Set to true if you need real-time data
       })
     });
 
@@ -91,15 +92,30 @@ serve(async (req) => {
       liquidity: Math.random() * 200000
     }
 
+    // Extract comprehensive metadata
+    const metadata = {
+      name: tokenMetadata.onChainMetadata?.metadata?.name || `Token ${address.slice(0, 6)}...`,
+      symbol: tokenMetadata.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
+      decimals: tokenMetadata.onChainMetadata?.metadata?.decimals || 9,
+      image: tokenMetadata.onChainMetadata?.metadata?.uri || null,
+      description: tokenMetadata.offChainMetadata?.metadata?.description || null,
+      externalUrl: tokenMetadata.offChainMetadata?.metadata?.external_url || null,
+      attributes: tokenMetadata.offChainMetadata?.metadata?.attributes || [],
+      tokenStandard: tokenMetadata.onChainMetadata?.tokenStandard || null,
+      creators: tokenMetadata.onChainMetadata?.metadata?.creators || [],
+      collection: tokenMetadata.offChainMetadata?.metadata?.collection || null,
+      uses: tokenMetadata.onChainMetadata?.metadata?.uses || null,
+    }
+
     // Update the token data in Supabase
     console.log('Updating Supabase database with token data')
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
         id: address,
-        name: tokenMetadata.onChainMetadata?.metadata?.name || `Token ${address.slice(0, 6)}...`,
-        symbol: tokenMetadata.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
-        image_url: tokenMetadata.onChainMetadata?.metadata?.uri || null,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        image_url: metadata.image,
         price: mockData.price,
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,
@@ -118,9 +134,7 @@ serve(async (req) => {
     console.log('Successfully processed token data')
     return new Response(
       JSON.stringify({
-        name: tokenMetadata.onChainMetadata?.metadata?.name || `Token ${address.slice(0, 6)}...`,
-        symbol: tokenMetadata.onChainMetadata?.metadata?.symbol || 'UNKNOWN',
-        image: tokenMetadata.onChainMetadata?.metadata?.uri || null,
+        ...metadata,
         price: mockData.price,
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,

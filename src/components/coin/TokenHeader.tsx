@@ -1,27 +1,61 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface TokenHeaderProps {
   name: string;
   symbol: string;
   image: string | null;
   price: number | null;
+  description?: string | null;
+  tokenStandard?: string | null;
+  decimals?: number;
 }
 
-export const TokenHeader = ({ name, symbol, image, price }: TokenHeaderProps) => {
+export const TokenHeader = ({ 
+  name, 
+  symbol, 
+  image, 
+  price,
+  description,
+  tokenStandard,
+  decimals 
+}: TokenHeaderProps) => {
   return (
-    <div className="flex items-center gap-4 mb-6">
-      <Avatar className="w-12 h-12">
-        <AvatarImage src={image || ""} alt={name} />
-        <AvatarFallback>{symbol?.[0] || "?"}</AvatarFallback>
-      </Avatar>
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          {name || "Unknown Token"} ({symbol || "???"})
-        </h1>
-        <p className="text-2xl font-bold">
-          ${price?.toFixed(4) ?? "Price not available"}
-        </p>
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex items-center gap-4">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={image || ""} alt={name} />
+          <AvatarFallback>{symbol?.[0] || "?"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              {name || "Unknown Token"} ({symbol || "???"})
+            </h1>
+            {tokenStandard && (
+              <Badge variant="outline" className="h-6">
+                {tokenStandard}
+              </Badge>
+            )}
+            {decimals !== undefined && (
+              <Tooltip content={`${decimals} decimals`}>
+                <Badge variant="secondary" className="h-6">
+                  d{decimals}
+                </Badge>
+              </Tooltip>
+            )}
+          </div>
+          <p className="text-2xl font-bold">
+            ${price?.toFixed(4) ?? "Price not available"}
+          </p>
+        </div>
       </div>
+      {description && (
+        <p className="text-muted-foreground max-w-3xl">
+          {description}
+        </p>
+      )}
     </div>
   );
 };
