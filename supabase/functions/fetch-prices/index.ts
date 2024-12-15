@@ -33,10 +33,10 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata using Alchemy's token API
+    // Fetch token metadata using Alchemy's token API with the correct endpoint
     console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/getTokenMetadata?tokenAddresses=${address}`,
+      `https://solana-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getTokenMetadata?contractAddresses=${address}`,
       {
         method: 'GET',
         headers: {
@@ -54,14 +54,6 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    if (!metadataResult.tokens || !metadataResult.tokens[0]) {
-      console.error('No metadata found in response:', metadataResult)
-      throw new Error('No metadata found for token')
-    }
-
-    const tokenMetadata = metadataResult.tokens[0]
-    console.log('Parsed token metadata:', tokenMetadata)
-
     // For demonstration, using mock data since we don't have real-time price data
     const mockData = {
       price: Math.random() * 100,
@@ -71,15 +63,22 @@ serve(async (req) => {
       liquidity: Math.random() * 200000
     }
 
+    // Extract token metadata with fallbacks
+    const tokenMetadata = {
+      name: metadataResult?.name || "Unknown Token",
+      symbol: metadataResult?.symbol || "???",
+      logo: metadataResult?.logo || null,
+    }
+
     // Update the token data in Supabase
     console.log('Updating Supabase database with token data')
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert({
         id: address,
-        name: tokenMetadata.name || "Unknown Token",
-        symbol: tokenMetadata.symbol || "???",
-        image_url: tokenMetadata.logo || null,
+        name: tokenMetadata.name,
+        symbol: tokenMetadata.symbol,
+        image_url: tokenMetadata.logo,
         price: mockData.price,
         change_24h: mockData.change_24h,
         market_cap: mockData.market_cap,
