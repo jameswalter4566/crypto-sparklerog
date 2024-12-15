@@ -22,17 +22,11 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `${window.location.origin}/functions/fetch-prices?address=${address}`
-      );
+      const { data, error } = await supabase.functions.invoke('fetch-prices', {
+        body: { address }
+      });
       
-      if (!response.ok) {
-        throw new Error("Failed to fetch coin data");
-      }
-
-      const { data, error: dataError } = await response.json();
-      
-      if (dataError) throw new Error(dataError);
+      if (error) throw error;
       
       if (!data || data.length === 0) {
         toast({
@@ -43,11 +37,11 @@ const CoinSearch = () => {
         return;
       }
 
-      const { error } = await supabase
+      const { error: upsertError } = await supabase
         .from("coins")
         .upsert(data[0], { onConflict: "id" });
 
-      if (error) throw error;
+      if (upsertError) throw upsertError;
 
       toast({
         title: "Success",
