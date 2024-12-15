@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
-const HELIUS_ENDPOINT = Deno.env.get('HELIUS_API_KEY')!;
+const HELIUS_API_KEY = Deno.env.get('HELIUS_API_KEY')!;
+const HELIUS_ENDPOINT = `https://api.helius.xyz/v0/?api-key=${HELIUS_API_KEY}`;
 
 interface TokenMetadata {
   name: string;
@@ -37,6 +38,7 @@ async function getTokenInfo(searchAddress: string): Promise<TokenInfo> {
     });
 
     const metadataData = await metadataResponse.json();
+    console.log("Metadata response:", metadataData);
     
     if (metadataData.error) {
       throw new Error(metadataData.error.message || 'Failed to fetch token metadata');
@@ -63,6 +65,7 @@ async function getTokenInfo(searchAddress: string): Promise<TokenInfo> {
     });
 
     const holdersData = await holdersResponse.json();
+    console.log("Holders response:", holdersData);
     
     if (holdersData.error) {
       throw new Error(holdersData.error.message || 'Failed to fetch token holders');
