@@ -96,17 +96,28 @@ async function getTokenPrice(mintAddress: string): Promise<number | null> {
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const { address } = await req.json();
     
     if (!address) {
       return new Response(
         JSON.stringify({ error: "Address is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const tokenInfo = await getTokenInfo(address);
+    console.log("Token info fetched:", tokenInfo);
     
     // Create Supabase client
     const supabaseClient = createClient(
@@ -132,15 +143,16 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, data: tokenInfo }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Error processing request:", error);
     return new Response(
       JSON.stringify({ 
         error: "Failed to fetch token information", 
         details: error.message 
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
