@@ -16,7 +16,7 @@ export function NewCoinCard({ id, name, symbol, price, change24h }: NewCoinCardP
       <Card className="hover:bg-gray-900 transition-colors">
         <CardHeader>
           <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-32 w-32">
+            <Avatar className="h-64 w-64">
               <AvatarImage src={`/placeholder.svg`} alt={name} />
               <AvatarFallback className="text-2xl">{symbol.slice(0, 2)}</AvatarFallback>
             </Avatar>
