@@ -42,7 +42,16 @@ serve(async (req) => {
 
     console.log('Fetching token metadata for:', address)
     
-    // Fetch token metadata using Alchemy's REST API with correct method name
+    // Get token supply and other on-chain information
+    try {
+      const tokenMint = new web3.PublicKey(address);
+      const tokenSupply = await connection.getTokenSupply(tokenMint);
+      console.log('Token supply:', tokenSupply);
+    } catch (error) {
+      console.error('Error fetching token supply:', error);
+    }
+
+    // Fetch token metadata using Alchemy's Enhanced API
     const metadataResponse = await fetch(
       `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
@@ -54,8 +63,10 @@ serve(async (req) => {
         body: JSON.stringify({
           id: 1,
           jsonrpc: "2.0",
-          method: "alchemy_getTokenMetadata",  // Updated method name
-          params: [address]
+          method: "alchemy_getTokenMetadata",
+          params: {
+            mint: address
+          }
         })
       }
     );
@@ -68,15 +79,6 @@ serve(async (req) => {
 
     const metadataResult = await metadataResponse.json()
     console.log('Token metadata response:', JSON.stringify(metadataResult, null, 2))
-
-    // Get token supply and other on-chain information
-    try {
-      const tokenMint = new web3.PublicKey(address);
-      const tokenSupply = await connection.getTokenSupply(tokenMint);
-      console.log('Token supply:', tokenSupply);
-    } catch (error) {
-      console.error('Error fetching token supply:', error);
-    }
 
     // Extract token metadata from the response
     const tokenMetadata = {
