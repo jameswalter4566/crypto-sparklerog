@@ -29,8 +29,34 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token data from Alchemy
-    const alchemyResponse = await fetch(
+    // Fetch token metadata from Alchemy
+    const metadataResponse = await fetch(
+      `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'alchemy_getTokenMetadata',
+          params: [address],
+          id: 1
+        })
+      }
+    )
+
+    if (!metadataResponse.ok) {
+      console.error('Metadata fetch failed:', await metadataResponse.text())
+      throw new Error('Failed to fetch token metadata')
+    }
+
+    const metadataResult = await metadataResponse.json()
+    const metadata = metadataResult.result || {}
+    console.log('Metadata response:', metadata)
+
+    // Fetch token price from Alchemy
+    const priceResponse = await fetch(
       `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/by-address`,
       {
         method: 'POST',
@@ -47,28 +73,16 @@ serve(async (req) => {
       }
     )
 
-    if (!alchemyResponse.ok) {
-      throw new Error(`Alchemy API error: ${alchemyResponse.statusText}`)
+    if (!priceResponse.ok) {
+      console.error('Price fetch failed:', await priceResponse.text())
+      throw new Error('Failed to fetch token price')
     }
 
-    const alchemyData = await alchemyResponse.json()
-    
-    if (!alchemyData.data || !alchemyData.data[0]) {
-      return new Response(
-        JSON.stringify({ 
-          name: "Unknown Token",
-          symbol: "UNKNOWN",
-          image: null
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      )
-    }
+    const priceData = await priceResponse.json()
+    console.log('Price response:', priceData)
 
-    const tokenData = alchemyData.data[0]
-    const price = tokenData.prices[0]?.value || null
+    const tokenData = priceData.data?.[0] || {}
+    const price = tokenData.prices?.[0]?.value || null
 
     // Update the token data in Supabase
     const supabaseClient = createClient(
@@ -80,6 +94,9 @@ serve(async (req) => {
       .from('coins')
       .upsert({
         id: address,
+        name: metadata.name || "Unknown Token",
+        symbol: metadata.symbol || "UNKNOWN",
+        image_url: metadata.logo || null,
         price: price ? parseFloat(price) : null,
         updated_at: new Date().toISOString()
       }, {
@@ -88,9 +105,10 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        name: tokenData.name || "Unknown Token",
-        symbol: tokenData.symbol || "UNKNOWN",
-        image: tokenData.image || null,
+        name: metadata.name || "Unknown Token",
+        symbol: metadata.symbol || "UNKNOWN",
+        image: metadata.logo || null,
+        decimals: metadata.decimals,
         price: price ? parseFloat(price) : null
       }),
       { 
