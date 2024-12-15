@@ -15,16 +15,16 @@ export function NewCoinCard({ id, name, symbol, price, change24h }: NewCoinCardP
     <Link to={`/coin/${id}`}>
       <Card className="hover:bg-gray-900 transition-colors">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-3">
-            <Avatar className="h-8 w-8">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="h-32 w-32">
               <AvatarImage src={`/placeholder.svg`} alt={name} />
-              <AvatarFallback>{symbol.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback className="text-2xl">{symbol.slice(0, 2)}</AvatarFallback>
             </Avatar>
-            <div className="flex justify-between items-center w-full">
+            <CardTitle className="text-lg flex flex-col items-center gap-1">
               <span>{name}</span>
               <span className="text-sm text-gray-400">{symbol}</span>
-            </div>
-          </CardTitle>
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center">
