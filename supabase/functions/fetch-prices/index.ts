@@ -24,12 +24,15 @@ serve(async (req) => {
       )
     }
 
+    console.log('Processing request for address:', address)
+
     const ALCHEMY_API_KEY = Deno.env.get('ALCHEMY_API_KEY')
     if (!ALCHEMY_API_KEY) {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
     // Fetch token metadata from Alchemy
+    console.log('Fetching metadata from Alchemy...')
     const metadataResponse = await fetch(
       `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
@@ -47,17 +50,20 @@ serve(async (req) => {
     )
 
     if (!metadataResponse.ok) {
-      console.error('Metadata fetch failed:', await metadataResponse.text())
-      throw new Error('Failed to fetch token metadata')
+      const errorText = await metadataResponse.text()
+      console.error('Metadata fetch failed:', errorText)
+      throw new Error(`Failed to fetch token metadata: ${errorText}`)
     }
 
     const metadataResult = await metadataResponse.json()
+    console.log('Metadata response:', metadataResult)
+
     const metadata = metadataResult.result || {}
-    console.log('Metadata response:', metadata)
 
     // Fetch token price from Alchemy
+    console.log('Fetching price data from Alchemy...')
     const priceResponse = await fetch(
-      `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/by-address`,
+      `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/getTokenMetadata`,
       {
         method: 'POST',
         headers: {
@@ -66,7 +72,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           addresses: [{
-            network: 'solana-mainnet',
+            network: 'eth-mainnet',
             address: address
           }]
         })
@@ -74,8 +80,9 @@ serve(async (req) => {
     )
 
     if (!priceResponse.ok) {
-      console.error('Price fetch failed:', await priceResponse.text())
-      throw new Error('Failed to fetch token price')
+      const errorText = await priceResponse.text()
+      console.error('Price fetch failed:', errorText)
+      throw new Error(`Failed to fetch token price: ${errorText}`)
     }
 
     const priceData = await priceResponse.json()
@@ -85,12 +92,13 @@ serve(async (req) => {
     const price = tokenData.prices?.[0]?.value || null
 
     // Update the token data in Supabase
+    console.log('Updating Supabase database...')
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    await supabaseClient
+    const { error: upsertError } = await supabaseClient
       .from('coins')
       .upsert({
         id: address,
@@ -103,6 +111,12 @@ serve(async (req) => {
         onConflict: 'id'
       })
 
+    if (upsertError) {
+      console.error('Database update failed:', upsertError)
+      throw upsertError
+    }
+
+    console.log('Successfully processed token data')
     return new Response(
       JSON.stringify({
         name: metadata.name || "Unknown Token",
@@ -117,9 +131,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Error in fetch-prices function:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch token data' }),
+      JSON.stringify({ 
+        error: error.message || 'Failed to fetch token data',
+        details: error.toString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
