@@ -43,63 +43,33 @@ serve(async (req) => {
     }
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Get Helius API key
-    const HELIUS_API_KEY = Deno.env.get('HELIUS_API_KEY')
-    if (!HELIUS_API_KEY) {
-      throw new Error('HELIUS_API_KEY is not set')
-    }
+    // Fetch token metadata from Solscan
+    console.log('Fetching token metadata from Solscan API')
+    const metadataUrl = `https://public-api.solscan.io/token/meta?tokenAddress=${address}`
+    const metadataResponse = await fetchWithRetry(metadataUrl)
+    const metadataResult = await metadataResponse.json()
+    console.log('Metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    console.log('Fetching token metadata from Helius API')
-    
-    // Test both v0 and v1 endpoints for metadata
-    const v1MetadataUrl = `https://api.helius.xyz/v1/token-metadata?api-key=${HELIUS_API_KEY}&tokenAddress=${address}`
-    const v0MetadataUrl = `https://api.helius.xyz/v0/token-metadata/${address}?api-key=${HELIUS_API_KEY}`
-    
-    console.log('Trying v1 endpoint...')
-    const v1Response = await fetchWithRetry(v1MetadataUrl)
-    const v1Data = await v1Response.json()
-    console.log('V1 Metadata response:', JSON.stringify(v1Data, null, 2))
-    
-    console.log('Trying v0 endpoint...')
-    const v0Response = await fetchWithRetry(v0MetadataUrl)
-    const v0Data = await v0Response.json()
-    console.log('V0 Metadata response:', JSON.stringify(v0Data, null, 2))
+    // Fetch market data from Solscan
+    console.log('Fetching market data from Solscan API')
+    const marketUrl = `https://public-api.solscan.io/market?tokenAddress=${address}`
+    const marketResponse = await fetchWithRetry(marketUrl)
+    const marketData = await marketResponse.json()
+    console.log('Market data response:', JSON.stringify(marketData, null, 2))
 
-    // Try DAS endpoint for market data
-    console.log('Fetching DAS market data')
-    const dasUrl = `https://api.helius.xyz/v0/token-metadata/DAS/${address}?api-key=${HELIUS_API_KEY}`
-    const dasResponse = await fetchWithRetry(dasUrl)
-    const dasData = await dasResponse.json()
-    console.log('DAS response:', JSON.stringify(dasData, null, 2))
-
-    // Extract metadata prioritizing v1 over v0 response
+    // Process and combine the data
     const metadata = {
-      name: v1Data?.onChainMetadata?.metadata?.name || 
-            v1Data?.offChainMetadata?.metadata?.name ||
-            v0Data?.name || 
-            `Unknown Token (${address.slice(0, 6)}...)`,
-      symbol: v1Data?.onChainMetadata?.metadata?.symbol || 
-              v0Data?.symbol || 
-              'UNKNOWN',
-      decimals: v1Data?.onChainMetadata?.metadata?.decimals || 
-                v0Data?.decimals || 
-                9,
-      image: v1Data?.offChainMetadata?.metadata?.image || 
-             v1Data?.onChainMetadata?.metadata?.uri ||
-             v0Data?.image ||
-             null,
-      description: v1Data?.offChainMetadata?.metadata?.description || 
-                   v0Data?.description ||
-                   null,
-      tokenStandard: v1Data?.onChainMetadata?.tokenStandard || 
-                     v0Data?.tokenStandard ||
-                     null,
-      // Market data from DAS
-      price: dasData?.price || null,
-      marketCap: dasData?.marketCap || null,
-      volume24h: dasData?.volume24h || null,
-      liquidity: dasData?.liquidity || null,
-      change24h: dasData?.priceChange24h || null
+      name: metadataResult?.symbol || `Unknown Token (${address.slice(0, 6)}...)`,
+      symbol: metadataResult?.symbol || 'UNKNOWN',
+      decimals: metadataResult?.decimals || 9,
+      image: metadataResult?.icon || null,
+      description: metadataResult?.description || null,
+      tokenStandard: 'SPL Token',
+      price: marketData?.priceUsdt || null,
+      marketCap: marketData?.marketCapFD || null,
+      volume24h: marketData?.volume24h || null,
+      liquidity: marketData?.liquidity || null,
+      change24h: marketData?.priceChange24h || null
     }
 
     console.log('Final processed metadata:', metadata)
