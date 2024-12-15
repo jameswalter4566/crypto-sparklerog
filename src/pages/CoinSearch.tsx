@@ -24,42 +24,21 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
+      console.log('Fetching metadata for:', address);
       const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
         body: { address }
       });
       
-      if (functionError) throw functionError;
-      
-      if (!functionData?.data) {
-        toast({
-          title: "Not Found",
-          description: "No coin found with this address",
-          variant: "destructive",
-        });
-        return;
+      if (functionError) {
+        console.error('Function error:', functionError);
+        throw functionError;
       }
-
-      const coinData = {
-        id: address,
-        name: functionData.data.name || "Unknown",
-        symbol: functionData.data.symbol || "UNKNOWN",
-        price: functionData.data.price ? Number(functionData.data.price) : null,
-        change_24h: functionData.data.change_24h ? Number(functionData.data.change_24h) : null,
-        market_cap: functionData.data.market_cap ? Number(functionData.data.market_cap) : null,
-        volume_24h: functionData.data.volume_24h ? Number(functionData.data.volume_24h) : null,
-        liquidity: functionData.data.liquidity ? Number(functionData.data.liquidity) : null,
-        image_url: functionData.data.image_url || null,
-      };
-
-      const { error: upsertError } = await supabase
-        .from("coins")
-        .upsert(coinData);
-
-      if (upsertError) throw upsertError;
+      
+      console.log('Received function data:', functionData);
 
       toast({
         title: "Success",
-        description: "Coin data has been fetched and stored",
+        description: "Token found and data has been stored",
       });
 
       // Navigate to the coin profile page
@@ -68,7 +47,7 @@ const CoinSearch = () => {
       console.error('Search error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to search for coin",
+        description: error.message || "Failed to search for token",
         variant: "destructive",
       });
     } finally {
@@ -79,16 +58,16 @@ const CoinSearch = () => {
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-        Search Coin
+        Search Token
       </h1>
       
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Enter Contract Address</CardTitle>
+          <CardTitle>Enter Token Address</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
-            placeholder="Enter contract address..."
+            placeholder="Enter token address..."
             value={address}
             onChange={(e) => setAddress(e.target.value)}
           />
