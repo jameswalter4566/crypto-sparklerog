@@ -33,15 +33,22 @@ serve(async (req) => {
       throw new Error('ALCHEMY_API_KEY is not set')
     }
 
-    // Fetch token metadata using Alchemy's token API with the correct endpoint
+    // Fetch token metadata using Alchemy's Enhanced API for Solana
     console.log('Fetching token metadata for:', address)
     const metadataResponse = await fetch(
-      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/getTokenMetadata?address=${address}`,
+      `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Accept': 'application/json',
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "getTokenMetadata",
+          params: [address]
+        })
       }
     )
 
@@ -54,11 +61,13 @@ serve(async (req) => {
     const metadataResult = await metadataResponse.json()
     console.log('Raw metadata response:', JSON.stringify(metadataResult, null, 2))
 
-    if (!metadataResult.data) {
+    if (!metadataResult.result) {
       console.error('No metadata found in response:', metadataResult)
       throw new Error('No metadata found for token')
     }
 
+    const tokenData = metadataResult.result
+    
     // For demonstration, using mock data since we don't have real-time price data
     const mockData = {
       price: Math.random() * 100,
@@ -69,11 +78,10 @@ serve(async (req) => {
     }
 
     // Extract token metadata
-    const tokenData = metadataResult.data
     const tokenMetadata = {
       name: tokenData.name || "Unknown Token",
       symbol: tokenData.symbol || "???",
-      logo: tokenData.logo || null,
+      logo: tokenData.logoURI || null,
     }
 
     // Update the token data in Supabase
