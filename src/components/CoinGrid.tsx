@@ -14,9 +14,9 @@ export function CoinGrid({ coins, isLoading }: CoinGridProps) {
     return <div>Loading...</div>;
   }
 
-  const renderSectionHeader = (title: string) => (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-xl font-bold bg-gradient-to-r from-primary/80 to-secondary/80 bg-clip-text text-transparent">
+  const renderSectionLabel = (title: string) => (
+    <div className="flex items-center gap-2">
+      <h2 className="text-xl font-bold bg-gradient-to-r from-primary/80 to-secondary/80 bg-clip-text text-transparent whitespace-nowrap">
         {title}
       </h2>
       <Button variant="outline" size="sm" className="gap-2">
@@ -26,7 +26,7 @@ export function CoinGrid({ coins, isLoading }: CoinGridProps) {
     </div>
   );
 
-  // For demo purposes, split coins into sections
+  // Split coins into sections
   const trendingCoins = coins.slice(0, 4);
   const newCoins = coins.slice(4, 8);
   const graduatingCoins = coins.slice(8, 12);
@@ -34,85 +34,29 @@ export function CoinGrid({ coins, isLoading }: CoinGridProps) {
 
   return (
     <div className="space-y-8">
-      <section>
-        {renderSectionHeader("🔥 Trending")}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {trendingCoins.map((coin) => (
-            <Card key={coin.id}>
-              <CardContent className="pt-6">
-                <NewCoinCard
-                  id={coin.id}
-                  name={coin.name}
-                  symbol={coin.symbol}
-                  price={coin.price || 0}
-                  change24h={coin.change_24h || 0}
-                  imageUrl={coin.imageUrl}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <div className="grid grid-cols-4 gap-8 mb-8">
+        {renderSectionLabel("🔥 Trending")}
+        {renderSectionLabel("✨ New")}
+        {renderSectionLabel("🎓 Soon to Graduate")}
+        {renderSectionLabel("🚀 To the Moon!")}
+      </div>
 
-      <section>
-        {renderSectionHeader("✨ New")}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {newCoins.map((coin) => (
-            <Card key={coin.id}>
-              <CardContent className="pt-6">
-                <NewCoinCard
-                  id={coin.id}
-                  name={coin.name}
-                  symbol={coin.symbol}
-                  price={coin.price || 0}
-                  change24h={coin.change_24h || 0}
-                  imageUrl={coin.imageUrl}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        {renderSectionHeader("🎓 Soon to Graduate")}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {graduatingCoins.map((coin) => (
-            <Card key={coin.id}>
-              <CardContent className="pt-6">
-                <NewCoinCard
-                  id={coin.id}
-                  name={coin.name}
-                  symbol={coin.symbol}
-                  price={coin.price || 0}
-                  change24h={coin.change_24h || 0}
-                  imageUrl={coin.imageUrl}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        {renderSectionHeader("🚀 To the Moon!")}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {toMoonCoins.map((coin) => (
-            <Card key={coin.id}>
-              <CardContent className="pt-6">
-                <NewCoinCard
-                  id={coin.id}
-                  name={coin.name}
-                  symbol={coin.symbol}
-                  price={coin.price || 0}
-                  change24h={coin.change_24h || 0}
-                  imageUrl={coin.imageUrl}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {coins.map((coin) => (
+          <Card key={coin.id}>
+            <CardContent className="pt-6">
+              <NewCoinCard
+                id={coin.id}
+                name={coin.name}
+                symbol={coin.symbol}
+                price={coin.price || 0}
+                change24h={coin.change_24h || 0}
+                imageUrl={coin.imageUrl}
+              />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
