@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CoinSearch = () => {
   const [address, setAddress] = useState("");
@@ -23,17 +24,31 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      // Placeholder for future integration
-      toast({
-        title: "Info",
-        description: "Search functionality is currently disabled",
+      console.log('Fetching metadata for contract address:', address);
+      
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
+        body: { contractAddress: address }
       });
+      
+      if (functionError) {
+        console.error('Function error:', functionError);
+        throw functionError;
+      }
+      
+      console.log('Received function data:', functionData);
+
+      toast({
+        title: "Success",
+        description: "Token found and data has been stored",
+      });
+
+      // Navigate to the coin profile page
       navigate(`/coin/${address}`);
     } catch (error) {
       console.error('Search error:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch token information",
+        description: error.message || "Failed to search for token",
         variant: "destructive",
       });
     } finally {
