@@ -43,7 +43,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="h-48"></div> {/* Added spacing for logo */}
+        <div className="h-20"></div> {/* Reduced spacing for logo */}
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
