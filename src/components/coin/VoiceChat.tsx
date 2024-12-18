@@ -1,8 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { VoiceChatUser } from "./VoiceChatUser";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Mic } from "lucide-react";
 
 const mockVoiceChatUsers = [
   { 
@@ -25,6 +23,13 @@ const mockVoiceChatUsers = [
     avatar: "/armadillo.jpg", 
     isMuted: false,
     tokenHolding: { amount: "1,230", percentage: 4.12 }
+  },
+  { 
+    id: 4, 
+    username: "Chief_mogger", 
+    avatar: "/blakccat.jpg", 
+    isMuted: false,
+    tokenHolding: { amount: "890", percentage: 2.98 }
   },
   { 
     id: 5, 
@@ -56,17 +61,8 @@ const mockVoiceChatUsers = [
   }
 ];
 
-const chiefMogger = {
-  id: 4, 
-  username: "Chief_mogger", 
-  avatar: "/blakccat.jpg", 
-  isMuted: false,
-  tokenHolding: { amount: "890", percentage: 2.98 }
-};
-
 export const VoiceChat = () => {
   const [users, setUsers] = useState(mockVoiceChatUsers);
-  const [isJoined, setIsJoined] = useState(false);
 
   const toggleMute = (userId: number) => {
     setUsers(prevUsers =>
@@ -76,36 +72,17 @@ export const VoiceChat = () => {
     );
   };
 
-  const handleVoiceChatToggle = () => {
-    if (!isJoined) {
-      setUsers(prev => [...prev, chiefMogger]);
-    } else {
-      setUsers(prev => prev.filter(user => user.id !== chiefMogger.id));
-    }
-    setIsJoined(!isJoined);
-  };
-
   return (
-    <>
-      <Button 
-        variant="outline" 
-        className="flex-1 max-w-[200px]"
-        onClick={handleVoiceChatToggle}
-      >
-        <Mic className="mr-2" />
-        {isJoined ? 'Leave Voice Chat' : 'Join Voice Chat'}
-      </Button>
-      <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {users.map((user) => (
-            <VoiceChatUser
-              key={user.id}
-              user={user}
-              onToggleMute={toggleMute}
-            />
-          ))}
-        </div>
-      </Card>
-    </>
+    <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {users.map((user) => (
+          <VoiceChatUser
+            key={user.id}
+            user={user}
+            onToggleMute={toggleMute}
+          />
+        ))}
+      </div>
+    </Card>
   );
 };
