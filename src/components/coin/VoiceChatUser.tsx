@@ -30,7 +30,7 @@ export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
         )}
       </div>
       <div className="text-xs text-center text-muted-foreground">
-        <div>${user.tokenHolding.amount}</div>
+        <div>${user.tokenHolding.amount} (USD)</div>
         <div className={user.tokenHolding.percentage > 20 ? 'text-yellow-500' : 'text-muted-foreground'}>
           {user.tokenHolding.percentage.toFixed(2)}% of supply
         </div>
