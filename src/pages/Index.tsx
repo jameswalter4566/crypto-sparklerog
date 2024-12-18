@@ -3,7 +3,7 @@ import { mockCoins } from "@/data/mockCoins";
 
 const Index = () => {
   return (
-    <div className="p-6">
+    <div className="container py-8">
       <CoinGrid coins={mockCoins} isLoading={false} />
     </div>
   );
