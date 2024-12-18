@@ -6,9 +6,9 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  ComposedChart
+  ComposedChart,
+  Scatter
 } from 'recharts';
-import { Candlestick } from 'recharts/es6/chart/CandlestickChart';
 
 interface PriceChartProps {
   data: Array<{
@@ -34,7 +34,12 @@ export const PriceChart = ({ data }: PriceChartProps) => {
         open,
         close,
         high,
-        low
+        low,
+        // Adding coordinates for scatter plot to represent candles
+        openPoint: { x: i, y: open },
+        closePoint: { x: i, y: close },
+        highPoint: { x: i, y: high },
+        lowPoint: { x: i, y: low }
       };
     });
 
@@ -44,12 +49,22 @@ export const PriceChart = ({ data }: PriceChartProps) => {
     const interval = setInterval(() => {
       setCandleData(prevData => {
         const lastCandle = prevData[prevData.length - 1];
+        const newIndex = prevData.length;
+        const open = lastCandle.close;
+        const close = open * (1 + Math.random() * 0.02); // Bias towards upward movement
+        const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+        
         const newCandle = {
           date: new Date().toLocaleDateString(),
-          open: lastCandle.close,
-          close: lastCandle.close * (1 + Math.random() * 0.02), // Bias towards upward movement
-          high: lastCandle.close * (1 + Math.random() * 0.03),
-          low: lastCandle.close * (1 - Math.random() * 0.01)
+          open,
+          close,
+          high,
+          low,
+          openPoint: { x: newIndex, y: open },
+          closePoint: { x: newIndex, y: close },
+          highPoint: { x: newIndex, y: high },
+          lowPoint: { x: newIndex, y: low }
         };
         
         return [...prevData.slice(1), newCandle];
@@ -96,16 +111,38 @@ export const PriceChart = ({ data }: PriceChartProps) => {
                 return null;
               }}
             />
-            <Candlestick
-              yAxisId={0}
-              stroke="#9945FF"
+            {/* Render candles using scatter plots */}
+            <Scatter
+              data={candleData}
               fill="#9945FF"
-              wickStroke="#9945FF"
-              dataKey={{
-                open: 'open',
-                close: 'close',
-                high: 'high',
-                low: 'low'
+              line={{ stroke: '#9945FF' }}
+              shape={(props: any) => {
+                const { cx, cy, payload } = props;
+                const candleHeight = Math.abs(payload.close - payload.open) * 100;
+                const wickHeight = Math.abs(payload.high - payload.low) * 100;
+                
+                return (
+                  <g>
+                    {/* Wick */}
+                    <line
+                      x1={cx}
+                      y1={cy - wickHeight / 2}
+                      x2={cx}
+                      y2={cy + wickHeight / 2}
+                      stroke="#9945FF"
+                      strokeWidth={1}
+                    />
+                    {/* Candle body */}
+                    <rect
+                      x={cx - 5}
+                      y={cy - candleHeight / 2}
+                      width={10}
+                      height={candleHeight}
+                      fill={payload.close > payload.open ? '#9945FF' : '#9945FF'}
+                      stroke="#9945FF"
+                    />
+                  </g>
+                );
               }}
             />
           </ComposedChart>
