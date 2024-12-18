@@ -41,7 +41,7 @@ const CoinProfile = () => {
       
       <TokenStats
         marketCap={coin.market_cap || null}
-        volume24h={null}
+        volume24h={coin.volume_24h || null}
         liquidity={coin.liquidity || null}
       />
 
