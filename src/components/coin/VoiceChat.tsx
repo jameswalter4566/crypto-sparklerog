@@ -25,13 +25,6 @@ const mockVoiceChatUsers = [
     tokenHolding: { amount: "1,230", percentage: 4.12 }
   },
   { 
-    id: 4, 
-    username: "Chief_mogger", 
-    avatar: "/blakccat.jpg", 
-    isMuted: false,
-    tokenHolding: { amount: "890", percentage: 2.98 }
-  },
-  { 
     id: 5, 
     username: "Diamond_Hands", 
     avatar: "/BAILYTHEBLUECAT.jpg", 
@@ -61,8 +54,17 @@ const mockVoiceChatUsers = [
   }
 ];
 
+const chiefMogger = {
+  id: 4, 
+  username: "Chief_mogger", 
+  avatar: "/blakccat.jpg", 
+  isMuted: false,
+  tokenHolding: { amount: "890", percentage: 2.98 }
+};
+
 export const VoiceChat = () => {
   const [users, setUsers] = useState(mockVoiceChatUsers);
+  const [isJoined, setIsJoined] = useState(false);
 
   const toggleMute = (userId: number) => {
     setUsers(prevUsers =>
@@ -70,6 +72,15 @@ export const VoiceChat = () => {
         user.id === userId ? { ...user, isMuted: !user.isMuted } : user
       )
     );
+  };
+
+  const toggleJoinVoiceChat = () => {
+    if (!isJoined) {
+      setUsers(prev => [...prev, chiefMogger]);
+    } else {
+      setUsers(prev => prev.filter(user => user.id !== chiefMogger.id));
+    }
+    setIsJoined(!isJoined);
   };
 
   return (
