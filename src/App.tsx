@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
+import RocketLaunch from "./pages/RocketLaunch";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />
+                <Route path="/rocket-launch" element={<RocketLaunch />} />
                 <Route path="/leaderboard" element={<div className="p-6">Leaderboard Coming Soon</div>} />
                 <Route path="/holdings" element={<div className="p-6">Holdings Coming Soon</div>} />
               </Routes>

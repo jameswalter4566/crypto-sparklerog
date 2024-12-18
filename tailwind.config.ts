@@ -67,6 +67,14 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        launch: {
+          "0%": { transform: "translateY(0) scale(1)" },
+          "100%": { transform: "translateY(-1000px) scale(0.5)" },
+        },
+        flame: {
+          "0%": { transform: "scaleY(1)" },
+          "100%": { transform: "scaleY(1.5)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

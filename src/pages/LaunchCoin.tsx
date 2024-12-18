@@ -2,9 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LaunchCoin() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    navigate('/rocket-launch');
+  };
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <Link to="/" className="text-primary hover:text-primary/90 inline-flex items-center gap-2 mb-8">
@@ -12,7 +19,7 @@ export default function LaunchCoin() {
         go back
       </Link>
 
-      <form className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <label className="text-primary block">name</label>
           <Input type="text" placeholder="Enter coin name" />
