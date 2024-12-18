@@ -150,6 +150,38 @@ const mockCoins = [
     symbol: "ALGO",
     price: 0.95,
     change_24h: -2.3
+  },
+  {
+    id: "colonycoin",
+    name: "Colony Coin",
+    symbol: "CLNY",
+    price: 7.8,
+    change_24h: -0.5,
+    imageUrl: "/COLONYCOIN.png"
+  },
+  {
+    id: "bailythebluecat",
+    name: "Baily The Blue Cat",
+    symbol: "BTBC",
+    price: 180.6,
+    change_24h: 1.9,
+    imageUrl: "/BAILYTHEBLUECAT.jpg"
+  },
+  {
+    id: "shimaai",
+    name: "Shima AI",
+    symbol: "SHAI",
+    price: 28.4,
+    change_24h: 3.7,
+    imageUrl: "/SHIMAAI.jpg"
+  },
+  {
+    id: "penguinzupsidedown",
+    name: "Penguinz Upside Down",
+    symbol: "PUD",
+    price: 0.95,
+    change_24h: -2.3,
+    imageUrl: "/penguinzupsidedown.png"
   }
 ];
 
