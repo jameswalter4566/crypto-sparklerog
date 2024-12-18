@@ -83,7 +83,7 @@ const CoinProfile = () => {
               Transactions
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="bottom" align="start" className="w-[600px] bg-card">
+          <DropdownMenuContent className="w-[600px] bg-card">
             <div className="p-2">
               <div className="grid grid-cols-5 gap-4 text-sm text-muted-foreground mb-2 px-2">
                 <div>Type</div>
@@ -115,7 +115,7 @@ const CoinProfile = () => {
               Holders (351)
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="bottom" align="start" className="w-[600px] bg-card">
+          <DropdownMenuContent className="w-[600px] bg-card">
             <div className="p-2">
               <div className="grid grid-cols-4 gap-4 text-sm text-muted-foreground mb-2 px-2">
                 <div>Wallet</div>
