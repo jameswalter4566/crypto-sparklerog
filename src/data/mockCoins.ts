@@ -9,6 +9,7 @@ export interface CoinData {
   supply?: number;
   liquidity?: number;
   market_cap?: number;
+  volume_24h?: number;
 }
 
 export const mockCoins: CoinData[] = [
@@ -55,6 +56,7 @@ export const mockCoins: CoinData[] = [
     supply: 1000000000, // 1B
     liquidity: 121000, // $121K
     market_cap: 876150, // $876.15K
+    volume_24h: 1300000, // $1.3M
   },
   {
     id: "blackcat",
