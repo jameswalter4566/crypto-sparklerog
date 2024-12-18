@@ -6,6 +6,7 @@ import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
 import { PriceChart } from "@/components/coin/PriceChart";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { mockCoins } from "@/data/mockCoins";
 import { Card } from "@/components/ui/card";
+
+const mockVoiceChatUsers = [
+  { id: 1, username: "Meme_boss", avatar: "/penguin.jpg" },
+  { id: 2, username: "To_the_moon", avatar: "/robotchinese.jpg" },
+  { id: 3, username: "hey_lil_bro", avatar: "/armadillo.jpg" },
+  { id: 4, username: "Chief_mogger", avatar: "/blakccat.jpg" },
+  { id: 5, username: "Diamond_Hands", avatar: "/BAILYTHEBLUECAT.jpg" },
+  { id: 6, username: "Rocket_Rider", avatar: "/unicornfartdust.jpg" },
+];
 
 const CoinProfile = () => {
   const { id } = useParams();
@@ -146,9 +156,22 @@ const CoinProfile = () => {
         </Button>
       </div>
 
-      {/* New large rectangular container */}
+      {/* Voice Chat Users Grid */}
       <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
-        {/* Content will go here */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {mockVoiceChatUsers.map((user) => (
+            <div 
+              key={user.id} 
+              className="flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors"
+            >
+              <Avatar className="w-24 h-24 mb-3">
+                <AvatarImage src={user.avatar} alt={user.username} />
+                <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-center">{user.username}</span>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );
