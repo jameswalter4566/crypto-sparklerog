@@ -86,16 +86,26 @@ export const VoiceChat = () => {
   };
 
   return (
-    <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {users.map((user) => (
-          <VoiceChatUser
-            key={user.id}
-            user={user}
-            onToggleMute={toggleMute}
-          />
-        ))}
-      </div>
-    </Card>
+    <>
+      <Button 
+        variant="outline" 
+        className="flex-1 max-w-[200px]"
+        onClick={handleVoiceChatToggle}
+      >
+        <Mic className="mr-2" />
+        {isJoined ? 'Leave Voice Chat' : 'Join Voice Chat'}
+      </Button>
+      <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {users.map((user) => (
+            <VoiceChatUser
+              key={user.id}
+              user={user}
+              onToggleMute={toggleMute}
+            />
+          ))}
+        </div>
+      </Card>
+    </>
   );
 };

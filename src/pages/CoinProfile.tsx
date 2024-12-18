@@ -14,12 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { mockCoins } from "@/data/mockCoins";
-import { useState } from "react";
 
 const CoinProfile = () => {
   const { id } = useParams();
   const coin = mockCoins.find(c => c.id === id);
-  const [isInVoiceChat, setIsInVoiceChat] = useState(false);
 
   if (!coin) {
     return (
@@ -141,10 +139,10 @@ const CoinProfile = () => {
         <Button 
           variant="outline" 
           className="flex-1 max-w-[200px]"
-          onClick={() => setIsInVoiceChat(!isInVoiceChat)}
+          onClick={() => console.log('Voice Chat clicked')}
         >
           <Mic className="mr-2" />
-          {isInVoiceChat ? 'Leave Voice Chat' : 'Join Voice Chat'}
+          Join Voice Chat
         </Button>
       </div>
 
