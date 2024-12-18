@@ -6,9 +6,9 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Candlestick,
   ComposedChart
 } from 'recharts';
+import { Candlestick } from 'recharts/es6/chart/CandlestickChart';
 
 interface PriceChartProps {
   data: Array<{
