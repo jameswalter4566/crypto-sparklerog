@@ -8,16 +8,17 @@ interface NewCoinCardProps {
   symbol: string;
   price: number;
   change24h: number;
+  imageUrl?: string;
 }
 
-export function NewCoinCard({ id, name, symbol, price, change24h }: NewCoinCardProps) {
+export function NewCoinCard({ id, name, symbol, price, change24h, imageUrl }: NewCoinCardProps) {
   return (
     <Link to={`/coin/${id}`}>
       <Card className="hover:bg-gray-900 transition-colors">
         <CardHeader>
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-72 w-72">
-              <AvatarImage src={`/placeholder.svg`} alt={name} />
+              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} />
               <AvatarFallback className="text-2xl">{symbol.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-lg flex flex-col items-center gap-1">

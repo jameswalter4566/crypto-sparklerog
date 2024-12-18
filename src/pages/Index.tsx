@@ -1,9 +1,72 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { NewCoinCard } from "@/components/NewCoinCard";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 const mockCoins = [
+  {
+    id: "xrp",
+    name: "XRP",
+    symbol: "XRP",
+    price: 45000,
+    change_24h: 2.5,
+    imageUrl: "/xrppic.jpg"
+  },
+  {
+    id: "robotchinese",
+    name: "Robot Chinese",
+    symbol: "RBC",
+    price: 3000,
+    change_24h: 1.8,
+    imageUrl: "/robotchinese.jpg"
+  },
+  {
+    id: "player1",
+    name: "Player One",
+    symbol: "P1",
+    price: 100,
+    change_24h: 5.2,
+    imageUrl: "/player1.png"
+  },
+  {
+    id: "savethelog",
+    name: "Save The Log",
+    symbol: "STL",
+    price: 1.2,
+    change_24h: -0.8,
+    imageUrl: "/savethelog.jpg"
+  },
+  {
+    id: "penguin",
+    name: "Penguin",
+    symbol: "PNG",
+    price: 24.5,
+    change_24h: 3.2,
+    imageUrl: "/penguin.jpg"
+  },
+  {
+    id: "blackcat",
+    name: "Black Cat",
+    symbol: "CAT",
+    price: 85.3,
+    change_24h: 4.7,
+    imageUrl: "/blakccat.jpg"
+  },
+  {
+    id: "armadillo",
+    name: "Armadillo",
+    symbol: "ARM",
+    price: 15.8,
+    change_24h: -1.2,
+    imageUrl: "/armadillo.jpg"
+  },
+  {
+    id: "unicornfartdust",
+    name: "Unicorn Fart Dust",
+    symbol: "UFD",
+    price: 1.45,
+    change_24h: 2.1,
+    imageUrl: "/unicornfartdust.jpg"
+  },
   {
     id: "bitcoin",
     name: "Bitcoin",
@@ -116,6 +179,7 @@ const Index = () => {
                 symbol={coin.symbol}
                 price={coin.price || 0}
                 change24h={coin.change_24h || 0}
+                imageUrl={coin.imageUrl}
               />
             </CardContent>
           </Card>
