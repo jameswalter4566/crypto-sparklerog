@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CandlestickChart, Users, Mic, Shuffle } from "lucide-react";
+import { CandlestickChart, Users, Mic, MicOff, Shuffle } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
@@ -15,19 +15,31 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { mockCoins } from "@/data/mockCoins";
 import { Card } from "@/components/ui/card";
+import { useState } from "react";
 
 const mockVoiceChatUsers = [
-  { id: 1, username: "Meme_boss", avatar: "/penguin.jpg" },
-  { id: 2, username: "To_the_moon", avatar: "/robotchinese.jpg" },
-  { id: 3, username: "hey_lil_bro", avatar: "/armadillo.jpg" },
-  { id: 4, username: "Chief_mogger", avatar: "/blakccat.jpg" },
-  { id: 5, username: "Diamond_Hands", avatar: "/BAILYTHEBLUECAT.jpg" },
-  { id: 6, username: "Rocket_Rider", avatar: "/unicornfartdust.jpg" },
+  { id: 1, username: "Meme_boss", avatar: "/penguin.jpg", isMuted: false },
+  { id: 2, username: "To_the_moon", avatar: "/robotchinese.jpg", isMuted: false },
+  { id: 3, username: "hey_lil_bro", avatar: "/armadillo.jpg", isMuted: false },
+  { id: 4, username: "Chief_mogger", avatar: "/blakccat.jpg", isMuted: false },
+  { id: 5, username: "Diamond_Hands", avatar: "/BAILYTHEBLUECAT.jpg", isMuted: false },
+  { id: 6, username: "Rocket_Rider", avatar: "/unicornfartdust.jpg", isMuted: false },
+  { id: 7, username: "Moon_Walker", avatar: "/penguin.jpg", isMuted: false },
+  { id: 8, username: "Crypto_King", avatar: "/robotchinese.jpg", isMuted: false },
 ];
 
 const CoinProfile = () => {
   const { id } = useParams();
   const coin = mockCoins.find(c => c.id === id);
+  const [users, setUsers] = useState(mockVoiceChatUsers);
+
+  const toggleMute = (userId: number) => {
+    setUsers(prevUsers =>
+      prevUsers.map(user =>
+        user.id === userId ? { ...user, isMuted: !user.isMuted } : user
+      )
+    );
+  };
 
   if (!coin) {
     return (
@@ -159,16 +171,28 @@ const CoinProfile = () => {
       {/* Voice Chat Users Grid */}
       <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {mockVoiceChatUsers.map((user) => (
+          {users.map((user) => (
             <div 
               key={user.id} 
-              className="flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors shadow-[0_0_15px_rgba(153,69,255,0.5)] border border-primary"
+              className="flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors shadow-[0_0_15px_rgba(153,69,255,0.5)] border border-primary relative"
             >
               <Avatar className="w-24 h-24 mb-3">
                 <AvatarImage src={user.avatar} alt={user.username} />
                 <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium text-center">{user.username}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => toggleMute(user.id)}
+              >
+                {user.isMuted ? (
+                  <MicOff className="h-4 w-4 text-red-500" />
+                ) : (
+                  <Mic className="h-4 w-4 text-green-500" />
+                )}
+              </Button>
             </div>
           ))}
         </div>
