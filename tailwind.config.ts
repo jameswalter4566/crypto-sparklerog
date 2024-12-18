@@ -75,10 +75,19 @@ export default {
           "0%": { transform: "scaleY(1)" },
           "100%": { transform: "scaleY(1.5)" },
         },
+        "glow-pulse": {
+          "0%, 100%": { 
+            boxShadow: "0 0 15px rgba(153,69,255,0.5)"
+          },
+          "50%": { 
+            boxShadow: "0 0 30px rgba(153,69,255,0.8)"
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "glow-pulse": "glow-pulse 1.5s ease-in-out infinite",
       },
     },
   },
