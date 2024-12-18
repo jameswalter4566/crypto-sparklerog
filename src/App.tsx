@@ -24,6 +24,7 @@ const App = () => (
           <div className="min-h-screen flex w-full bg-black text-white">
             <AppSidebar />
             <main className="flex-1">
+              <div className="h-20"></div>
               <WalletConnect />
               <Routes>
                 <Route path="/" element={<Index />} />
