@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
+import LaunchCoin from "./pages/LaunchCoin";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
+                <Route path="/launch" element={<LaunchCoin />} />
                 <Route path="/leaderboard" element={<div className="p-6">Leaderboard Coming Soon</div>} />
                 <Route path="/holdings" element={<div className="p-6">Holdings Coming Soon</div>} />
               </Routes>
