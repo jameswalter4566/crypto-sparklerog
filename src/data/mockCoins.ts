@@ -73,34 +73,6 @@ export const mockCoins: CoinData[] = [
     imageUrl: "/unicornfartdust.jpg"
   },
   {
-    id: "bitcoin",
-    name: "Bitcoin",
-    symbol: "BTC",
-    price: 45000,
-    change_24h: 2.5
-  },
-  {
-    id: "ethereum",
-    name: "Ethereum",
-    symbol: "ETH",
-    price: 3000,
-    change_24h: 1.8
-  },
-  {
-    id: "solana",
-    name: "Solana",
-    symbol: "SOL",
-    price: 100,
-    change_24h: 5.2
-  },
-  {
-    id: "cardano",
-    name: "Cardano",
-    symbol: "ADA",
-    price: 1.2,
-    change_24h: -0.8
-  },
-  {
     id: "colonycoin",
     name: "Colony Coin",
     symbol: "CLNY",
