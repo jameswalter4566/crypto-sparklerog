@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { mockCoins } from "@/data/mockCoins";
+import { Card } from "@/components/ui/card";
 
 const CoinProfile = () => {
   const { id } = useParams();
@@ -83,7 +84,7 @@ const CoinProfile = () => {
               Transactions
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[600px] bg-card">
+          <DropdownMenuContent className="w-[600px] bg-card" side="bottom" align="start">
             <div className="p-2">
               <div className="grid grid-cols-5 gap-4 text-sm text-muted-foreground mb-2 px-2">
                 <div>Type</div>
@@ -115,7 +116,7 @@ const CoinProfile = () => {
               Holders (351)
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[600px] bg-card">
+          <DropdownMenuContent className="w-[600px] bg-card" side="bottom" align="start">
             <div className="p-2">
               <div className="grid grid-cols-4 gap-4 text-sm text-muted-foreground mb-2 px-2">
                 <div>Wallet</div>
@@ -144,6 +145,11 @@ const CoinProfile = () => {
           Voice Chat
         </Button>
       </div>
+
+      {/* New large rectangular container */}
+      <Card className="mt-6 p-6 min-h-[400px] w-full bg-card">
+        {/* Content will go here */}
+      </Card>
     </div>
   );
 };
