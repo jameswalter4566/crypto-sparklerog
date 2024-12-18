@@ -24,31 +24,25 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      console.log('Fetching metadata for contract address:', address);
-      
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-prices', {
-        body: { contractAddress: address }
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-token-info', {
+        body: { address }
       });
       
       if (functionError) {
-        console.error('Function error:', functionError);
         throw functionError;
       }
-      
-      console.log('Received function data:', functionData);
 
       toast({
         title: "Success",
-        description: "Token found and data has been stored",
+        description: "Token information has been fetched and stored",
       });
 
-      // Navigate to the coin profile page
       navigate(`/coin/${address}`);
     } catch (error) {
       console.error('Search error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to search for token",
+        description: error.message || "Failed to fetch token information",
         variant: "destructive",
       });
     } finally {
