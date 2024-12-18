@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CandlestickChart } from "lucide-react";
+import { CandlestickChart, Users, MessageSquare, Shuffle } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
 import { PriceChart } from "@/components/coin/PriceChart";
+import { Button } from "@/components/ui/button";
 import { mockCoins } from "@/data/mockCoins";
 
 const CoinProfile = () => {
@@ -24,7 +25,7 @@ const CoinProfile = () => {
   // Generate mock price data for the chart
   const priceData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    price: coin.price * (1 + Math.sin(i / 5) * 0.1), // Creates a sine wave pattern around the base price
+    price: coin.price * (1 + Math.sin(i / 5) * 0.1),
   }));
 
   return (
@@ -52,6 +53,33 @@ const CoinProfile = () => {
       />
 
       <PriceChart data={priceData} />
+
+      <div className="flex gap-4 mt-6 justify-center">
+        <Button 
+          variant="outline" 
+          className="flex-1 max-w-[200px]"
+          onClick={() => console.log('Transactions clicked')}
+        >
+          <Shuffle className="mr-2" />
+          Transactions
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1 max-w-[200px]"
+          onClick={() => console.log('Holders clicked')}
+        >
+          <Users className="mr-2" />
+          Holders (351)
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1 max-w-[200px]"
+          onClick={() => console.log('Voice Chat clicked')}
+        >
+          <MessageSquare className="mr-2" />
+          Voice Chat
+        </Button>
+      </div>
     </div>
   );
 };
