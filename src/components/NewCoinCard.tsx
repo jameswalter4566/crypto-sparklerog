@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
 
 interface NewCoinCardProps {
   id: string;
@@ -12,6 +13,23 @@ interface NewCoinCardProps {
 }
 
 export function NewCoinCard({ id, name, symbol, price, change24h, imageUrl }: NewCoinCardProps) {
+  const [currentPrice, setCurrentPrice] = useState(price);
+
+  useEffect(() => {
+    // Update price every 2 seconds with a small random fluctuation
+    const interval = setInterval(() => {
+      const fluctuation = price * (Math.random() * 0.002 - 0.001); // ±0.1% fluctuation
+      setCurrentPrice(price + fluctuation);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [price]);
+
+  // Format price to SOL style
+  const formatPrice = (p: number) => {
+    return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
+  };
+
   return (
     <Link to={`/coin/${id}`}>
       <Card className="hover:bg-gray-900 transition-colors">
@@ -29,7 +47,9 @@ export function NewCoinCard({ id, name, symbol, price, change24h, imageUrl }: Ne
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center">
-            <span className="text-xl font-bold">${price.toFixed(4)}</span>
+            <span className="text-xl font-bold transition-all duration-300">
+              {formatPrice(currentPrice)}
+            </span>
             <span
               className={`${
                 change24h >= 0 ? "text-secondary" : "text-red-500"
