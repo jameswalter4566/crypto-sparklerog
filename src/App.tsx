@@ -28,7 +28,7 @@ const App = () => (
                 <img 
                   src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
                   alt="Logo" 
-                  className="h-36 mt-2 ml-4"
+                  className="h-36 ml-16"
                 />
               </div>
               <div className="h-20"></div>
