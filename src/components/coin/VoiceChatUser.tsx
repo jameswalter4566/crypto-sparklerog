@@ -23,7 +23,12 @@ export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
         <AvatarImage src={user.avatar} alt={user.username} />
         <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
       </Avatar>
-      <span className="text-sm font-medium text-center mb-2">{user.username}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-sm font-medium text-center">{user.username}</span>
+        {user.tokenHolding.percentage > 20 && (
+          <span className="text-xs font-medium text-yellow-400">(Dev)</span>
+        )}
+      </div>
       <div className="text-xs text-center text-muted-foreground">
         <div>${user.tokenHolding.amount}</div>
         <div className={user.tokenHolding.percentage > 20 ? 'text-yellow-500' : 'text-muted-foreground'}>
