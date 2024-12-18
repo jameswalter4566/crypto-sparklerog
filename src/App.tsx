@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { WalletConnect } from "@/components/WalletConnect";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Index from "./pages/Index";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
@@ -25,22 +24,8 @@ const App = () => (
           <div className="min-h-screen flex w-full bg-black text-white">
             <AppSidebar />
             <main className="flex-1">
-              <div className="h-20 fixed top-0 right-0 left-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-between px-4">
-                <img 
-                  src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
-                  alt="Logo" 
-                  className="h-12 w-auto"
-                />
-                <div className="flex items-center gap-4">
-                  <WalletConnect />
-                  <Avatar>
-                    <AvatarFallback className="bg-primary text-white">
-                      A
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
               <div className="h-20"></div>
+              <WalletConnect />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
