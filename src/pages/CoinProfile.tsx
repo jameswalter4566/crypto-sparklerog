@@ -162,7 +162,7 @@ const CoinProfile = () => {
           {mockVoiceChatUsers.map((user) => (
             <div 
               key={user.id} 
-              className="flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors"
+              className="flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors shadow-[0_0_15px_rgba(153,69,255,0.5)] border border-primary"
             >
               <Avatar className="w-24 h-24 mb-3">
                 <AvatarImage src={user.avatar} alt={user.username} />
