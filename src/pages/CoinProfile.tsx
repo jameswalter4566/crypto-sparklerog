@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CandlestickChart, Users, MessageSquare, Shuffle } from "lucide-react";
+import { CandlestickChart, Users, Mic, Shuffle } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
@@ -141,8 +141,8 @@ const CoinProfile = () => {
           className="flex-1 max-w-[200px]"
           onClick={() => console.log('Voice Chat clicked')}
         >
-          <MessageSquare className="mr-2" />
-          Voice Chat
+          <Mic className="mr-2" />
+          Join Voice Chat
         </Button>
       </div>
 
