@@ -5,6 +5,10 @@ export interface CoinData {
   price: number;
   change_24h: number;
   imageUrl?: string;
+  price_sol?: number;
+  supply?: number;
+  liquidity?: number;
+  market_cap?: number;
 }
 
 export const mockCoins: CoinData[] = [
@@ -44,9 +48,13 @@ export const mockCoins: CoinData[] = [
     id: "penguin",
     name: "Penguin",
     symbol: "PNG",
-    price: 24.5,
+    price: 0.038761,
+    price_sol: 0.053962,
     change_24h: 3.2,
-    imageUrl: "/penguin.jpg"
+    imageUrl: "/penguin.jpg",
+    supply: 1000000000, // 1B
+    liquidity: 121000, // $121K
+    market_cap: 876150, // $876.15K
   },
   {
     id: "blackcat",
