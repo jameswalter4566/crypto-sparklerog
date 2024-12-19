@@ -24,22 +24,49 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         if (isConnecting) return;
         setIsConnecting(true);
 
-        // Get the API key from Supabase secrets
+        // Get the API key from Supabase secrets with detailed logging
+        console.log('Fetching Helius API key from Supabase...');
         const { data: secretData, error: secretError } = await supabase
           .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
 
-        if (secretError || !secretData?.[0]?.secret) {
+        console.log('Secret data received:', secretData);
+        console.log('Secret error if any:', secretError);
+
+        if (secretError) {
           console.error('Failed to get Helius API key:', secretError);
           toast({
             title: "Configuration Error",
-            description: "Failed to get Helius API key. Please ensure it's set in Supabase.",
+            description: "Failed to get Helius API key. Error: " + secretError.message,
             variant: "destructive",
           });
           setIsConnecting(false);
           return;
         }
 
-        const heliusApiKey = secretData[0].secret;
+        if (!secretData || secretData.length === 0) {
+          console.error('No secret data returned from Supabase');
+          toast({
+            title: "Configuration Error",
+            description: "No Helius API key found in Supabase secrets.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+          return;
+        }
+
+        const heliusApiKey = secretData[0]?.secret;
+        if (!heliusApiKey) {
+          console.error('Helius API key is empty or undefined');
+          toast({
+            title: "Configuration Error",
+            description: "Helius API key is empty or undefined.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+          return;
+        }
+
+        console.log('Successfully retrieved Helius API key');
         const ws = new WebSocket(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
         wsRef.current = ws;
 
