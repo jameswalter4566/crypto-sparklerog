@@ -3,6 +3,8 @@ import { NewCoinCard } from "@/components/NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
+import { useHeliusWebSocket } from "@/hooks/use-helius-websocket";
+import { useEffect } from "react";
 
 interface CoinGridProps {
   coins: CoinData[];
@@ -10,6 +12,16 @@ interface CoinGridProps {
 }
 
 export function CoinGrid({ coins, isLoading }: CoinGridProps) {
+  useHeliusWebSocket({
+    onMessage: (data) => {
+      console.log('Received real-time update:', data);
+      // We'll implement the update logic in the next step
+    },
+    onError: (error) => {
+      console.error('WebSocket error:', error);
+    }
+  });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
