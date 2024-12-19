@@ -25,18 +25,32 @@ const CoinSearch = () => {
   const { toast } = useToast();
 
   const fetchTokenMetadata = async (mintAddress: string) => {
-    // Get the API key from Supabase secrets
+    console.log('Starting API key retrieval from Supabase...');
+    
+    // Get the API key from Supabase secrets with detailed logging
     const { data: secretData, error: secretError } = await supabase
       .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-    // Since get_secret returns an array, we need to get the first row
-    const heliusApiKey = secretData?.[0]?.secret;
-    
-    if (secretError || !heliusApiKey) {
-      console.error("Failed to get Helius API key:", secretError);
-      throw new Error("Failed to get API key configuration. Please ensure HELIUSKEYMAIN is set in Supabase.");
+    console.log('Secret data received:', secretData);
+    console.log('Secret error if any:', secretError);
+
+    if (secretError) {
+      console.error('Failed to get Helius API key:', secretError);
+      throw new Error("Failed to get API key configuration. Error: " + secretError.message);
     }
 
+    if (!secretData || secretData.length === 0) {
+      console.error('No secret data returned from Supabase');
+      throw new Error("No Helius API key found in Supabase secrets.");
+    }
+
+    const heliusApiKey = secretData[0]?.secret;
+    if (!heliusApiKey) {
+      console.error('Helius API key is empty or undefined');
+      throw new Error("Helius API key is empty or undefined.");
+    }
+
+    console.log('Successfully retrieved Helius API key');
     const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
 
     const response = await fetch(HELIUS_API_URL, {
