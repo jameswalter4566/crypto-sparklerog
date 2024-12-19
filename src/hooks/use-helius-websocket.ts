@@ -29,8 +29,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         const { data: secretData, error: secretError } = await supabase
           .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-        console.log('Secret data received:', secretData);
-        console.log('Secret error if any:', secretError);
+        console.log('Secret response:', { secretData, secretError });
 
         if (secretError) {
           console.error('Failed to get Helius API key:', secretError);
@@ -43,7 +42,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        if (!secretData || secretData.length === 0) {
+        if (!secretData) {
           console.error('No secret data returned from Supabase');
           toast({
             title: "Configuration Error",
@@ -54,7 +53,8 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        const heliusApiKey = secretData[0]?.secret;
+        // The get_secret function returns an array with a single row containing the secret
+        const heliusApiKey = secretData.secret;
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
           toast({
