@@ -1,24 +1,54 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { NewCoinCard } from "@/components/NewCoinCard";
+import { NewCoinCard } from "./NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { useHeliusWebSocket } from "@/hooks/use-helius-websocket";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface CoinGridProps {
   coins: CoinData[];
   isLoading?: boolean;
 }
 
-export function CoinGrid({ coins, isLoading }: CoinGridProps) {
+export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
+  const [coins, setCoins] = useState(initialCoins);
+
   useHeliusWebSocket({
     onMessage: (data) => {
       console.log('Received real-time update:', data);
-      // We'll implement the update logic in the next step
+      
+      // Handle token updates
+      if (data.account?.data?.parsed?.type === 'mint') {
+        const mintUpdate = data.account.data.parsed.info;
+        
+        setCoins(currentCoins => 
+          currentCoins.map(coin => {
+            if (coin.symbol === mintUpdate.symbol) {
+              return {
+                ...coin,
+                // Update relevant fields based on the mint data
+                supply: mintUpdate.supply,
+                // Add other relevant updates
+              };
+            }
+            return coin;
+          })
+        );
+
+        toast({
+          title: "Price Update",
+          description: `${mintUpdate.symbol} data has been updated`,
+        });
+      }
     },
     onError: (error) => {
       console.error('WebSocket error:', error);
+      toast({
+        title: "Update Error",
+        description: "Failed to receive real-time updates",
+        variant: "destructive",
+      });
     }
   });
 
@@ -26,47 +56,18 @@ export function CoinGrid({ coins, isLoading }: CoinGridProps) {
     return <div>Loading...</div>;
   }
 
-  const renderSectionLabel = (title: string) => (
-    <div className="flex items-center gap-2">
-      <h2 className="text-xl font-bold bg-gradient-to-r from-primary/80 to-secondary/80 bg-clip-text text-transparent whitespace-nowrap">
-        {title}
-      </h2>
-      <Button variant="outline" size="sm" className="gap-2">
-        <Filter className="h-4 w-4" />
-        Filter
-      </Button>
-    </div>
-  );
-
-  // Split coins into sections
-  const trendingCoins = coins.slice(0, 4);
-  const newCoins = coins.slice(4, 8);
-  const graduatingCoins = coins.slice(8, 12);
-  const toMoonCoins = coins.slice(12, 16);
-
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-4 gap-8 mb-8">
-        {renderSectionLabel("🔥 Trending")}
-        {renderSectionLabel("✨ New")}
-        {renderSectionLabel("🎓 Soon to Graduate")}
-        {renderSectionLabel("🚀 To the Moon!")}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Trending Coins</h2>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Filter className="h-4 w-4" />
+          Filter
+        </Button>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {coins.map((coin) => (
-          <Card key={coin.id}>
-            <CardContent className="pt-6">
-              <NewCoinCard
-                id={coin.id}
-                name={coin.name}
-                symbol={coin.symbol}
-                price={coin.price || 0}
-                change24h={coin.change_24h || 0}
-                imageUrl={coin.imageUrl}
-              />
-            </CardContent>
-          </Card>
+          <NewCoinCard key={coin.id} coin={coin} />
         ))}
       </div>
     </div>
