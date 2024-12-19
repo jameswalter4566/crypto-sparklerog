@@ -26,15 +26,16 @@ const CoinSearch = () => {
 
   const fetchTokenMetadata = async (mintAddress: string) => {
     // Get the API key from Supabase secrets
-    const { data: { secret: heliusApiKey }, error: secretError } = await supabase
+    const { data: secretData, error: secretError } = await supabase
       .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
 
-    if (secretError || !heliusApiKey) {
+    if (secretError || !secretData?.secret) {
       console.error("Failed to get Helius API key:", secretError);
-      throw new Error("Failed to get API key configuration");
+      throw new Error("Failed to get API key configuration. Please ensure HELIUS_API_KEY is set in Supabase.");
     }
 
-    const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    const heliusApiKey = secretData.secret;
+    const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
 
     const response = await fetch(HELIUS_API_URL, {
       method: "POST",
@@ -42,25 +43,24 @@ const CoinSearch = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "my-id",
-        method: "getAsset",
-        params: [mintAddress],
+        mintAccounts: [mintAddress],
+        includeOffChain: true,
+        disableCache: false,
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch token metadata");
+      throw new Error(`Failed to fetch token metadata: ${response.statusText}`);
     }
 
     const data = await response.json();
     console.log("Helius API Response:", data);
 
-    if (data.error) {
-      throw new Error(data.error.message || "Failed to fetch token data");
+    if (!data || data.length === 0) {
+      throw new Error("No token data found");
     }
 
-    return data.result;
+    return data[0];
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -80,21 +80,20 @@ const CoinSearch = () => {
       
       // Transform the Helius API response into our app's format
       const formattedData = {
-        name: tokenData.content?.metadata?.name || "Unknown Token",
-        symbol: tokenData.content?.metadata?.symbol || "???",
-        image: tokenData.content?.files?.[0]?.uri || null,
+        name: tokenData.onChainMetadata?.metadata?.name || "Unknown Token",
+        symbol: tokenData.onChainMetadata?.metadata?.symbol || "???",
+        image: tokenData.offChainMetadata?.metadata?.image || null,
         price: tokenData.price?.value || 0,
-        description: tokenData.content?.metadata?.description || "No description available",
-        tokenStandard: tokenData.interface || "Unknown",
-        decimals: tokenData.content?.metadata?.decimals || 0,
+        description: tokenData.offChainMetadata?.metadata?.description || "No description available",
+        tokenStandard: tokenData.onChainMetadata?.tokenStandard || "Unknown",
+        decimals: tokenData.onChainMetadata?.metadata?.decimals || 0,
         marketCap: tokenData.marketCap || 0,
         volume24h: tokenData.volume24h || 0,
         liquidity: tokenData.liquidity || 0,
         supply: {
-          total: parseInt(tokenData.supply?.print_max_supply || "0"),
-          circulating: parseInt(tokenData.supply?.print_current_supply || "0"),
-          nonCirculating: parseInt(tokenData.supply?.print_max_supply || "0") - 
-                         parseInt(tokenData.supply?.print_current_supply || "0"),
+          total: parseInt(tokenData.supply?.total || "0"),
+          circulating: parseInt(tokenData.supply?.circulating || "0"),
+          nonCirculating: parseInt(tokenData.supply?.nonCirculating || "0"),
         },
       };
 
