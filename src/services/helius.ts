@@ -20,23 +20,20 @@ export interface TokenMetadata {
 }
 
 export const fetchHeliusApiKey = async (): Promise<string> => {
-  const { data: secretData, error: secretError } = await supabase
-    .from('secrets')
-    .select('value')
-    .eq('name', 'HELIUSKEYMAIN')
-    .single();
+  const { data, error } = await supabase.rpc('get_secret', {
+    secret_name: 'HELIUSKEYMAIN'
+  });
 
-  if (secretError) {
-    console.error('Secret fetch error:', secretError);
-    throw new Error(`Failed to fetch API key: ${secretError.message}`);
+  if (error) {
+    console.error('Secret fetch error:', error);
+    throw new Error(`Failed to fetch API key: ${error.message}`);
   }
 
-  if (!secretData?.value) {
-    console.error('No secret found');
+  if (!data || !Array.isArray(data) || data.length === 0) {
     throw new Error('API key not found');
   }
 
-  return secretData.value;
+  return data[0].value;
 };
 
 export const fetchTokenMetadata = async (mintAddress: string): Promise<TokenMetadata> => {
