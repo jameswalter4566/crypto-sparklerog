@@ -12,6 +12,10 @@ const TOKEN_PROGRAM_IDS = [
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", // Associated Token Program
 ];
 
+interface SecretResponse {
+  secret: string;
+}
+
 export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -29,7 +33,10 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         const { data: secretData, error: secretError } = await supabase
           .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-        console.log('Secret response:', { secretData, secretError });
+        console.log('Secret response:', { 
+          data: secretData ? 'Data present' : 'No data', 
+          error: secretError 
+        });
 
         if (secretError) {
           console.error('Failed to get Helius API key:', secretError);
@@ -53,8 +60,9 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        // The get_secret function returns an array with a single row containing the secret
-        const heliusApiKey = secretData.secret;
+        const typedSecretData = secretData as SecretResponse[];
+        const heliusApiKey = typedSecretData[0]?.secret;
+        
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
           toast({
@@ -67,6 +75,8 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         }
 
         console.log('Successfully retrieved Helius API key');
+        console.log(`Connecting to Helius WebSocket (Key: ${heliusApiKey.slice(0, 4)}...)`);
+        
         const ws = new WebSocket(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
         wsRef.current = ws;
 
@@ -87,6 +97,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
                 }
               ]
             };
+            console.log('Sending subscription message:', subscribeMessage);
             ws.send(JSON.stringify(subscribeMessage));
           });
         };
@@ -120,9 +131,10 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           });
         };
 
-        ws.onclose = () => {
-          console.log('WebSocket connection closed');
+        ws.onclose = (event) => {
+          console.log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
           setIsConnecting(false);
+          wsRef.current = null;
           setTimeout(connectWebSocket, 5000);
         };
 
@@ -137,6 +149,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.close();
           }
+          wsRef.current = null;
         };
       } catch (error) {
         console.error('Failed to establish WebSocket connection:', error);
