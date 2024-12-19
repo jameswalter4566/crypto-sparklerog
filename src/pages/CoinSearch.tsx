@@ -27,27 +27,24 @@ const CoinSearch = () => {
   const fetchTokenMetadata = async (mintAddress: string) => {
     console.log('Starting API key retrieval from Supabase...');
     
-    // Get the API key from Supabase secrets with detailed logging
+    // Get the API key from Supabase secrets
     const { data: secretData, error: secretError } = await supabase
       .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-    console.log('Secret data received:', secretData);
-    console.log('Secret error if any:', secretError);
-
     if (secretError) {
       console.error('Failed to get Helius API key:', secretError);
-      throw new Error("Failed to get API key configuration. Error: " + secretError.message);
+      throw new Error(`Failed to get API key configuration. Error: ${secretError.message}`);
     }
 
-    if (!secretData || secretData.length === 0) {
-      console.error('No secret data returned from Supabase');
-      throw new Error("No Helius API key found in Supabase secrets.");
+    if (!secretData || !Array.isArray(secretData) || secretData.length === 0) {
+      console.error('No Helius API key found:', secretData);
+      throw new Error('Helius API key not found. Please ensure the HELIUSKEYMAIN secret is set in Supabase.');
     }
 
     const heliusApiKey = secretData[0]?.secret;
     if (!heliusApiKey) {
-      console.error('Helius API key is empty or undefined');
-      throw new Error("Helius API key is empty or undefined.");
+      console.error('Retrieved secret is empty');
+      throw new Error('Retrieved Helius API key is empty. Please check the secret value in Supabase.');
     }
 
     console.log('Successfully retrieved Helius API key');
