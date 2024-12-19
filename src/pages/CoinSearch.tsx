@@ -12,43 +12,50 @@ const CoinSearch = () => {
   const navigate = useNavigate();
 
   const fetchTokenMetadata = async (mintAddress: string) => {
-    const { data: secretData, error: secretError } = await supabase
-      .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
+    try {
+      const { data: secretData, error: secretError } = await supabase
+        .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-    if (secretError) {
-      if (secretError.message.includes("Secret not found")) {
-        throw new Error('Helius API key is not configured. Please add it in the Supabase settings.');
+      if (secretError) {
+        console.error('Secret fetch error:', secretError);
+        if (secretError.message.includes("Secret not found")) {
+          throw new Error('Helius API key is not configured. Please add it in the Supabase settings.');
+        }
+        throw secretError;
       }
-      throw secretError;
+
+      if (!secretData || !secretData[0]?.secret) {
+        console.error('Invalid secret data:', secretData);
+        throw new Error('Invalid API key configuration');
+      }
+
+      const heliusApiKey = secretData[0].secret;
+      const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
+
+      const response = await fetch(HELIUS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mintAccounts: [mintAddress],
+          includeOffChain: true,
+          disableCache: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Helius API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (!data || data.length === 0) {
+        throw new Error("No token data found for this address");
+      }
+
+      return data[0];
+    } catch (error) {
+      console.error('Token metadata fetch error:', error);
+      throw error;
     }
-
-    if (!secretData || !Array.isArray(secretData) || secretData.length === 0 || !secretData[0]?.secret) {
-      throw new Error('Invalid API key configuration');
-    }
-
-    const heliusApiKey = secretData[0].secret;
-    const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
-
-    const response = await fetch(HELIUS_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mintAccounts: [mintAddress],
-        includeOffChain: true,
-        disableCache: false,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Helius API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    if (!data || data.length === 0) {
-      throw new Error("No token data found for this address");
-    }
-
-    return data[0];
   };
 
   const handleSearch = async (mintAddress: string) => {
