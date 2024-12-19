@@ -43,8 +43,18 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        // Access the secret directly from the first row
-        const heliusApiKey = secretData?.secret;
+        if (!secretData || secretData.length === 0) {
+          console.error('No secret data returned from Supabase');
+          toast({
+            title: "Configuration Error",
+            description: "No Helius API key found in Supabase secrets.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+          return;
+        }
+
+        const heliusApiKey = secretData[0]?.secret;
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
           toast({
