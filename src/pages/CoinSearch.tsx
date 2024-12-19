@@ -7,9 +7,7 @@ import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
 import { useToast } from "@/components/ui/use-toast";
-
-const HELIUS_API_KEY = import.meta.env.VITE_HELIUS_API_KEY;
-const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+import { supabase } from "@/integrations/supabase/client";
 
 interface TokenMetadata {
   name: string;
@@ -27,6 +25,17 @@ const CoinSearch = () => {
   const { toast } = useToast();
 
   const fetchTokenMetadata = async (mintAddress: string) => {
+    // Get the API key from Supabase secrets
+    const { data: { secret: heliusApiKey }, error: secretError } = await supabase
+      .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
+
+    if (secretError || !heliusApiKey) {
+      console.error("Failed to get Helius API key:", secretError);
+      throw new Error("Failed to get API key configuration");
+    }
+
+    const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+
     const response = await fetch(HELIUS_API_URL, {
       method: "POST",
       headers: {
