@@ -79,6 +79,9 @@ export type Database = {
           secret_name: string
         }
         Returns: {
+          created_at: string
+          name: string
+          updated_at: string
           value: string
         }[]
       }

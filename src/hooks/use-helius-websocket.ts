@@ -26,39 +26,34 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
 
         // Get the API key from Supabase secrets with detailed logging
         console.log('Fetching Helius API key from Supabase...');
-        const { data: secretData, error: secretError } = await supabase
-          .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
-
-        if (secretError) {
-          console.error('Failed to get Helius API key:', secretError);
-          toast({
-            title: "Configuration Error",
-            description: "Failed to get Helius API key. Error: " + secretError.message,
-            variant: "destructive",
-          });
-          setIsConnecting(false);
-          return;
-        }
-
-        // Log the structure of the response (safely)
-        console.log('Secret response structure:', {
-          hasData: !!secretData,
-          type: typeof secretData,
-          isArray: Array.isArray(secretData)
+        
+        const { data, error } = await supabase.rpc('get_secret', {
+          secret_name: 'HELIUSKEYMAIN'
         });
 
-        if (!secretData || !Array.isArray(secretData) || secretData.length === 0) {
-          console.error('Invalid secret data format returned from Supabase');
+        if (error) {
+          console.error('Supabase RPC error:', error);
           toast({
             title: "Configuration Error",
-            description: "Invalid secret data format returned from Supabase",
+            description: "Failed to get Helius API key. Error: " + error.message,
             variant: "destructive",
           });
           setIsConnecting(false);
           return;
         }
 
-        const heliusApiKey = secretData[0]?.value; // Changed from .secret to .value
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          console.error('No secret data returned from Supabase');
+          toast({
+            title: "Configuration Error",
+            description: "No secret data returned from Supabase",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+          return;
+        }
+
+        const heliusApiKey = data[0].value;
         
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
@@ -72,7 +67,6 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         }
 
         console.log('Successfully retrieved Helius API key');
-        console.log(`Connecting to Helius WebSocket (Key: ${heliusApiKey.slice(0, 4)}...)`);
         
         const ws = new WebSocket(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
         wsRef.current = ws;
