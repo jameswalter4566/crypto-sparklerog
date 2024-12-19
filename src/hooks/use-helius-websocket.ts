@@ -27,7 +27,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         // Get the API key from Supabase secrets with detailed logging
         console.log('Fetching Helius API key from Supabase...');
         const { data: secretData, error: secretError } = await supabase
-          .rpc('get_secret', { secret_name: 'HELIIUSMAINAPI' });
+          .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
         console.log('Secret data received:', secretData);
         console.log('Secret error if any:', secretError);
