@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TokenMetadata {
@@ -29,12 +29,14 @@ const CoinSearch = () => {
     const { data: secretData, error: secretError } = await supabase
       .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
 
-    if (secretError || !secretData?.secret) {
+    // Since get_secret returns an array, we need to get the first row
+    const heliusApiKey = secretData?.[0]?.secret;
+    
+    if (secretError || !heliusApiKey) {
       console.error("Failed to get Helius API key:", secretError);
       throw new Error("Failed to get API key configuration. Please ensure HELIUS_API_KEY is set in Supabase.");
     }
 
-    const heliusApiKey = secretData.secret;
     const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
 
     const response = await fetch(HELIUS_API_URL, {
