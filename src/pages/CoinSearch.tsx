@@ -69,26 +69,45 @@ const CoinSearch = () => {
         id: mintAddress,
         name: tokenData.onChainMetadata?.metadata?.name || "Unknown Token",
         symbol: tokenData.onChainMetadata?.metadata?.symbol || "???",
-        image: tokenData.offChainMetadata?.metadata?.image || null,
+        image_url: tokenData.offChainMetadata?.metadata?.image || null,
         price: tokenData.price?.value || 0,
         description: tokenData.offChainMetadata?.metadata?.description || "No description available",
         tokenStandard: tokenData.onChainMetadata?.tokenStandard || "Unknown",
         decimals: tokenData.onChainMetadata?.metadata?.decimals || 0,
-        marketCap: tokenData.marketCap || 0,
-        volume24h: tokenData.volume24h || 0,
+        market_cap: tokenData.marketCap || 0,
+        volume_24h: tokenData.volume24h || 0,
         liquidity: tokenData.liquidity || 0,
-        supply: {
-          total: parseInt(tokenData.supply?.total || "0"),
-          circulating: parseInt(tokenData.supply?.circulating || "0"),
-          nonCirculating: parseInt(tokenData.supply?.nonCirculating || "0"),
-        },
       };
 
       setCoinData(formattedData);
-      toast({
-        title: "Success",
-        description: "Token information retrieved successfully",
-      });
+
+      // Store the coin data in Supabase
+      const { error: upsertError } = await supabase
+        .from('coins')
+        .upsert({
+          id: formattedData.id,
+          name: formattedData.name,
+          symbol: formattedData.symbol,
+          image_url: formattedData.image_url,
+          price: formattedData.price,
+          market_cap: formattedData.market_cap,
+          volume_24h: formattedData.volume_24h,
+          liquidity: formattedData.liquidity,
+        });
+
+      if (upsertError) {
+        console.error('Error saving coin data:', upsertError);
+        toast({
+          title: "Warning",
+          description: "Token information retrieved but failed to save to database",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Token information retrieved successfully",
+        });
+      }
     } catch (error) {
       console.error("Search error:", error);
       toast({
@@ -101,38 +120,6 @@ const CoinSearch = () => {
     }
   };
 
-  const handleViewProfile = async () => {
-    if (!coinData) return;
-
-    try {
-      const { error } = await supabase
-        .from('coins')
-        .upsert({
-          id: coinData.id,
-          name: coinData.name,
-          symbol: coinData.symbol,
-          image_url: coinData.image,
-          price: coinData.price,
-          market_cap: coinData.marketCap,
-          volume_24h: coinData.volume24h,
-          liquidity: coinData.liquidity,
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      navigate(`/coin/${coinData.id}`);
-    } catch (error) {
-      console.error('Error saving coin:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save coin data",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -142,7 +129,7 @@ const CoinSearch = () => {
       <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
 
       {coinData && (
-        <TokenDetails coinData={coinData} onClick={handleViewProfile} />
+        <TokenDetails coinData={coinData} onClick={() => navigate(`/coin/${coinData.id}`)} />
       )}
     </div>
   );
