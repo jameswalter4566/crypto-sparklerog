@@ -12,10 +12,6 @@ const TOKEN_PROGRAM_IDS = [
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", // Associated Token Program
 ];
 
-interface SecretResponse {
-  secret: string;
-}
-
 export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -62,7 +58,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        const heliusApiKey = secretData[0]?.secret;
+        const heliusApiKey = secretData[0]?.value; // Changed from .secret to .value
         
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
@@ -94,7 +90,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
                 programId,
                 {
                   encoding: "jsonParsed",
-                  commitment: "finalized" // Changed from "confirmed" to "finalized" for more stable updates
+                  commitment: "finalized"
                 }
               ]
             };
