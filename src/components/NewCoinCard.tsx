@@ -30,6 +30,9 @@ export function NewCoinCard({ id, name, symbol, price, change24h, imageUrl }: Ne
     return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
   };
 
+  // Safely get the first two characters of the symbol for the fallback
+  const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
+
   return (
     <Link to={`/coin/${id}`}>
       <Card className="hover:bg-gray-900 transition-colors">
@@ -37,7 +40,7 @@ export function NewCoinCard({ id, name, symbol, price, change24h, imageUrl }: Ne
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-72 w-72">
               <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} />
-              <AvatarFallback className="text-2xl">{symbol.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-lg flex flex-col items-center gap-1">
               <span>{name}</span>

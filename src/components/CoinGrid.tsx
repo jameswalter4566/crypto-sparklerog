@@ -67,7 +67,15 @@ export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {coins.map((coin) => (
-          <NewCoinCard key={coin.id} coin={coin} />
+          <NewCoinCard
+            key={coin.id}
+            id={coin.id}
+            name={coin.name}
+            symbol={coin.symbol}
+            price={coin.price}
+            change24h={coin.change_24h}
+            imageUrl={coin.imageUrl}
+          />
         ))}
       </div>
     </div>
