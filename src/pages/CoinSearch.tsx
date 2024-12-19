@@ -8,6 +8,7 @@ import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface TokenMetadata {
   name: string;
@@ -23,6 +24,7 @@ const CoinSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [coinData, setCoinData] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchTokenMetadata = async (mintAddress: string) => {
     // First, check if we can get the API key
@@ -85,6 +87,7 @@ const CoinSearch = () => {
       const tokenData = await fetchTokenMetadata(mintAddress.trim());
       
       const formattedData = {
+        id: mintAddress.trim(), // Use the mint address as the ID
         name: tokenData.onChainMetadata?.metadata?.name || "Unknown Token",
         symbol: tokenData.onChainMetadata?.metadata?.symbol || "???",
         image: tokenData.offChainMetadata?.metadata?.image || null,
@@ -119,6 +122,39 @@ const CoinSearch = () => {
     }
   };
 
+  const handleViewProfile = () => {
+    // Save the coin data to the database before navigating
+    const saveCoin = async () => {
+      const { error } = await supabase
+        .from('coins')
+        .upsert({
+          id: coinData.id,
+          name: coinData.name,
+          symbol: coinData.symbol,
+          image_url: coinData.image,
+          price: coinData.price,
+          market_cap: coinData.marketCap,
+          volume_24h: coinData.volume24h,
+          liquidity: coinData.liquidity,
+        });
+
+      if (error) {
+        console.error('Error saving coin:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save coin data",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Navigate to the coin profile page
+      navigate(`/coin/${coinData.id}`);
+    };
+
+    saveCoin();
+  };
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -147,27 +183,29 @@ const CoinSearch = () => {
 
       {coinData && (
         <div className="space-y-6">
-          <TokenHeader
-            name={coinData.name}
-            symbol={coinData.symbol}
-            image={coinData.image}
-            price={coinData.price}
-            description={coinData.description}
-            tokenStandard={coinData.tokenStandard}
-            decimals={coinData.decimals}
-          />
+          <div onClick={handleViewProfile} className="cursor-pointer hover:opacity-80 transition-opacity">
+            <TokenHeader
+              name={coinData.name}
+              symbol={coinData.symbol}
+              image={coinData.image}
+              price={coinData.price}
+              description={coinData.description}
+              tokenStandard={coinData.tokenStandard}
+              decimals={coinData.decimals}
+            />
 
-          <TokenStats
-            marketCap={coinData.marketCap}
-            volume24h={coinData.volume24h}
-            liquidity={coinData.liquidity}
-          />
+            <TokenStats
+              marketCap={coinData.marketCap}
+              volume24h={coinData.volume24h}
+              liquidity={coinData.liquidity}
+            />
 
-          <TokenSupply
-            total={coinData.supply.total}
-            circulating={coinData.supply.circulating}
-            nonCirculating={coinData.supply.nonCirculating}
-          />
+            <TokenSupply
+              total={coinData.supply.total}
+              circulating={coinData.supply.circulating}
+              nonCirculating={coinData.supply.nonCirculating}
+            />
+          </div>
         </div>
       )}
     </div>
