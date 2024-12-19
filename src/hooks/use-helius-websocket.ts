@@ -17,6 +17,8 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
   const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const connectWebSocket = async () => {
       try {
         if (isConnecting) return;
@@ -103,7 +105,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           }
         }, 30000);
 
-        return () => {
+        cleanup = () => {
           clearInterval(pingInterval);
           if (ws.readyState === WebSocket.OPEN) {
             ws.close();
@@ -120,7 +122,8 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
       }
     };
 
-    const cleanup = connectWebSocket();
+    connectWebSocket();
+
     return () => {
       if (cleanup) cleanup();
     };
