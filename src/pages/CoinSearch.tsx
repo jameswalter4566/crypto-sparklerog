@@ -26,27 +26,35 @@ const CoinSearch = () => {
 
   const fetchTokenMetadata = async (mintAddress: string) => {
     try {
-      // Get the API key from Supabase secrets with improved error handling
+      // First, check if we can get the API key
       const { data: secretData, error: secretError } = await supabase
         .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
       if (secretError) {
         console.error('Error fetching API key:', secretError);
+        // Check specifically for missing secret error
         if (secretError.message.includes("Secret not found")) {
-          throw new Error('Helius API key not configured. Please contact support.');
+          toast({
+            title: "Configuration Error",
+            description: "Helius API key is not configured. Please add it in the Supabase settings.",
+            variant: "destructive",
+          });
+          throw new Error('Helius API key not configured');
         }
-        throw new Error('Failed to retrieve API key: ' + secretError.message);
+        throw secretError;
       }
 
-      if (!secretData || !Array.isArray(secretData) || secretData.length === 0) {
+      // Validate secret data structure
+      if (!secretData || !Array.isArray(secretData) || secretData.length === 0 || !secretData[0]?.secret) {
+        toast({
+          title: "Configuration Error",
+          description: "Invalid API key configuration",
+          variant: "destructive",
+        });
         throw new Error('Invalid API key configuration');
       }
 
-      const heliusApiKey = secretData[0]?.secret;
-      if (!heliusApiKey) {
-        throw new Error('API key is empty or invalid');
-      }
-
+      const heliusApiKey = secretData[0].secret;
       const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
 
       const response = await fetch(HELIUS_API_URL, {
