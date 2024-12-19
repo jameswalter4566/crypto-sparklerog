@@ -8,11 +8,51 @@ import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
 import { useToast } from "@/components/ui/use-toast";
 
+const HELIUS_API_KEY = import.meta.env.VITE_HELIUS_API_KEY;
+const HELIUS_API_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+
+interface TokenMetadata {
+  name: string;
+  symbol: string;
+  image?: string;
+  description?: string;
+  tokenStandard: string;
+  decimals: number;
+}
+
 const CoinSearch = () => {
   const [mintAddress, setMintAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [coinData, setCoinData] = useState<any>(null);
   const { toast } = useToast();
+
+  const fetchTokenMetadata = async (mintAddress: string) => {
+    const response = await fetch(HELIUS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "my-id",
+        method: "getAsset",
+        params: [mintAddress],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch token metadata");
+    }
+
+    const data = await response.json();
+    console.log("Helius API Response:", data);
+
+    if (data.error) {
+      throw new Error(data.error.message || "Failed to fetch token data");
+    }
+
+    return data.result;
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,38 +67,40 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      // For demo purposes, we'll use a mock response
-      // In a real implementation, you would fetch data from Helius API
-      const mockResponse = {
-        name: "Test Token",
-        symbol: "TEST",
-        image: null,
-        price: 0.5,
-        description: "This is a test token found by mint address",
-        tokenStandard: "SPL Token",
-        decimals: 9,
-        marketCap: 1000000,
-        volume24h: 50000,
-        liquidity: 25000,
+      const tokenData = await fetchTokenMetadata(mintAddress.trim());
+      
+      // Transform the Helius API response into our app's format
+      const formattedData = {
+        name: tokenData.content?.metadata?.name || "Unknown Token",
+        symbol: tokenData.content?.metadata?.symbol || "???",
+        image: tokenData.content?.files?.[0]?.uri || null,
+        price: tokenData.price?.value || 0,
+        description: tokenData.content?.metadata?.description || "No description available",
+        tokenStandard: tokenData.interface || "Unknown",
+        decimals: tokenData.content?.metadata?.decimals || 0,
+        marketCap: tokenData.marketCap || 0,
+        volume24h: tokenData.volume24h || 0,
+        liquidity: tokenData.liquidity || 0,
         supply: {
-          total: 1000000000,
-          circulating: 750000000,
-          nonCirculating: 250000000,
+          total: parseInt(tokenData.supply?.print_max_supply || "0"),
+          circulating: parseInt(tokenData.supply?.print_current_supply || "0"),
+          nonCirculating: parseInt(tokenData.supply?.print_max_supply || "0") - 
+                         parseInt(tokenData.supply?.print_current_supply || "0"),
         },
       };
 
-      setCoinData(mockResponse);
+      setCoinData(formattedData);
       toast({
         title: "Success",
         description: "Token information retrieved successfully",
       });
     } catch (error) {
+      console.error("Search error:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch token information",
+        description: error instanceof Error ? error.message : "Failed to fetch token information",
         variant: "destructive",
       });
-      console.error("Search error:", error);
     } finally {
       setIsLoading(false);
     }
