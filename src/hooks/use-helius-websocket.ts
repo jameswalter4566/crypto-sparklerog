@@ -33,11 +33,6 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         const { data: secretData, error: secretError } = await supabase
           .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
-        console.log('Secret response:', { 
-          data: secretData ? 'Data present' : 'No data', 
-          error: secretError 
-        });
-
         if (secretError) {
           console.error('Failed to get Helius API key:', secretError);
           toast({
@@ -49,25 +44,31 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           return;
         }
 
-        if (!secretData) {
-          console.error('No secret data returned from Supabase');
+        // Log the structure of the response (safely)
+        console.log('Secret response structure:', {
+          hasData: !!secretData,
+          type: typeof secretData,
+          isArray: Array.isArray(secretData)
+        });
+
+        if (!secretData || !Array.isArray(secretData) || secretData.length === 0) {
+          console.error('Invalid secret data format returned from Supabase');
           toast({
             title: "Configuration Error",
-            description: "No Helius API key found in Supabase secrets.",
+            description: "Invalid secret data format returned from Supabase",
             variant: "destructive",
           });
           setIsConnecting(false);
           return;
         }
 
-        const typedSecretData = secretData as SecretResponse[];
-        const heliusApiKey = typedSecretData[0]?.secret;
+        const heliusApiKey = secretData[0]?.secret;
         
         if (!heliusApiKey) {
           console.error('Helius API key is empty or undefined');
           toast({
             title: "Configuration Error",
-            description: "Helius API key is empty or undefined.",
+            description: "Helius API key is empty or undefined",
             variant: "destructive",
           });
           setIsConnecting(false);
@@ -93,7 +94,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
                 programId,
                 {
                   encoding: "jsonParsed",
-                  commitment: "confirmed"
+                  commitment: "finalized" // Changed from "confirmed" to "finalized" for more stable updates
                 }
               ]
             };
@@ -135,9 +136,12 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
           console.log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
           setIsConnecting(false);
           wsRef.current = null;
+          
+          // Attempt to reconnect after a delay
           setTimeout(connectWebSocket, 5000);
         };
 
+        // Setup ping interval to keep connection alive
         const pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ jsonrpc: "2.0", id: "ping", method: "ping" }));
