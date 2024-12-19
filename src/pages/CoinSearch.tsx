@@ -1,38 +1,21 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import { TokenHeader } from "@/components/coin/TokenHeader";
-import { TokenStats } from "@/components/coin/TokenStats";
-import { TokenSupply } from "@/components/coin/TokenSupply";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-
-interface TokenMetadata {
-  name: string;
-  symbol: string;
-  image?: string;
-  description?: string;
-  tokenStandard: string;
-  decimals: number;
-}
+import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
+import { TokenDetails } from "@/components/coin/TokenDetails";
 
 const CoinSearch = () => {
-  const [mintAddress, setMintAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [coinData, setCoinData] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const fetchTokenMetadata = async (mintAddress: string) => {
-    // First, check if we can get the API key
     const { data: secretData, error: secretError } = await supabase
       .rpc('get_secret', { secret_name: 'HELIUSKEYMAIN' });
 
     if (secretError) {
-      // Check if the error is due to missing secret
       if (secretError.message.includes("Secret not found")) {
         throw new Error('Helius API key is not configured. Please add it in the Supabase settings.');
       }
@@ -48,9 +31,7 @@ const CoinSearch = () => {
 
     const response = await fetch(HELIUS_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         mintAccounts: [mintAddress],
         includeOffChain: true,
@@ -63,7 +44,6 @@ const CoinSearch = () => {
     }
 
     const data = await response.json();
-    
     if (!data || data.length === 0) {
       throw new Error("No token data found for this address");
     }
@@ -71,9 +51,8 @@ const CoinSearch = () => {
     return data[0];
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mintAddress.trim()) {
+  const handleSearch = async (mintAddress: string) => {
+    if (!mintAddress) {
       toast({
         title: "Error",
         description: "Please enter a mint address",
@@ -84,10 +63,10 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      const tokenData = await fetchTokenMetadata(mintAddress.trim());
+      const tokenData = await fetchTokenMetadata(mintAddress);
       
       const formattedData = {
-        id: mintAddress.trim(), // Use the mint address as the ID
+        id: mintAddress,
         name: tokenData.onChainMetadata?.metadata?.name || "Unknown Token",
         symbol: tokenData.onChainMetadata?.metadata?.symbol || "???",
         image: tokenData.offChainMetadata?.metadata?.image || null,
@@ -122,9 +101,10 @@ const CoinSearch = () => {
     }
   };
 
-  const handleViewProfile = () => {
-    // Save the coin data to the database before navigating
-    const saveCoin = async () => {
+  const handleViewProfile = async () => {
+    if (!coinData) return;
+
+    try {
       const { error } = await supabase
         .from('coins')
         .upsert({
@@ -139,20 +119,18 @@ const CoinSearch = () => {
         });
 
       if (error) {
-        console.error('Error saving coin:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save coin data",
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
-      // Navigate to the coin profile page
       navigate(`/coin/${coinData.id}`);
-    };
-
-    saveCoin();
+    } catch (error) {
+      console.error('Error saving coin:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save coin data",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -161,52 +139,10 @@ const CoinSearch = () => {
         Search Token
       </h1>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Search by Mint Address</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <Input
-              placeholder="Enter mint address..."
-              value={mintAddress}
-              onChange={(e) => setMintAddress(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading}>
-              <Search className="h-4 w-4 mr-2" />
-              {isLoading ? "Searching..." : "Search"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
 
       {coinData && (
-        <div className="space-y-6">
-          <div onClick={handleViewProfile} className="cursor-pointer hover:opacity-80 transition-opacity">
-            <TokenHeader
-              name={coinData.name}
-              symbol={coinData.symbol}
-              image={coinData.image}
-              price={coinData.price}
-              description={coinData.description}
-              tokenStandard={coinData.tokenStandard}
-              decimals={coinData.decimals}
-            />
-
-            <TokenStats
-              marketCap={coinData.marketCap}
-              volume24h={coinData.volume24h}
-              liquidity={coinData.liquidity}
-            />
-
-            <TokenSupply
-              total={coinData.supply.total}
-              circulating={coinData.supply.circulating}
-              nonCirculating={coinData.supply.nonCirculating}
-            />
-          </div>
-        </div>
+        <TokenDetails coinData={coinData} onClick={handleViewProfile} />
       )}
     </div>
   );
