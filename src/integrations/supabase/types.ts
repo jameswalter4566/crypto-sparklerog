@@ -9,58 +9,13 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      coins: {
-        Row: {
-          change_24h: number | null
-          id: string
-          image_url: string | null
-          liquidity: number | null
-          market_cap: number | null
-          name: string
-          price: number | null
-          symbol: string
-          updated_at: string | null
-          volume_24h: number | null
-        }
-        Insert: {
-          change_24h?: number | null
-          id: string
-          image_url?: string | null
-          liquidity?: number | null
-          market_cap?: number | null
-          name: string
-          price?: number | null
-          symbol: string
-          updated_at?: string | null
-          volume_24h?: number | null
-        }
-        Update: {
-          change_24h?: number | null
-          id?: string
-          image_url?: string | null
-          liquidity?: number | null
-          market_cap?: number | null
-          name?: string
-          price?: number | null
-          symbol?: string
-          updated_at?: string | null
-          volume_24h?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_secret: {
-        Args: {
-          secret_name: string
-        }
-        Returns: {
-          secret: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
