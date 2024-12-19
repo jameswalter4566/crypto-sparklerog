@@ -27,14 +27,14 @@ const CoinSearch = () => {
   const fetchTokenMetadata = async (mintAddress: string) => {
     // Get the API key from Supabase secrets
     const { data: secretData, error: secretError } = await supabase
-      .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
+      .rpc('get_secret', { secret_name: 'HELIIUSMAINAPI' });
 
     // Since get_secret returns an array, we need to get the first row
     const heliusApiKey = secretData?.[0]?.secret;
     
     if (secretError || !heliusApiKey) {
       console.error("Failed to get Helius API key:", secretError);
-      throw new Error("Failed to get API key configuration. Please ensure HELIUS_API_KEY is set in Supabase.");
+      throw new Error("Failed to get API key configuration. Please ensure HELIIUSMAINAPI is set in Supabase.");
     }
 
     const HELIUS_API_URL = `https://api.helius.xyz/v0/token-metadata?api-key=${heliusApiKey}`;
