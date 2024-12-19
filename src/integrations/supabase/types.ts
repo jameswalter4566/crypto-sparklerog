@@ -79,7 +79,7 @@ export type Database = {
           secret_name: string
         }
         Returns: {
-          secret: string
+          value: string
         }[]
       }
     }

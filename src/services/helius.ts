@@ -4,14 +4,19 @@ export interface TokenMetadata {
   id: string;
   name: string;
   symbol: string;
-  image_url: string | null;
+  image: string | null;
   price: number;
   description: string;
   tokenStandard: string;
   decimals: number;
-  market_cap: number;
-  volume_24h: number;
+  marketCap: number;
+  volume24h: number;
   liquidity: number;
+  supply: {
+    total: number;
+    circulating: number;
+    nonCirculating: number;
+  };
 }
 
 export const fetchHeliusApiKey = async (): Promise<string> => {
@@ -63,14 +68,19 @@ export const fetchTokenMetadata = async (mintAddress: string): Promise<TokenMeta
       id: mintAddress,
       name: tokenData.onChainMetadata?.metadata?.name || "Unknown Token",
       symbol: tokenData.onChainMetadata?.metadata?.symbol || "???",
-      image_url: tokenData.offChainMetadata?.metadata?.image || null,
+      image: tokenData.offChainMetadata?.metadata?.image || null,
       price: tokenData.price?.value || 0,
       description: tokenData.offChainMetadata?.metadata?.description || "No description available",
       tokenStandard: tokenData.onChainMetadata?.tokenStandard || "Unknown",
       decimals: tokenData.onChainMetadata?.metadata?.decimals || 0,
-      market_cap: tokenData.marketCap || 0,
-      volume_24h: tokenData.volume24h || 0,
+      marketCap: tokenData.marketCap || 0,
+      volume24h: tokenData.volume24h || 0,
       liquidity: tokenData.liquidity || 0,
+      supply: {
+        total: tokenData.onChainMetadata?.supply?.total || 0,
+        circulating: tokenData.onChainMetadata?.supply?.circulating || 0,
+        nonCirculating: tokenData.onChainMetadata?.supply?.nonCirculating || 0,
+      }
     };
   } catch (error) {
     console.error('Token metadata fetch error:', error);

@@ -8,10 +8,10 @@ export const saveCoinData = async (coinData: TokenMetadata) => {
       id: coinData.id,
       name: coinData.name,
       symbol: coinData.symbol,
-      image_url: coinData.image_url,
+      image_url: coinData.image,
       price: coinData.price,
-      market_cap: coinData.market_cap,
-      volume_24h: coinData.volume_24h,
+      market_cap: coinData.marketCap,
+      volume_24h: coinData.volume24h,
       liquidity: coinData.liquidity,
     });
 
