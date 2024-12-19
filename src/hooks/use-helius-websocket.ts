@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeliusWebSocketOptions {
   onMessage?: (data: any) => void;
   onError?: (error: any) => void;
 }
 
-// Program IDs for token-related programs on Solana
 const TOKEN_PROGRAM_IDS = [
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // SPL Token Program
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", // Associated Token Program
@@ -14,22 +14,37 @@ const TOKEN_PROGRAM_IDS = [
 
 export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
   const wsRef = useRef<WebSocket | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
-    const connectWebSocket = () => {
+    const connectWebSocket = async () => {
       try {
-        if (!import.meta.env.VITE_HELIUS_API_KEY) {
-          console.error('Helius API key not found in environment variables');
+        if (isConnecting) return;
+        setIsConnecting(true);
+
+        // Get the API key from Supabase secrets
+        const { data: secretData, error: secretError } = await supabase
+          .rpc('get_secret', { secret_name: 'HELIUS_API_KEY' });
+
+        if (secretError || !secretData?.[0]?.secret) {
+          console.error('Failed to get Helius API key:', secretError);
+          toast({
+            title: "Configuration Error",
+            description: "Failed to get Helius API key. Please ensure it's set in Supabase.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
           return;
         }
 
-        const ws = new WebSocket(`wss://mainnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`);
+        const heliusApiKey = secretData[0].secret;
+        const ws = new WebSocket(`wss://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
         wsRef.current = ws;
 
         ws.onopen = () => {
           console.log('WebSocket connection established');
+          setIsConnecting(false);
           
-          // Subscribe to multiple program updates
           TOKEN_PROGRAM_IDS.forEach((programId, index) => {
             const subscribeMessage = {
               jsonrpc: "2.0",
@@ -52,13 +67,11 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
             const data = JSON.parse(event.data);
             console.log('Received WebSocket message:', data);
             
-            // Handle subscription confirmation
             if (data.result !== undefined) {
               console.log('Subscription confirmed:', data);
               return;
             }
 
-            // Handle program update
             if (data.params?.result?.value) {
               options.onMessage?.(data.params.result.value);
             }
@@ -70,6 +83,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         ws.onerror = (error) => {
           console.error('WebSocket error:', error);
           options.onError?.(error);
+          setIsConnecting(false);
           toast({
             title: "WebSocket Error",
             description: "Failed to connect to real-time updates",
@@ -79,10 +93,10 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
 
         ws.onclose = () => {
           console.log('WebSocket connection closed');
+          setIsConnecting(false);
           setTimeout(connectWebSocket, 5000);
         };
 
-        // Set up ping interval to keep connection alive
         const pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ jsonrpc: "2.0", id: "ping", method: "ping" }));
@@ -97,6 +111,7 @@ export const useHeliusWebSocket = (options: HeliusWebSocketOptions = {}) => {
         };
       } catch (error) {
         console.error('Failed to establish WebSocket connection:', error);
+        setIsConnecting(false);
         toast({
           title: "Connection Error",
           description: "Failed to establish real-time connection",
