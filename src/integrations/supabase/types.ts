@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      coins: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          liquidity: number | null
+          market_cap: number | null
+          name: string
+          price: number | null
+          symbol: string
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          image_url?: string | null
+          liquidity?: number | null
+          market_cap?: number | null
+          name: string
+          price?: number | null
+          symbol: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          liquidity?: number | null
+          market_cap?: number | null
+          name?: string
+          price?: number | null
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
       secrets: {
         Row: {
           created_at: string
