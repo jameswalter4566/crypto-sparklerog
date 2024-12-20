@@ -10,34 +10,38 @@ export const useVoiceChatConnection = (client: IAgoraRTCClient) => {
     audioTrack: ILocalTrack
   ) => {
     try {
-      console.log("[Voice Chat] Joining channel:", channelName);
+      console.log("[Voice Chat Connection] Joining channel:", channelName);
+      
+      // Join the Agora channel
       const uid = await client.join(appId, channelName, null, undefined);
-      console.log("[Voice Chat] Joined channel with UID:", uid);
+      console.log("[Voice Chat Connection] Joined channel with UID:", uid);
 
-      console.log("[Voice Chat] Publishing audio track");
-      await client.publish(audioTrack);
-      console.log("[Voice Chat] Published audio track successfully");
+      console.log("[Voice Chat Connection] Publishing audio track");
+      // Publish the audio track
+      // Note: Publish expects ILocalTrack or ILocalTrack[], so we wrap the track in an array
+      await client.publish([audioTrack]);
+      console.log("[Voice Chat Connection] Published audio track successfully");
 
       setIsConnected(true);
       return uid;
     } catch (error) {
-      console.error("[Voice Chat] Error connecting:", error);
+      console.error("[Voice Chat Connection] Error connecting:", error);
       throw error;
     }
   }, [client]);
 
   const disconnect = useCallback(async () => {
     if (!isConnected) {
-      console.log("[Voice Chat] Not connected to voice chat");
+      console.log("[Voice Chat Connection] Not connected to voice chat");
       return;
     }
 
     try {
       await client.leave();
       setIsConnected(false);
-      console.log("[Voice Chat] Left voice chat");
+      console.log("[Voice Chat Connection] Left voice chat");
     } catch (error) {
-      console.error("[Voice Chat] Error leaving voice chat:", error);
+      console.error("[Voice Chat Connection] Error leaving voice chat:", error);
       throw error;
     }
   }, [client, isConnected]);
