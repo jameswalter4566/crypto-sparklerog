@@ -3,8 +3,7 @@ import { useRTCClient } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
-import type { IAgoraRTCClient, ILocalTrack } from 'agora-rtc-react';
-import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
+import type { ILocalTrack } from 'agora-rtc-react';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -118,8 +117,27 @@ export const useVoiceChat = ({
       removeParticipant(uidNumber);
     };
 
+    // IMPORTANT: Handle user-published event to hear remote users
+    const handleUserPublished = async (user: any, mediaType: string) => {
+      console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
+      if (mediaType === "audio") {
+        await client.subscribe(user, "audio");
+        console.log("[Voice Chat] Subscribed to remote audio:", user.uid);
+        user.audioTrack?.play();
+      }
+    };
+
+    const handleUserUnpublished = (user: any, mediaType: string) => {
+      console.log("[Voice Chat] User unpublished:", user.uid, "MediaType:", mediaType);
+      if (mediaType === "audio") {
+        user.audioTrack?.stop();
+      }
+    };
+
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
+    client.on("user-published", handleUserPublished);
+    client.on("user-unpublished", handleUserUnpublished);
 
     // Enable volume indicator
     client.enableAudioVolumeIndicator();
@@ -128,6 +146,8 @@ export const useVoiceChat = ({
       console.log("[Voice Chat] Cleaning up voice chat event listeners");
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
+      client.off("user-published", handleUserPublished);
+      client.off("user-unpublished", handleUserUnpublished);
     };
   }, [client, addRemoteParticipant, removeParticipant, localUid]);
 
