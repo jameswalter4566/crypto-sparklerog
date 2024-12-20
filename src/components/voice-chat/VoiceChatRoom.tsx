@@ -34,36 +34,38 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   const [isDeviceSelected, setIsDeviceSelected] = useState(false);
   const { toast } = useToast();
 
-  const { 
-    participants, 
-    isMuted, 
-    handleToggleMute, 
-    join, 
-    leave, 
-    toggleMute 
+  const {
+    participants,
+    isMuted,
+    handleToggleMute,
+    join,
+    leave,
+    toggleMute
   } = useVoiceChat({
     channelName,
     userProfile,
     agoraAppId: AGORA_APP_ID,
-    microphoneId: selectedMicrophoneId
+    microphoneId: selectedMicrophoneId,
   });
+
+  // Debug: Log whenever participants change
+  useEffect(() => {
+    console.log("Participants updated:", participants);
+  }, [participants]);
 
   useEffect(() => {
     const getDevices = async () => {
+      console.log("Requesting audio permission and listing devices...");
       try {
-        // Request permission to access audio devices
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        // Get list of audio input devices
         const devices = await AgoraRTC.getMicrophones();
+        console.log("Available audio devices:", devices);
         setAudioDevices(devices);
-        
-        // Set default device if available
         if (devices.length > 0) {
           setSelectedMicrophoneId(devices[0].deviceId);
+        } else {
+          setError("No audio input devices found. Please plug in a microphone.");
         }
-        
-        setIsLoading(false);
       } catch (err) {
         console.error('Failed to get audio devices:', err);
         const errorMsg = err instanceof Error ? err.message : "Failed to access microphone. Please check your browser permissions.";
@@ -73,6 +75,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
           title: "Error",
           description: errorMsg,
         });
+      } finally {
         setIsLoading(false);
       }
     };
@@ -81,18 +84,25 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   }, [toast]);
 
   const handleDeviceSelect = async () => {
-    try {
-      if (!selectedMicrophoneId) {
-        setError("Please select a microphone device.");
-        return;
-      }
+    console.log("Selected microphone ID:", selectedMicrophoneId);
+    if (!selectedMicrophoneId) {
+      const errMsg = "Please select a microphone device before joining.";
+      setError(errMsg);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errMsg,
+      });
+      return;
+    }
 
+    try {
       setIsLoading(true);
       setError(null);
-      await join();
+      console.log("Attempting to join voice chat...");
+      await join(); // Ensure that join() handles track creation and publishing
       setIsDeviceSelected(true);
       console.log("Successfully joined voice chat with device:", selectedMicrophoneId);
-      setIsLoading(false);
     } catch (err) {
       console.error('Failed to initialize Agora:', err);
       const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
@@ -102,6 +112,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
         title: "Error",
         description: errorMsg,
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -159,7 +170,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
             <Button variant="outline" onClick={onLeave}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleDeviceSelect}
               disabled={!selectedMicrophoneId}
             >
