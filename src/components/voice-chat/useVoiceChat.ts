@@ -3,6 +3,7 @@ import { useRTCClient } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
+import type { ILocalTrack } from 'agora-rtc-sdk-ng';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -57,7 +58,8 @@ export const useVoiceChat = ({
         throw new Error("Failed to create audio track");
       }
 
-      const uid = await connect(channelName, agoraAppId, audioTrack);
+      // Cast the audio track to ILocalTrack since we know it's compatible
+      const uid = await connect(channelName, agoraAppId, audioTrack as ILocalTrack);
       addLocalParticipant(Number(uid), userProfile);
       console.log("[Voice Chat] Successfully connected to voice chat");
     } catch (error) {
