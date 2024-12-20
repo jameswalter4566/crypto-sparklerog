@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useRTCClient } from "agora-rtc-react";
 import type { 
-  IAgoraRTCRemoteUser, 
+  IAgoraRTCRemoteUser,
   ILocalAudioTrack,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack 
+  UID
 } from "agora-rtc-sdk-ng";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
@@ -32,7 +31,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
     const initVoiceChat = async () => {
       try {
         // Join the Agora channel
-        await client.join(agoraAppId, channelName, null, null);
+        const uid = await client.join(agoraAppId, channelName, null, null);
         console.log("Successfully joined channel:", channelName);
 
         // Create and publish local audio track
@@ -42,24 +41,25 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        // Publish as an array to match the expected type
-        await client.publish([audioTrack]);
+        await client.publish(audioTrack);
         setLocalAudioTrack(audioTrack);
 
         // Add local user to participants
         if (userProfile) {
           setParticipants(prev => [
             ...prev,
-            createParticipant(client.uid as number, userProfile)
+            createParticipant(uid as number, userProfile)
           ]);
         }
 
-        // Monitor audio levels using the processSourceFrame event
+        // Monitor audio levels
         audioTrack.setVolume(100);
-        audioTrack.on("audio-volume-indication", (volume) => {
-          setParticipants(prev => 
-            updateParticipantTalkingState(prev, client.uid as number, volume > 5)
-          );
+        audioTrack.on("volume-indicator", (volume) => {
+          if (mounted) {
+            setParticipants(prev => 
+              updateParticipantTalkingState(prev, uid as number, volume > 5)
+            );
+          }
         });
 
       } catch (error) {
@@ -78,8 +78,10 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
     const handleUserJoined = async (user: IAgoraRTCRemoteUser) => {
       try {
         // Subscribe to the remote user's audio track
-        await client.subscribe(user, "audio");
-        console.log("Subscribed to remote user:", user.uid);
+        if (user.hasAudio) {
+          await client.subscribe(user, "audio");
+          console.log("Subscribed to remote user:", user.uid);
+        }
 
         // Get user profile from Supabase
         const { data: profile } = await supabase
@@ -94,10 +96,12 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         // Monitor remote user's audio levels
         if (user.audioTrack) {
           user.audioTrack.setVolume(100);
-          user.audioTrack.on("audio-volume-indication", (volume) => {
-            setParticipants(prev => 
-              updateParticipantTalkingState(prev, Number(user.uid), volume > 5)
-            );
+          user.audioTrack.on("volume-indicator", (volume) => {
+            if (mounted) {
+              setParticipants(prev => 
+                updateParticipantTalkingState(prev, Number(user.uid), volume > 5)
+              );
+            }
           });
         }
       } catch (error) {
