@@ -4,7 +4,6 @@ import type {
   IAgoraRTCRemoteUser,
   ILocalAudioTrack,
   UID,
-  IAgoraRTCClient
 } from "agora-rtc-sdk-ng";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
@@ -42,8 +41,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        // Publish the track as an array to match the expected type
-        await (client as IAgoraRTCClient).publish([audioTrack]);
+        // Publish the track
+        await client.publish([audioTrack]);
         setLocalAudioTrack(audioTrack);
 
         // Add local user to participants
@@ -56,12 +55,14 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
 
         // Monitor audio levels
         audioTrack.setVolume(100);
-        // Use "audio-volume-indicator" event instead of "volume-indicator"
-        audioTrack.on("audio-volume-indicator", (volume) => {
+        audioTrack.enableAudioVolumeIndicator();
+        client.on("volume-indicator", (volumes) => {
           if (mounted) {
-            setParticipants(prev => 
-              updateParticipantTalkingState(prev, uid as number, volume > 5)
-            );
+            volumes.forEach(volume => {
+              setParticipants(prev => 
+                updateParticipantTalkingState(prev, volume.uid as number, volume.level > 5)
+              );
+            });
           }
         });
 
@@ -80,7 +81,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
       try {
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          await (client as IAgoraRTCClient).subscribe(user as IAgoraRTCRemoteUser, "audio");
+          await client.subscribe(user, "audio");
           console.log("Subscribed to remote user:", user.uid);
         }
 
@@ -94,18 +95,6 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         // Add remote user to participants
         setParticipants(prev => [...prev, createParticipant(Number(user.uid), profile)]);
 
-        // Monitor remote user's audio levels
-        if (user.audioTrack) {
-          user.audioTrack.setVolume(100);
-          // Use "audio-volume-indicator" event for remote tracks as well
-          user.audioTrack.on("audio-volume-indicator", (volume) => {
-            if (mounted) {
-              setParticipants(prev => 
-                updateParticipantTalkingState(prev, Number(user.uid), volume > 5)
-              );
-            }
-          });
-        }
       } catch (error) {
         console.error("Error subscribing to remote user:", error);
       }
