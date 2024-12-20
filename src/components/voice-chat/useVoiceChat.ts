@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRTCClient } from 'agora-rtc-react';
-import type { UID } from 'agora-rtc-sdk-ng';
+import type { UID, ILocalTrack } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
 import { createParticipant } from './participantUtils';
@@ -42,16 +42,17 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
 
     try {
       // Join the channel
-      const uid = await client.join(agoraAppId, channelName, null, null);
+      const uid = await client.join(agoraAppId, channelName, null, undefined);
       console.log("Joined voice chat with UID:", uid);
 
       // Create and publish local audio track
       const audioTrack = await createLocalAudioTrack();
-      await client.publish(getTrackForPublishing());
+      const trackToPublish = getTrackForPublishing();
+      await client.publish(trackToPublish as unknown as ILocalTrack[]);
       console.log("Published local audio track");
 
       // Add local participant
-      setParticipants([createParticipant(uid, userProfile)]);
+      setParticipants([createParticipant(Number(uid), userProfile)]);
       setIsConnected(true);
     } catch (error) {
       console.error("Error joining voice chat:", error);
