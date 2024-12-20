@@ -3,7 +3,7 @@ import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
 import type { UID } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
-import { createParticipant } from './participantUtils';
+import { createParticipant, updateParticipantTalkingState } from './participantUtils';
 import type { Participant } from './types';
 
 export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
@@ -33,6 +33,21 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
     handleUserJoined,
     handleUserLeft
   } = useRemoteUsers();
+
+  // Handle remote users joining
+  useEffect(() => {
+    if (remoteUsers.length > 0) {
+      setParticipants(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newParticipants = remoteUsers
+          .filter(user => !existingIds.has(Number(user.uid)))
+          .map(user => createParticipant(Number(user.uid)));
+        
+        if (newParticipants.length === 0) return prev;
+        return [...prev, ...newParticipants];
+      });
+    }
+  }, [remoteUsers]);
 
   const join = useCallback(async () => {
     if (isConnected) {
@@ -101,6 +116,18 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
       client.off("user-left", handleUserLeft);
     };
   }, [client, handleUserJoined, handleUserLeft]);
+
+  // Handle user leaving
+  useEffect(() => {
+    const handleUserLeftUpdate = (uid: UID) => {
+      setParticipants(prev => prev.filter(p => p.id !== Number(uid)));
+    };
+
+    client.on("user-left", handleUserLeftUpdate);
+    return () => {
+      client.off("user-left", handleUserLeftUpdate);
+    };
+  }, [client]);
 
   return {
     isConnected,
