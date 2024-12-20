@@ -44,8 +44,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        // Publish the audio track to the channel
-        await client.publish([audioTrack] as ILocalTrack[]);
+        // Publish the audio track to the channel with proper type casting
+        await client.publish([(audioTrack as unknown) as ILocalTrack]);
         console.log("Published local audio track");
         setLocalAudioTrack(audioTrack);
 
