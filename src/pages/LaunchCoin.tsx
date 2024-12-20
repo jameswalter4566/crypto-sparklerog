@@ -3,14 +3,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createToken } from "@/lib/solana/tokenCreator";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function LaunchCoin() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { publicKey, connected } = useWallet();
   const [isCreating, setIsCreating] = useState(false);
+  const [solBalance, setSolBalance] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     symbol: "",
@@ -19,6 +23,28 @@ export default function LaunchCoin() {
     initialSupply: "1000000"
   });
 
+  const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (publicKey) {
+        try {
+          const balance = await connection.getBalance(publicKey);
+          setSolBalance(balance / LAMPORTS_PER_SOL);
+        } catch (error) {
+          console.error("Error fetching balance:", error);
+          setSolBalance(null);
+        }
+      }
+    };
+
+    if (connected && publicKey) {
+      fetchBalance();
+    } else {
+      setSolBalance(null);
+    }
+  }, [connected, publicKey]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -26,6 +52,25 @@ export default function LaunchCoin() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!publicKey) {
+      toast({
+        variant: "destructive",
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to create a token",
+      });
+      return;
+    }
+
+    if (solBalance !== null && solBalance < 0.1) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Balance",
+        description: "You need at least 0.1 SOL to create a token",
+      });
+      return;
+    }
+
     setIsCreating(true);
 
     try {
@@ -36,7 +81,7 @@ export default function LaunchCoin() {
         initialSupply: parseInt(formData.initialSupply)
       };
 
-      const result = await createToken(tokenConfig);
+      const result = await createToken(tokenConfig, publicKey, connection);
 
       if (result.success) {
         toast({
@@ -68,6 +113,15 @@ export default function LaunchCoin() {
         <ArrowLeft className="h-4 w-4" />
         go back
       </Link>
+
+      {connected && publicKey && (
+        <div className="mb-6 p-4 bg-secondary/10 rounded-lg">
+          <p className="text-sm text-muted-foreground">Connected: {publicKey.toBase58().slice(0, 8)}...{publicKey.toBase58().slice(-8)}</p>
+          {solBalance !== null && (
+            <p className="text-sm text-muted-foreground mt-1">Balance: {solBalance.toFixed(4)} SOL</p>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
@@ -155,8 +209,16 @@ export default function LaunchCoin() {
           </Button>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isCreating}>
-          {isCreating ? "creating coin..." : "create coin"}
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isCreating || !connected || (solBalance !== null && solBalance < 0.1)}
+        >
+          {!connected 
+            ? "Connect Wallet to Create" 
+            : isCreating 
+              ? "creating coin..." 
+              : "create coin"}
         </Button>
 
         <p className="text-sm text-muted-foreground text-center">
