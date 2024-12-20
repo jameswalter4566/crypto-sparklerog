@@ -22,34 +22,50 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { participants, isMuted, handleToggleMute } = useVoiceChat({
+  const { 
+    participants, 
+    isMuted, 
+    handleToggleMute, 
+    join, 
+    leave, 
+    toggleMute 
+  } = useVoiceChat({
     channelName,
     userProfile,
     agoraAppId: AGORA_APP_ID
   });
 
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      if (!AGORA_APP_ID) {
-        throw new Error("Failed to initialize voice chat. Please try again later.");
+    const initializeVoiceChat = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        if (!AGORA_APP_ID) {
+          throw new Error("Failed to initialize voice chat. Please try again later.");
+        }
+        
+        await join();
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to initialize Agora:', err);
+        const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
+        setError(errorMsg);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: errorMsg,
+        });
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Failed to initialize Agora:', err);
-      const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
-      setError(errorMsg);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMsg,
-      });
-      setIsLoading(false);
-    }
-  }, [toast]);
+    };
+
+    initializeVoiceChat();
+
+    return () => {
+      leave();
+    };
+  }, [join, leave, toast]);
 
   if (isLoading) {
     return (
@@ -72,7 +88,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     <div className="p-4">
       <VoiceChatControls
         isMuted={isMuted}
-        onToggleMute={handleToggleMute}
+        onToggleMute={toggleMute}
         onLeave={onLeave}
       />
       <VoiceChatParticipants

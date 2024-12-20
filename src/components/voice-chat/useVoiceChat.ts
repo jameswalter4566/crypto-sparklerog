@@ -1,12 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useClient } from 'agora-rtc-react';
-import { UID } from 'agora-rtc-sdk-ng';
+import { useRTCClient } from 'agora-rtc-react';
+import type { UID } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
+import { createParticipant } from './participantUtils';
+import type { Participant } from './types';
 
-export const useVoiceChat = (channelName: string) => {
-  const client = useClient();
+export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
+  channelName: string;
+  userProfile: {
+    wallet_address: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+  agoraAppId: string;
+}) => {
+  const client = useRTCClient();
   const [isConnected, setIsConnected] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   
   const {
     localAudioTrack,
@@ -31,12 +42,7 @@ export const useVoiceChat = (channelName: string) => {
 
     try {
       // Join the channel
-      const uid = await client.join(
-        "c6f7a2828b774baebabd8ece87268954",
-        channelName,
-        null,
-        null
-      );
+      const uid = await client.join(agoraAppId, channelName, null, null);
       console.log("Joined voice chat with UID:", uid);
 
       // Create and publish local audio track
@@ -44,13 +50,15 @@ export const useVoiceChat = (channelName: string) => {
       await client.publish(getTrackForPublishing());
       console.log("Published local audio track");
 
+      // Add local participant
+      setParticipants([createParticipant(uid, userProfile)]);
       setIsConnected(true);
     } catch (error) {
       console.error("Error joining voice chat:", error);
       cleanup();
       throw error;
     }
-  }, [client, channelName, isConnected, createLocalAudioTrack, getTrackForPublishing]);
+  }, [client, channelName, isConnected, createLocalAudioTrack, getTrackForPublishing, agoraAppId, userProfile]);
 
   const leave = useCallback(async () => {
     if (!isConnected) {
@@ -59,7 +67,6 @@ export const useVoiceChat = (channelName: string) => {
     }
 
     try {
-      // Cleanup and leave
       cleanup();
       console.log("Left voice chat");
     } catch (error) {
@@ -72,15 +79,20 @@ export const useVoiceChat = (channelName: string) => {
     cleanupLocalAudio();
     client.leave();
     setIsConnected(false);
+    setParticipants([]);
   }, [client, cleanupLocalAudio]);
 
+  const handleToggleMute = useCallback((userId: number) => {
+    setParticipants(prev => 
+      prev.map(p => p.id === userId ? { ...p, isMuted: !p.isMuted } : p)
+    );
+  }, []);
+
   useEffect(() => {
-    // Set up event listeners
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
 
     return () => {
-      // Clean up event listeners
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
     };
@@ -91,6 +103,8 @@ export const useVoiceChat = (channelName: string) => {
     localAudioTrack,
     remoteUsers,
     isMuted,
+    participants,
+    handleToggleMute,
     join,
     leave,
     toggleMute

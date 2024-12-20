@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { IMicrophoneAudioTrack, ILocalTrack } from 'agora-rtc-react';
 import AgoraRTC from 'agora-rtc-sdk-ng';
+import type { IMicrophoneAudioTrack, ILocalTrack } from 'agora-rtc-sdk-ng';
 
 export const useLocalAudio = () => {
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
@@ -9,7 +9,7 @@ export const useLocalAudio = () => {
   const createLocalAudioTrack = useCallback(async () => {
     try {
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      setLocalAudioTrack(audioTrack);
+      setLocalAudioTrack(audioTrack as IMicrophoneAudioTrack);
       return audioTrack;
     } catch (error) {
       console.error("Error creating local audio track:", error);
@@ -42,7 +42,7 @@ export const useLocalAudio = () => {
     toggleMute,
     cleanup,
     getTrackForPublishing: useCallback(() => 
-      localAudioTrack ? [(localAudioTrack as unknown) as ILocalTrack] : [], 
+      localAudioTrack ? [localAudioTrack as unknown as ILocalTrack] : [], 
     [localAudioTrack])
   };
 };
