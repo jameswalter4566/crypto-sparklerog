@@ -82,7 +82,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
       try {
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          await client.subscribe(user, "audio");
+          // Use user.uid directly for subscription
+          await client.subscribe(user.uid as UID, "audio");
           console.log("Subscribed to remote user:", user.uid);
         }
 
