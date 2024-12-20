@@ -6,7 +6,7 @@ export const createParticipant = (
 ): Participant => {
   const participant = {
     id: uid,
-    username: profile?.display_name || "User",
+    username: profile?.display_name || `User ${uid.toString().slice(-4)}`,
     avatar: profile?.avatar_url || "/placeholder.svg",
     isMuted: false,
     isTalking: false,

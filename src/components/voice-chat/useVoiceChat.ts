@@ -69,6 +69,7 @@ export const useVoiceChat = ({
 
       // Store the UID mapping for the local user
       if (userProfile?.wallet_address) {
+        console.log("[Voice Chat] Storing UID mapping:", { uid: uidNumber, wallet: userProfile.wallet_address });
         await storeVoiceChatUID(uidNumber, userProfile.wallet_address);
       }
 
@@ -113,15 +114,14 @@ export const useVoiceChat = ({
       }
       console.log("[Voice Chat] Remote user joined:", uidNumber);
 
-      let fetchedProfile: ParticipantProfile | null = null;
       try {
-        fetchedProfile = await fetchUserProfile(uidNumber);
+        const fetchedProfile = await fetchUserProfile(uidNumber);
         console.log("[Voice Chat] Fetched remote user profile:", fetchedProfile);
+        addRemoteParticipant(uidNumber, fetchedProfile);
       } catch (err) {
         console.error("[Voice Chat] Error fetching remote user profile:", err);
+        addRemoteParticipant(uidNumber, null);
       }
-
-      addRemoteParticipant(uidNumber, fetchedProfile);
     };
 
     const handleUserLeft = (user: any) => {
