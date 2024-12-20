@@ -13,12 +13,11 @@ export const useLocalAudio = (microphoneId?: string) => {
         microphoneId: microphoneId
       });
       console.log("[Local Audio] Created audio track:", audioTrack);
-      
-      // Test the audio track
+
       const enabled = audioTrack.enabled;
       const muted = audioTrack.muted;
       console.log("[Local Audio] Track state - Enabled:", enabled, "Muted:", muted);
-      
+
       setLocalAudioTrack(audioTrack);
       return audioTrack;
     } catch (error) {
@@ -40,6 +39,7 @@ export const useLocalAudio = (microphoneId?: string) => {
 
   const cleanup = useCallback(() => {
     if (localAudioTrack) {
+      console.log("[Local Audio] Cleaning up local audio track");
       localAudioTrack.close();
       setLocalAudioTrack(null);
     }
