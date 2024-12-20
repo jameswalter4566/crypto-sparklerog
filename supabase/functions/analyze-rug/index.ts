@@ -23,16 +23,18 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
             content: `You are a cryptocurrency security analyst. Analyze the provided coin data and user's voice input to assess the rug pull risk. 
-            Format your response as a JSON object with these fields:
-            - devAnalysis: Analysis of developer holdings
-            - launchAnalysis: Analysis of launch history
-            - socialMediaStatus: Analysis of social media presence
-            - rugScore: A number between 0-100 indicating risk (higher = riskier)`
+            Return ONLY a JSON object with these exact fields:
+            {
+              "devAnalysis": "Analysis of developer holdings",
+              "launchAnalysis": "Analysis of launch history",
+              "socialMediaStatus": "Analysis of social media presence",
+              "rugScore": number between 0-100 indicating risk
+            }`
           },
           {
             role: 'user',
@@ -43,23 +45,44 @@ serve(async (req) => {
             User's Question: ${userMessage}`
           }
         ],
+        temperature: 0.7,
+        max_tokens: 500
       }),
     });
 
-    const data = await openAIResponse.json();
-    console.log("OpenAI response:", data);
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.text();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData}`);
+    }
 
-    // Parse the response text as JSON
-    const analysis = JSON.parse(data.choices[0].message.content);
+    const data = await openAIResponse.json();
+    console.log("OpenAI raw response:", data);
+
+    // Extract the content from the response and parse it as JSON
+    const analysisText = data.choices[0].message.content.trim();
+    console.log("Analysis text before parsing:", analysisText);
     
+    const analysis = JSON.parse(analysisText);
+    console.log("Parsed analysis:", analysis);
+
+    // Validate the required fields
+    if (!analysis.devAnalysis || !analysis.launchAnalysis || 
+        !analysis.socialMediaStatus || typeof analysis.rugScore !== 'number') {
+      throw new Error('Invalid analysis format returned from OpenAI');
+    }
+
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in analyze-rug function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
