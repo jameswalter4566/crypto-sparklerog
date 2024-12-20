@@ -4,6 +4,8 @@ import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
 import type { ILocalTrack } from 'agora-rtc-react';
+import type { ParticipantProfile } from './types'; // Ensure this type is imported
+import { fetchUserProfile } from '@/services/fetchUserProfile'; // A function you write to fetch profile data
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -97,14 +99,24 @@ export const useVoiceChat = ({
   useEffect(() => {
     console.log("[Voice Chat] Setting up voice chat event listeners");
 
-    const handleUserJoined = (user: any) => {
+    const handleUserJoined = async (user: any) => {
       const uidNumber = Number(user.uid);
       if (localUid !== null && uidNumber === localUid) {
         console.log("[Voice Chat] Local user reported as joined (ignoring remote add):", uidNumber);
         return;
       }
       console.log("[Voice Chat] Remote user joined:", uidNumber);
-      addRemoteParticipant(uidNumber);
+
+      // **New Code: Fetch the remote user's profile before adding them**
+      let fetchedProfile: ParticipantProfile | null = null;
+      try {
+        fetchedProfile = await fetchUserProfile(uidNumber);
+        console.log("[Voice Chat] Fetched remote user profile:", fetchedProfile);
+      } catch (err) {
+        console.error("[Voice Chat] Error fetching remote user profile:", err);
+      }
+
+      addRemoteParticipant(uidNumber, fetchedProfile);
     };
 
     const handleUserLeft = (user: any) => {
@@ -117,7 +129,6 @@ export const useVoiceChat = ({
       removeParticipant(uidNumber);
     };
 
-    // IMPORTANT: Handle user-published event to hear remote users
     const handleUserPublished = async (user: any, mediaType: string) => {
       console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
       if (mediaType === "audio") {
