@@ -2,35 +2,22 @@ import { useState, useEffect } from "react";
 import { useRTCClient } from "agora-rtc-react";
 import type { 
   IAgoraRTCRemoteUser, 
-  ILocalAudioTrack, 
-  IRemoteAudioTrack,
-  UID
+  ILocalAudioTrack,
+  ICameraVideoTrack,
+  IMicrophoneAudioTrack 
 } from "agora-rtc-sdk-ng";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-interface UseVoiceChatProps {
-  channelName: string;
-  userProfile: {
-    wallet_address: string;
-    display_name: string | null;
-    avatar_url: string | null;
-  } | null;
-  agoraAppId: string;
-}
-
-interface Participant {
-  id: number;
-  username: string;
-  avatar: string;
-  isMuted: boolean;
-  isTalking: boolean;
-  tokenHolding: {
-    amount: string;
-    percentage: number;
-  };
-}
+import { 
+  type Participant,
+  type UseVoiceChatProps
+} from "./types";
+import { 
+  createParticipant,
+  updateParticipantTalkingState,
+  updateParticipantMuteState
+} from "./participantUtils";
 
 export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceChatProps) => {
   const client = useRTCClient();
@@ -38,19 +25,6 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
   const [localAudioTrack, setLocalAudioTrack] = useState<ILocalAudioTrack | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const { toast } = useToast();
-
-  // Function to create participant object from user data
-  const createParticipant = (uid: number, profile: any = null): Participant => ({
-    id: uid,
-    username: profile?.display_name || "Anonymous",
-    avatar: profile?.avatar_url || "/placeholder.svg",
-    isMuted: false,
-    isTalking: false,
-    tokenHolding: {
-      amount: "1000",
-      percentage: 25
-    }
-  });
 
   useEffect(() => {
     let mounted = true;
@@ -68,7 +42,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        await client.publish(audioTrack);
+        // Publish as an array to match the expected type
+        await client.publish([audioTrack]);
         setLocalAudioTrack(audioTrack);
 
         // Add local user to participants
@@ -79,15 +54,11 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           ]);
         }
 
-        // Set up volume detection for local audio
+        // Monitor audio levels using the processSourceFrame event
         audioTrack.setVolume(100);
-        audioTrack.on("volume-indicator", (volume) => {
+        audioTrack.on("audio-volume-indication", (volume) => {
           setParticipants(prev => 
-            prev.map(p => 
-              p.id === client.uid 
-                ? { ...p, isTalking: volume > 5 }
-                : p
-            )
+            updateParticipantTalkingState(prev, client.uid as number, volume > 5)
           );
         });
 
@@ -118,18 +89,14 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           .single();
 
         // Add remote user to participants
-        setParticipants(prev => [...prev, createParticipant(user.uid as number, profile)]);
+        setParticipants(prev => [...prev, createParticipant(Number(user.uid), profile)]);
 
-        // Set up volume detection for remote user
+        // Monitor remote user's audio levels
         if (user.audioTrack) {
           user.audioTrack.setVolume(100);
-          user.audioTrack.on("volume-indicator", (volume) => {
+          user.audioTrack.on("audio-volume-indication", (volume) => {
             setParticipants(prev => 
-              prev.map(p => 
-                p.id === user.uid 
-                  ? { ...p, isTalking: volume > 5 }
-                  : p
-              )
+              updateParticipantTalkingState(prev, Number(user.uid), volume > 5)
             );
           });
         }
@@ -141,16 +108,14 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
     // Handle remote users leaving
     const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
       console.log("Remote user left:", user.uid);
-      setParticipants(prev => prev.filter(p => p.id !== user.uid));
+      setParticipants(prev => prev.filter(p => p.id !== Number(user.uid)));
     };
 
     // Handle remote user mute/unmute
     const handleUserMuted = (user: IAgoraRTCRemoteUser, mediaType: "audio" | "video") => {
       if (mediaType === "audio") {
         setParticipants(prev =>
-          prev.map(p =>
-            p.id === user.uid ? { ...p, isMuted: true } : p
-          )
+          updateParticipantMuteState(prev, Number(user.uid), true)
         );
       }
     };
@@ -158,9 +123,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
     const handleUserUnmuted = (user: IAgoraRTCRemoteUser, mediaType: "audio" | "video") => {
       if (mediaType === "audio") {
         setParticipants(prev =>
-          prev.map(p =>
-            p.id === user.uid ? { ...p, isMuted: false } : p
-          )
+          updateParticipantMuteState(prev, Number(user.uid), false)
         );
       }
     };
@@ -189,9 +152,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
       await localAudioTrack.setEnabled(!newMutedState);
       
       setParticipants(prev =>
-        prev.map(participant =>
-          participant.id === client.uid ? { ...participant, isMuted: newMutedState } : participant
-        )
+        updateParticipantMuteState(prev, client.uid as number, newMutedState)
       );
     }
   };
