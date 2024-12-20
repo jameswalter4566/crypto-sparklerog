@@ -19,6 +19,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    'global': {},
+    'process.env': {}
+  },
   build: {
     rollupOptions: {
       external: [

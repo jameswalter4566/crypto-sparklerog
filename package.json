@@ -49,6 +49,7 @@
     "agora-rtc-react": "^2.3.0",
     "agora-rtc-sdk-ng": "^4.23.0",
     "alchemy-sdk": "^3.5.0",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
