@@ -38,22 +38,32 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
         // @ts-ignore
         const { solana } = window;
         
-        // Check if wallet is connected
         if (solana?.isPhantom && solana.isConnected) {
-          setWalletConnected(true);
           const address = solana.publicKey.toString();
+          console.log("Wallet connected:", address);
+          setWalletConnected(true);
           
           // Get the user's profile
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('wallet_address, display_name, avatar_url')
             .eq('wallet_address', address)
             .maybeSingle();
           
+          if (error) {
+            console.error("Error fetching profile:", error);
+            toast.error("Error loading profile");
+            return;
+          }
+
+          console.log("Profile data:", profile);
           if (profile) {
             setUserProfile(profile);
+          } else {
+            setUserProfile(null);
           }
         } else {
+          console.log("Wallet not connected");
           setWalletConnected(false);
           setUserProfile(null);
         }
@@ -65,14 +75,20 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
       }
     };
 
+    // Initial check
     checkWalletAndProfile();
 
     // Listen for wallet connection changes
     // @ts-ignore
     const { solana } = window;
     if (solana) {
-      solana.on('connect', checkWalletAndProfile);
+      solana.on('connect', () => {
+        console.log("Wallet connected event");
+        checkWalletAndProfile();
+      });
+      
       solana.on('disconnect', () => {
+        console.log("Wallet disconnected event");
         setWalletConnected(false);
         setUserProfile(null);
         if (isJoined) {
@@ -85,7 +101,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
         solana.removeListener('disconnect', () => {});
       };
     }
-  }, [isJoined]);
+  }, []);
 
   const handleJoinVoiceChat = () => {
     if (!walletConnected) {
@@ -112,7 +128,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
               size="lg"
               onClick={handleJoinVoiceChat}
               className="gap-2"
-              disabled={isLoading || !walletConnected || !userProfile}
+              disabled={isLoading}
             >
               <Mic className="h-5 w-5" />
               Join Voice Chat
