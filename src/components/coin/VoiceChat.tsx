@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
 import { AgoraRTCProvider } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
@@ -31,77 +31,80 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [walletConnected, setWalletConnected] = useState(false);
 
-  useEffect(() => {
-    const checkWalletAndProfile = async () => {
-      try {
-        setIsLoading(true);
-        // @ts-ignore
-        const { solana } = window;
+  const checkWalletAndProfile = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // @ts-ignore
+      const { solana } = window;
+      
+      if (solana?.isPhantom && solana.isConnected) {
+        const address = solana.publicKey.toString();
+        console.log("Wallet connected:", address);
+        setWalletConnected(true);
         
-        if (solana?.isPhantom && solana.isConnected) {
-          const address = solana.publicKey.toString();
-          console.log("Wallet connected:", address);
-          setWalletConnected(true);
-          
-          // Get the user's profile
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('wallet_address, display_name, avatar_url')
-            .eq('wallet_address', address)
-            .maybeSingle();
-          
-          if (error) {
-            console.error("Error fetching profile:", error);
-            toast.error("Error loading profile");
-            return;
-          }
-
-          console.log("Profile data:", profile);
-          if (profile) {
-            setUserProfile(profile);
-          } else {
-            setUserProfile(null);
-          }
-        } else {
-          console.log("Wallet not connected");
-          setWalletConnected(false);
+        // Fetch user's profile from Supabase
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('wallet_address, display_name, avatar_url')
+          .eq('wallet_address', address)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching profile:", error);
+          toast.error("Error loading profile");
           setUserProfile(null);
+        } else {
+          console.log("Profile data:", profile);
+          setUserProfile(profile || null);
         }
-      } catch (error) {
-        console.error("Error checking wallet and profile:", error);
-        toast.error("Error loading profile");
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.log("Wallet not connected");
+        setWalletConnected(false);
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error("Error checking wallet and profile:", error);
+      toast.error("Error loading profile");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initial check on mount
+    checkWalletAndProfile();
+
+    // @ts-ignore
+    const { solana } = window;
+    if (!solana) {
+      console.log("Phantom wallet not found");
+      return;
+    }
+
+    // Define event handlers so we can remove them later
+    const onConnect = () => {
+      console.log("Wallet connected event");
+      checkWalletAndProfile();
+    };
+    const onDisconnect = () => {
+      console.log("Wallet disconnected event");
+      setWalletConnected(false);
+      setUserProfile(null);
+      if (isJoined) {
+        setIsJoined(false);
       }
     };
 
-    // Initial check
-    checkWalletAndProfile();
+    solana.on('connect', onConnect);
+    solana.on('disconnect', onDisconnect);
 
-    // Listen for wallet connection changes
-    // @ts-ignore
-    const { solana } = window;
-    if (solana) {
-      solana.on('connect', () => {
-        console.log("Wallet connected event");
-        checkWalletAndProfile();
-      });
-      
-      solana.on('disconnect', () => {
-        console.log("Wallet disconnected event");
-        setWalletConnected(false);
-        setUserProfile(null);
-        if (isJoined) {
-          setIsJoined(false);
-        }
-      });
-
-      return () => {
-        solana.removeListener('connect', checkWalletAndProfile);
-        solana.removeListener('disconnect', () => {});
-      };
-    }
-  }, []);
+    return () => {
+      if (solana) {
+        solana.removeListener('connect', onConnect);
+        solana.removeListener('disconnect', onDisconnect);
+      }
+    };
+  }, [checkWalletAndProfile, isJoined]);
 
   const handleJoinVoiceChat = () => {
     if (!walletConnected) {
