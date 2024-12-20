@@ -1,1 +1,12 @@
 project_id = "fybgcaeoxptmmcwgslpl"
+
+[api]
+enabled = true
+url = "https://fybgcaeoxptmmcwgslpl.supabase.co"
+
+[functions]
+[functions.analyze-rug]
+verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
