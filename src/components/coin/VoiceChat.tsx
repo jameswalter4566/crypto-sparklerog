@@ -1,30 +1,58 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
 import { AgoraRTCProvider } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import type { ClientConfig } from "agora-rtc-sdk-ng";
 import type { IAgoraRTCClient } from "agora-rtc-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VoiceChatProps {
   coinId: string;
 }
 
-// Define client configuration
 const config: ClientConfig = {
   mode: "rtc",
   codec: "vp8"
 };
 
-// Create the Agora RTC client and cast it to the expected type
 const client = AgoraRTC.createClient(config) as unknown as IAgoraRTCClient;
 
 export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   const [isJoined, setIsJoined] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    wallet_address: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_address, display_name, avatar_url')
+          .eq('wallet_address', session.user.id)
+          .single();
+        
+        if (profile) {
+          setUserProfile(profile);
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleJoinVoiceChat = () => {
+    if (!userProfile) {
+      toast.error("Please connect your wallet to join voice chat");
+      return;
+    }
     setIsJoined(true);
   };
 
@@ -41,18 +69,22 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
               size="lg"
               onClick={handleJoinVoiceChat}
               className="gap-2"
+              disabled={!userProfile}
             >
               <Mic className="h-5 w-5" />
               Join Voice Chat
             </Button>
             <p className="text-sm text-muted-foreground">
-              Join the voice chat to discuss with other traders
+              {userProfile 
+                ? "Join the voice chat to discuss with other traders"
+                : "Please connect your wallet to join voice chat"}
             </p>
           </div>
         ) : (
           <VoiceChatRoom
             channelName={`coin-${coinId}`}
             onLeave={handleLeaveVoiceChat}
+            userProfile={userProfile}
           />
         )}
       </AgoraRTCProvider>

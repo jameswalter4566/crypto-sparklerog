@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
-import { useRTCClient } from "agora-rtc-react";
+import { useRTCClient, IAgoraRTCRemoteUser, IMicrophoneAudioTrack } from "agora-rtc-react";
 import { Button } from "@/components/ui/button";
 import { getAgoraAppId, DEFAULT_TOKEN } from "./AgoraConfig";
 import { VoiceChatUser } from "../coin/VoiceChatUser";
 import { useToast } from "@/components/ui/use-toast";
+import AgoraRTC from "agora-rtc-sdk-ng";
 
 interface VoiceChatRoomProps {
   channelName: string;
   onLeave: () => void;
+  userProfile: {
+    wallet_address: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 const useIsConnected = () => {
@@ -21,7 +27,7 @@ const useIsConnected = () => {
   return isConnected;
 };
 
-export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
+export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRoomProps) => {
   const client = useRTCClient();
   const [users, setUsers] = useState<Array<{
     id: number;
@@ -34,6 +40,8 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
       percentage: number;
     };
   }>>([]);
+  const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const [calling, setCalling] = useState(false);
   const [agoraAppId, setAgoraAppId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,9 +57,7 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
         setIsLoading(true);
         setError(null);
         
-        console.log('Initializing Agora...');
         const appId = await getAgoraAppId();
-        console.log('Received Agora App ID:', appId ? 'Valid ID' : 'No ID');
         
         if (!isMounted) return;
 
@@ -93,19 +99,22 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
   }, [toast]);
 
   useEffect(() => {
-    if (!agoraAppId || !calling) return;
+    if (!agoraAppId || !calling || !userProfile) return;
 
     const initVoiceChat = async () => {
       try {
-        console.log('Joining voice chat with App ID:', agoraAppId ? 'Valid ID' : 'No ID');
         await client.join(agoraAppId, channelName, DEFAULT_TOKEN, null);
-        console.log("Joined voice chat successfully");
         
-        // Add a mock user for testing
+        // Create and publish local audio track
+        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        await client.publish(audioTrack);
+        setLocalAudioTrack(audioTrack);
+
+        // Add current user to the users list
         setUsers([{
-          id: 1,
-          username: "Test User",
-          avatar: "/placeholder.svg",
+          id: client.uid as number,
+          username: userProfile.display_name || "Anonymous",
+          avatar: userProfile.avatar_url || "/placeholder.svg",
           isMuted: false,
           isTalking: false,
           tokenHolding: {
@@ -113,6 +122,27 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
             percentage: 25
           }
         }]);
+
+        // Set up user-joined event handler
+        client.on("user-joined", (user: IAgoraRTCRemoteUser) => {
+          setUsers(prev => [...prev, {
+            id: user.uid as number,
+            username: "Remote User",
+            avatar: "/placeholder.svg",
+            isMuted: false,
+            isTalking: false,
+            tokenHolding: {
+              amount: "1000",
+              percentage: 25
+            }
+          }]);
+        });
+
+        // Set up user-left event handler
+        client.on("user-left", (user: IAgoraRTCRemoteUser) => {
+          setUsers(prev => prev.filter(u => u.id !== user.uid));
+        });
+
       } catch (error) {
         console.error("Error joining voice chat:", error);
         toast({
@@ -128,16 +158,28 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
     }
 
     return () => {
+      if (localAudioTrack) {
+        localAudioTrack.close();
+      }
       client.leave();
     };
-  }, [agoraAppId, calling, channelName, client, isConnected, toast]);
+  }, [agoraAppId, calling, channelName, client, isConnected, toast, userProfile]);
 
-  const handleToggleMute = (userId: number) => {
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId ? { ...user, isMuted: !user.isMuted } : user
-      )
-    );
+  const handleToggleMute = async (userId: number) => {
+    if (userId === client.uid && localAudioTrack) {
+      const newMutedState = !isMuted;
+      setIsMuted(newMutedState);
+      if (newMutedState) {
+        await localAudioTrack.setEnabled(false);
+      } else {
+        await localAudioTrack.setEnabled(true);
+      }
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, isMuted: newMutedState } : user
+        )
+      );
+    }
   };
 
   if (isLoading) {
