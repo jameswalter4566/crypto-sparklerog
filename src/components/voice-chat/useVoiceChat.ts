@@ -31,20 +31,27 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
   const {
     remoteUsers,
     handleUserJoined,
-    handleUserLeft
+    handleUserLeft,
+    cleanup: cleanupRemoteUsers
   } = useRemoteUsers();
 
-  // Handle remote users joining
+  // Handle remote users joining and update participants list
   useEffect(() => {
     if (remoteUsers.length > 0) {
       setParticipants(prev => {
         const existingIds = new Set(prev.map(p => p.id));
         const newParticipants = remoteUsers
           .filter(user => !existingIds.has(Number(user.uid)))
-          .map(user => createParticipant(Number(user.uid)));
+          .map(user => {
+            const participant = createParticipant(Number(user.uid));
+            console.log("Created new participant:", participant);
+            return participant;
+          });
         
         if (newParticipants.length === 0) return prev;
-        return [...prev, ...newParticipants];
+        const updatedParticipants = [...prev, ...newParticipants];
+        console.log("Updated participants list:", updatedParticipants);
+        return updatedParticipants;
       });
     }
   }, [remoteUsers]);
@@ -56,21 +63,24 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
     }
 
     try {
-      // Join the channel
+      console.log("Joining channel:", channelName);
       const uid = await client.join(agoraAppId, channelName, null, undefined);
       console.log("Joined voice chat with UID:", uid);
 
-      // Create and publish local audio track
       const audioTrack = await createLocalAudioTrack();
+      console.log("Created local audio track");
+
       const trackToPublish = getTrackForPublishing();
       if (trackToPublish.length > 0) {
-        // Double cast to avoid type mismatch between SDK versions
         await client.publish((trackToPublish[0] as unknown) as ILocalTrack);
+        console.log("Published local audio track");
       }
-      console.log("Published local audio track");
 
       // Add local participant
-      setParticipants([createParticipant(Number(uid), userProfile)]);
+      const localParticipant = createParticipant(Number(uid), userProfile);
+      setParticipants([localParticipant]);
+      console.log("Added local participant:", localParticipant);
+      
       setIsConnected(true);
     } catch (error) {
       console.error("Error joining voice chat:", error);
@@ -96,10 +106,12 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
 
   const cleanup = useCallback(() => {
     cleanupLocalAudio();
+    cleanupRemoteUsers();
     client.leave();
     setIsConnected(false);
     setParticipants([]);
-  }, [client, cleanupLocalAudio]);
+    console.log("Cleaned up voice chat resources");
+  }, [client, cleanupLocalAudio, cleanupRemoteUsers]);
 
   const handleToggleMute = useCallback((userId: number) => {
     setParticipants(prev => 
@@ -107,25 +119,42 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
     );
   }, []);
 
+  // Set up event listeners for user join/leave
   useEffect(() => {
+    console.log("Setting up voice chat event listeners");
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
 
     return () => {
+      console.log("Cleaning up voice chat event listeners");
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
     };
   }, [client, handleUserJoined, handleUserLeft]);
 
-  // Handle user leaving
+  // Handle volume indicator to show who is talking
   useEffect(() => {
-    const handleUserLeftUpdate = (uid: UID) => {
-      setParticipants(prev => prev.filter(p => p.id !== Number(uid)));
+    const handleVolumeIndicator = (volumes: { [uid: string]: number }) => {
+      setParticipants(prev => {
+        let updated = false;
+        const newParticipants = prev.map(p => {
+          const volume = volumes[p.id];
+          const isTalking = volume && volume > 5;
+          if (p.isTalking !== isTalking) {
+            updated = true;
+            return { ...p, isTalking };
+          }
+          return p;
+        });
+        return updated ? newParticipants : prev;
+      });
     };
 
-    client.on("user-left", handleUserLeftUpdate);
+    client.enableAudioVolumeIndicator();
+    client.on("volume-indicator", handleVolumeIndicator);
+
     return () => {
-      client.off("user-left", handleUserLeftUpdate);
+      client.off("volume-indicator", handleVolumeIndicator);
     };
   }, [client]);
 

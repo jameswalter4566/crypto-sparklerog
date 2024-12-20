@@ -19,7 +19,13 @@ interface VoiceChatUserProps {
 
 export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
   return (
-    <div className={`flex flex-col items-center p-4 bg-black/20 rounded-lg hover:bg-black/30 transition-colors border border-primary relative ${user.isTalking ? 'animate-glow-pulse' : 'shadow-[0_0_15px_rgba(153,69,255,0.5)]'}`}>
+    <div 
+      className={`
+        flex flex-col items-center p-4 bg-black/20 rounded-lg 
+        hover:bg-black/30 transition-colors border border-primary relative
+        ${user.isTalking ? 'animate-pulse shadow-[0_0_15px_rgba(153,69,255,0.8)]' : 'shadow-[0_0_15px_rgba(153,69,255,0.5)]'}
+      `}
+    >
       <Avatar className="w-24 h-24 mb-3">
         <AvatarImage src={user.avatar} alt={user.username} />
         <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
