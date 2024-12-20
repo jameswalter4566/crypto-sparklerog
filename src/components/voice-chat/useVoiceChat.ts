@@ -63,7 +63,7 @@ export const useVoiceChat = ({
       }
 
       // Then connect to the channel
-      const uid = await connect(channelName);
+      const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
@@ -84,7 +84,7 @@ export const useVoiceChat = ({
       cleanupLocalAudio();
       throw error;
     }
-  }, [isConnected, connect, channelName, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
+  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
   const leave = useCallback(async () => {
     try {
