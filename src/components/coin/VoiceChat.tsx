@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
 import { useState } from "react";
 import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
-import { AgoraRTCProvider } from "agora-rtc-react";
+import { AgoraRTCProvider, useRTCClient } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 
 interface VoiceChatProps {
