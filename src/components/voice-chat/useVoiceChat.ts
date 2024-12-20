@@ -44,7 +44,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        await client.publish([audioTrack]);
+        // Convert the audioTrack to an array before publishing
+        await client.publish([audioTrack] as any);
         setLocalAudioTrack(audioTrack);
 
         if (userProfile) {
