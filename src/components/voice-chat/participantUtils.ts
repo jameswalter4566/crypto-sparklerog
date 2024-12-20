@@ -6,13 +6,13 @@ export const createParticipant = (
 ): Participant => {
   const participant = {
     id: uid,
-    username: profile?.display_name || `User ${uid.toString().slice(-4)}`,
+    username: profile?.display_name || "Anonymous",
     avatar: profile?.avatar_url || "/placeholder.svg",
     isMuted: false,
     isTalking: false,
     tokenHolding: {
-      amount: "1000",
-      percentage: 25,
+      amount: "0",
+      percentage: 0,
     },
   };
 

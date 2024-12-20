@@ -17,13 +17,9 @@ interface VoiceChatUserProps {
   onToggleMute: (userId: number) => void;
 }
 
-/**
- * Renders a single voice chat participant (user) with their avatar, name, 
- * token holding stats, and a button to toggle mute/unmute.
- */
 export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
   // Fallback logic for username
-  const displayName = user.username?.trim() || "User";
+  const displayName = user.username || "Anonymous";
 
   return (
     <div
@@ -36,24 +32,11 @@ export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
       <Avatar className="w-24 h-24 mb-3">
         <AvatarImage src={user.avatar} alt={displayName} />
         <AvatarFallback>
-          {displayName.charAt(0).toUpperCase() || "U"}
+          {displayName.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-sm font-medium text-center">{displayName}</span>
-        {user.tokenHolding.percentage > 20 && (
-          <span className="text-xs font-medium text-yellow-400">(Dev)</span>
-        )}
-      </div>
-      <div className="text-xs text-center text-muted-foreground">
-        <div>${user.tokenHolding.amount} (USD)</div>
-        <div
-          className={
-            user.tokenHolding.percentage > 20 ? 'text-yellow-500' : 'text-muted-foreground'
-          }
-        >
-          {user.tokenHolding.percentage.toFixed(2)}% of supply
-        </div>
       </div>
       <Button
         variant="ghost"
