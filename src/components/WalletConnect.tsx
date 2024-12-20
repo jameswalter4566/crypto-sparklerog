@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -62,6 +62,23 @@ export const WalletConnect = () => {
     } catch (error) {
       console.error(error);
       toast.error("Error connecting wallet");
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      // @ts-ignore
+      const { solana } = window;
+      if (solana) {
+        await solana.disconnect();
+        setConnected(false);
+        setWalletAddress(null);
+        setShowProfileSetup(false);
+        toast.success("Wallet disconnected!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error disconnecting wallet");
     }
   };
 
@@ -134,17 +151,28 @@ export const WalletConnect = () => {
 
   return (
     <>
-      <button
-        onClick={connectWallet}
-        className="fixed top-4 right-4 hover:opacity-80 transition-opacity"
-      >
-        <img
-          src="/1200x1200.png"
-          alt="Phantom Wallet"
-          className="w-10 h-10 rounded-full"
-        />
-        <span className="sr-only">Connect Phantom Wallet</span>
-      </button>
+      {connected ? (
+        <button
+          onClick={disconnectWallet}
+          className="fixed top-4 right-4 flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
+          aria-label="Disconnect wallet"
+        >
+          <LogOut className="w-4 h-4" />
+          Disconnect
+        </button>
+      ) : (
+        <button
+          onClick={connectWallet}
+          className="fixed top-4 right-4 hover:opacity-80 transition-opacity"
+        >
+          <img
+            src="/1200x1200.png"
+            alt="Phantom Wallet"
+            className="w-10 h-10 rounded-full"
+          />
+          <span className="sr-only">Connect Phantom Wallet</span>
+        </button>
+      )}
 
       <Sheet open={showProfileSetup} onOpenChange={setShowProfileSetup}>
         <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-black border-l border-gray-800">
