@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
-import type { IAgoraRTCRemoteUser, UID } from 'agora-rtc-sdk-ng';
+import type { IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
-import { createParticipant, updateParticipantTalkingState } from './participantUtils';
+import { createParticipant } from './participantUtils';
 import type { Participant } from './types';
 
 interface UseVoiceChatProps {
@@ -17,25 +17,25 @@ interface UseVoiceChatProps {
   microphoneId?: string;
 }
 
-export const useVoiceChat = ({ 
-  channelName, 
-  userProfile, 
+export const useVoiceChat = ({
+  channelName,
+  userProfile,
   agoraAppId,
-  microphoneId 
+  microphoneId
 }: UseVoiceChatProps) => {
   const client = useRTCClient();
   const [isConnected, setIsConnected] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
-  
+
   const {
     localAudioTrack,
     isMuted,
     createLocalAudioTrack,
     toggleMute,
-    cleanup: cleanupLocalAudio,
-    getTrackForPublishing
+    cleanup: cleanupLocalAudio
   } = useLocalAudio(microphoneId);
-  
+
+  // useRemoteUsers should handle subscribing to audio and updating `remoteUsers`
   const {
     remoteUsers,
     handleUserJoined,
@@ -66,7 +66,7 @@ export const useVoiceChat = ({
       const localParticipant = createParticipant(Number(uid), userProfile);
       setParticipants([localParticipant]);
       console.log("[Voice Chat] Added local participant:", localParticipant);
-      
+
       setIsConnected(true);
       console.log("[Voice Chat] Successfully connected to voice chat");
     } catch (error) {
@@ -75,6 +75,15 @@ export const useVoiceChat = ({
       throw error;
     }
   }, [client, channelName, isConnected, createLocalAudioTrack, agoraAppId, userProfile, microphoneId]);
+
+  const cleanup = useCallback(() => {
+    cleanupLocalAudio();
+    cleanupRemoteUsers();
+    client.leave();
+    setIsConnected(false);
+    setParticipants([]);
+    console.log("[Voice Chat] Cleaned up voice chat resources");
+  }, [client, cleanupLocalAudio, cleanupRemoteUsers]);
 
   const leave = useCallback(async () => {
     if (!isConnected) {
@@ -89,19 +98,10 @@ export const useVoiceChat = ({
       console.error("[Voice Chat] Error leaving voice chat:", error);
       throw error;
     }
-  }, [isConnected]);
-
-  const cleanup = useCallback(() => {
-    cleanupLocalAudio();
-    cleanupRemoteUsers();
-    client.leave();
-    setIsConnected(false);
-    setParticipants([]);
-    console.log("[Voice Chat] Cleaned up voice chat resources");
-  }, [client, cleanupLocalAudio, cleanupRemoteUsers]);
+  }, [isConnected, cleanup]);
 
   const handleToggleMute = useCallback((userId: number) => {
-    setParticipants(prev => 
+    setParticipants(prev =>
       prev.map(p => p.id === userId ? { ...p, isMuted: !p.isMuted } : p)
     );
   }, []);
@@ -119,14 +119,50 @@ export const useVoiceChat = ({
     };
   }, [client, handleUserJoined, handleUserLeft]);
 
+  // Update participants whenever remoteUsers change
+  useEffect(() => {
+    setParticipants(prev => {
+      // Build a map of current participants
+      const participantMap = new Map(prev.map(p => [p.id, p]));
+
+      // The first participant in the array should be the local participant
+      const localParticipant = prev.find(p => p.id === prev[0]?.id) || null;
+
+      // Add or update remote participants
+      for (const user of remoteUsers) {
+        const uidNumber = Number(user.uid);
+        if (!participantMap.has(uidNumber)) {
+          participantMap.set(uidNumber, createParticipant(uidNumber, null));
+        }
+      }
+
+      // Remove participants no longer in remoteUsers (except the local one)
+      const remoteUserIds = new Set(remoteUsers.map(u => Number(u.uid)));
+      const finalParticipants = [...participantMap.values()].filter(p => {
+        if (localParticipant && p.id === localParticipant.id) return true;
+        return remoteUserIds.has(p.id);
+      });
+
+      // Ensure local participant stays at the beginning of the array
+      if (localParticipant) {
+        const others = finalParticipants.filter(p => p.id !== localParticipant.id);
+        return [localParticipant, ...others];
+      }
+
+      return finalParticipants;
+    });
+  }, [remoteUsers]);
+
   // Handle volume indicator to show who is talking
   useEffect(() => {
-    const handleVolumeIndicator = (volumes: { [uid: string]: number }) => {
+    client.enableAudioVolumeIndicator();
+
+    const handleVolumeIndicator = (volumes: Array<{ uid: string | number; level: number }>) => {
       setParticipants(prev => {
         let updated = false;
         const newParticipants = prev.map(p => {
-          const volume = volumes[p.id];
-          const isTalking = volume && volume > 5;
+          const volumeObj = volumes.find(v => Number(v.uid) === p.id);
+          const isTalking = volumeObj ? volumeObj.level > 5 : false;
           if (p.isTalking !== isTalking) {
             updated = true;
             return { ...p, isTalking };
@@ -137,7 +173,6 @@ export const useVoiceChat = ({
       });
     };
 
-    client.enableAudioVolumeIndicator();
     client.on("volume-indicator", handleVolumeIndicator);
 
     return () => {
