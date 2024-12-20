@@ -2,9 +2,7 @@ import { NewCoinCard } from "./NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { useHeliusWebSocket } from "@/hooks/use-helius-websocket";
-import { useEffect, useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface CoinGridProps {
   coins: CoinData[];
@@ -12,45 +10,7 @@ interface CoinGridProps {
 }
 
 export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
-  const [coins, setCoins] = useState(initialCoins);
-
-  useHeliusWebSocket({
-    onMessage: (data) => {
-      console.log('Received real-time update:', data);
-      
-      // Handle token updates
-      if (data.account?.data?.parsed?.type === 'mint') {
-        const mintUpdate = data.account.data.parsed.info;
-        
-        setCoins(currentCoins => 
-          currentCoins.map(coin => {
-            if (coin.symbol === mintUpdate.symbol) {
-              return {
-                ...coin,
-                // Update relevant fields based on the mint data
-                supply: mintUpdate.supply,
-                // Add other relevant updates
-              };
-            }
-            return coin;
-          })
-        );
-
-        toast({
-          title: "Price Update",
-          description: `${mintUpdate.symbol} data has been updated`,
-        });
-      }
-    },
-    onError: (error) => {
-      console.error('WebSocket error:', error);
-      toast({
-        title: "Update Error",
-        description: "Failed to receive real-time updates",
-        variant: "destructive",
-      });
-    }
-  });
+  const [coins] = useState(initialCoins);
 
   if (isLoading) {
     return <div>Loading...</div>;

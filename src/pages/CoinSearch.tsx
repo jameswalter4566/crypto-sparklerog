@@ -3,13 +3,22 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
 import { TokenDetails } from "@/components/coin/TokenDetails";
-import { fetchTokenMetadata } from "@/services/helius";
 import { saveCoinData } from "@/services/coins";
-import type { TokenMetadata } from "@/services/helius";
+
+interface TokenData {
+  id: string;
+  name: string;
+  symbol: string;
+  image?: string;
+  price?: number;
+  market_cap?: number;
+  volume_24h?: number;
+  liquidity?: number;
+}
 
 const CoinSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [coinData, setCoinData] = useState<TokenMetadata | null>(null);
+  const [coinData, setCoinData] = useState<TokenData | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -25,10 +34,16 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      const tokenData = await fetchTokenMetadata(mintAddress);
-      setCoinData(tokenData);
+      // Mock data for now since Helius is removed
+      const mockTokenData: TokenData = {
+        id: mintAddress,
+        name: "Test Token",
+        symbol: "TEST",
+        price: 0.1,
+      };
       
-      await saveCoinData(tokenData);
+      setCoinData(mockTokenData);
+      await saveCoinData(mockTokenData);
       
       toast({
         title: "Success",
