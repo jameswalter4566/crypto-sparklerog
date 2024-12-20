@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,18 +17,27 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const loadProfile = async (address: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('display_name, avatar_url')
-      .eq('wallet_address', address)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('wallet_address', address)
+        .single();
 
-    if (data) {
-      setDisplayName(data.display_name || '');
-      setAvatarUrl(data.avatar_url);
-      setShowProfileSetup(false);
-    } else {
-      setShowProfileSetup(true);
+      if (error) {
+        console.error("Error loading profile:", error);
+        return;
+      }
+
+      if (data) {
+        setDisplayName(data.display_name || '');
+        setAvatarUrl(data.avatar_url);
+        setShowProfileSetup(false);
+      } else {
+        setShowProfileSetup(true);
+      }
+    } catch (error) {
+      console.error("Error in loadProfile:", error);
     }
   };
 
@@ -72,21 +81,23 @@ export const WalletConnect = () => {
 
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const filePath = `${walletAddress}.${fileExt}`;
+        const fileName = `${walletAddress}-${Date.now()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data } = await supabase.storage
           .from('avatars')
-          .upload(filePath, avatarFile, {
+          .upload(fileName, avatarFile, {
             upsert: true
           });
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
+        if (data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
 
-        finalAvatarUrl = publicUrl;
+          finalAvatarUrl = publicUrl;
+        }
       }
 
       const { error } = await supabase
@@ -139,6 +150,9 @@ export const WalletConnect = () => {
         <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-black border-l border-gray-800">
           <SheetHeader>
             <SheetTitle className="text-white">Complete Your Profile</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Set up your display name and profile picture
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-8 space-y-6">
             <div className="flex flex-col items-center space-y-4">
@@ -153,6 +167,7 @@ export const WalletConnect = () => {
                 accept="image/*"
                 onChange={handleAvatarChange}
                 className="max-w-xs"
+                aria-label="Upload profile picture"
               />
             </div>
             <div className="space-y-2">
@@ -162,12 +177,14 @@ export const WalletConnect = () => {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
                 className="bg-gray-900 border-gray-700 text-white"
+                aria-label="Display name"
               />
             </div>
             <Button
               onClick={saveProfile}
               disabled={loading || !displayName}
               className="w-full"
+              aria-label={loading ? "Saving profile..." : "Save profile"}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Profile
