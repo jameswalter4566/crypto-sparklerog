@@ -19,7 +19,7 @@ export const useRemoteUsers = () => {
           audioElement.id = `audio-${user.uid}`;
           document.body.appendChild(audioElement);
           
-          // Play the audio track - call play() without arguments
+          // Play the audio track without arguments as per Agora's API
           user.audioTrack.play();
           console.log("Started playing audio for user:", user.uid);
         }
