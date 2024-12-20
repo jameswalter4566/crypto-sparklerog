@@ -3,7 +3,6 @@ import { useRTCClient } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
-import type { ILocalTrack } from 'agora-rtc-react';
 import type { ParticipantProfile } from './types';
 import { fetchUserProfile } from '@/services/fetchUserProfile';
 
@@ -57,16 +56,21 @@ export const useVoiceChat = ({
     }
 
     try {
-      // Create the local audio track
+      // First create the local audio track
       const audioTrack = await createLocalAudioTrack();
       if (!audioTrack) {
         throw new Error("Failed to create audio track");
       }
 
-      // Connect to the channel and publish the track
-      const uid = await connect(channelName, agoraAppId, audioTrack as unknown as ILocalTrack);
+      // Then connect to the channel
+      const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
+
+      // After connecting, publish the track
+      console.log("[Voice Chat] Publishing audio track");
+      await client.publish([audioTrack]);
+      console.log("[Voice Chat] Published audio track successfully");
 
       addLocalParticipant(uidNumber, userProfile);
       console.log("[Voice Chat] Successfully connected to voice chat with UID:", uidNumber);
@@ -75,12 +79,12 @@ export const useVoiceChat = ({
       cleanupLocalAudio();
       throw error;
     }
-  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile]);
+  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
   const leave = useCallback(async () => {
     try {
       if (localAudioTrack) {
-        await client.unpublish([localAudioTrack as unknown as ILocalTrack]);
+        await client.unpublish([localAudioTrack]);
       }
       await disconnect();
       cleanupLocalAudio();
@@ -126,4 +130,38 @@ export const useVoiceChat = ({
     };
 
     const handleUserPublished = async (user: any, mediaType: string) => {
-     
+      console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
+      if (mediaType === "audio") {
+        await client.subscribe(user, mediaType);
+        console.log("[Voice Chat] Subscribed to remote audio:", user.uid);
+        user.audioTrack?.play();
+      }
+    };
+
+    const handleUserUnpublished = (user: any) => {
+      console.log("[Voice Chat] User unpublished:", user.uid);
+    };
+
+    client.on("user-joined", handleUserJoined);
+    client.on("user-left", handleUserLeft);
+    client.on("user-published", handleUserPublished);
+    client.on("user-unpublished", handleUserUnpublished);
+
+    return () => {
+      client.off("user-joined", handleUserJoined);
+      client.off("user-left", handleUserLeft);
+      client.off("user-published", handleUserPublished);
+      client.off("user-unpublished", handleUserUnpublished);
+    };
+  }, [client, localUid, addRemoteParticipant, removeParticipant]);
+
+  return {
+    participants,
+    isMuted,
+    handleToggleMute,
+    join,
+    leave,
+    toggleMute,
+    isConnected
+  };
+};

@@ -1,28 +1,18 @@
 import { useState, useCallback } from 'react';
-import type { IAgoraRTCClient, ILocalTrack } from 'agora-rtc-react';
+import type { IAgoraRTCClient } from 'agora-rtc-react';
+import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 
 export const useVoiceChatConnection = (client: IAgoraRTCClient) => {
   const [isConnected, setIsConnected] = useState(false);
 
-  /**
-   * Connect to the given channel using the specified App ID, then publish the provided track.
-   */
-  const connect = useCallback(async (channelName: string, appId: string, track: ILocalTrack) => {
+  const connect = useCallback(async (channelName: string, appId: string) => {
     console.log("[Voice Chat Connection] Joining channel:", channelName);
     const uid = await client.join(appId, channelName, null, undefined);
     console.log("[Voice Chat Connection] Joined channel with UID:", uid);
-
-    console.log("[Voice Chat Connection] Publishing audio track");
-    await client.publish([track]);
-    console.log("[Voice Chat Connection] Published audio track successfully");
-
     setIsConnected(true);
     return uid;
   }, [client]);
 
-  /**
-   * Disconnect from the channel if currently connected.
-   */
   const disconnect = useCallback(async () => {
     if (!isConnected) {
       console.log("[Voice Chat Connection] Not connected to voice chat");
