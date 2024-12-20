@@ -19,4 +19,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      external: [
+        '@solana/web3.js',
+        '@solana/spl-token'
+      ]
+    }
+  },
+  optimizeDeps: {
+    include: ['@solana/web3.js', '@solana/spl-token']
+  }
 }));

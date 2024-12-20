@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import * as splToken from "@solana/spl-token";
 
 export interface TokenConfig {
   name: string;
@@ -19,36 +19,40 @@ export async function createToken(config: TokenConfig) {
     console.log("Creating new token with config:", config);
     
     // Create the token mint
-    const mint = await Token.createMint(
+    const mint = await splToken.createMint(
       connection,
       mintAuthority,
       mintAuthority.publicKey,
       mintAuthority.publicKey,
-      config.decimals,
-      TOKEN_PROGRAM_ID
+      config.decimals
     );
     
-    console.log("Token mint created:", mint.publicKey.toBase58());
+    console.log("Token mint created:", mint.toBase58());
     
     // Create associated token account
-    const tokenAccount = await mint.getOrCreateAssociatedAccountInfo(
+    const tokenAccount = await splToken.getOrCreateAssociatedTokenAccount(
+      connection,
+      mintAuthority,
+      mint,
       mintAuthority.publicKey
     );
     
     console.log("Token account created:", tokenAccount.address.toBase58());
     
     // Mint initial supply
-    await mint.mintTo(
+    await splToken.mintTo(
+      connection,
+      mintAuthority,
+      mint,
       tokenAccount.address,
       mintAuthority,
-      [],
       config.initialSupply * Math.pow(10, config.decimals)
     );
     
     console.log("Initial supply minted");
     
     return {
-      mintAddress: mint.publicKey.toBase58(),
+      mintAddress: mint.toBase58(),
       tokenAccount: tokenAccount.address.toBase58(),
       mintAuthority: mintAuthority.publicKey.toBase58(),
       success: true
