@@ -19,7 +19,7 @@ export const useLocalAudio = (microphoneId?: string) => {
       const muted = audioTrack.muted;
       console.log("[Local Audio] Track state - Enabled:", enabled, "Muted:", muted);
       
-      setLocalAudioTrack(audioTrack as IMicrophoneAudioTrack);
+      setLocalAudioTrack(audioTrack);
       return audioTrack;
     } catch (error) {
       console.error("[Local Audio] Error creating audio track:", error);
@@ -29,23 +29,25 @@ export const useLocalAudio = (microphoneId?: string) => {
 
   const toggleMute = useCallback(() => {
     if (localAudioTrack) {
-      console.log("[Local Audio] Toggling mute state from:", isMuted);
       if (isMuted) {
         localAudioTrack.setEnabled(true);
       } else {
         localAudioTrack.setEnabled(false);
       }
       setIsMuted(!isMuted);
-      console.log("[Local Audio] New mute state:", !isMuted);
     }
   }, [localAudioTrack, isMuted]);
 
   const cleanup = useCallback(() => {
     if (localAudioTrack) {
-      console.log("[Local Audio] Cleaning up audio track");
       localAudioTrack.close();
       setLocalAudioTrack(null);
     }
+  }, [localAudioTrack]);
+
+  const getTrackForPublishing = useCallback(() => {
+    console.log("[Local Audio] Getting track for publishing:", localAudioTrack ? [localAudioTrack] : []);
+    return localAudioTrack ? [localAudioTrack] : [];
   }, [localAudioTrack]);
 
   return {
@@ -54,10 +56,6 @@ export const useLocalAudio = (microphoneId?: string) => {
     createLocalAudioTrack,
     toggleMute,
     cleanup,
-    getTrackForPublishing: useCallback(() => {
-      const tracks = localAudioTrack ? [localAudioTrack as unknown as ILocalTrack] : [];
-      console.log("[Local Audio] Getting tracks for publishing:", tracks);
-      return tracks;
-    }, [localAudioTrack])
+    getTrackForPublishing
   };
 };

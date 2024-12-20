@@ -58,16 +58,10 @@ export const useVoiceChat = ({
       const audioTrack = await createLocalAudioTrack();
       console.log("[Voice Chat] Created local audio track:", audioTrack);
 
-      const trackToPublish = getTrackForPublishing();
-      console.log("[Voice Chat] Tracks to publish:", trackToPublish);
-
-      if (trackToPublish.length > 0) {
-        console.log("[Voice Chat] Publishing audio track");
-        await client.publish((trackToPublish[0] as unknown) as ILocalTrack);
-        console.log("[Voice Chat] Published audio track successfully");
-      } else {
-        console.warn("[Voice Chat] No audio track to publish");
-      }
+      const trackToPublish = audioTrack as unknown as ILocalTrack;
+      console.log("[Voice Chat] Publishing audio track");
+      await client.publish(trackToPublish);
+      console.log("[Voice Chat] Published audio track successfully");
 
       const localParticipant = createParticipant(Number(uid), userProfile);
       setParticipants([localParticipant]);
@@ -80,7 +74,7 @@ export const useVoiceChat = ({
       cleanup();
       throw error;
     }
-  }, [client, channelName, isConnected, createLocalAudioTrack, getTrackForPublishing, agoraAppId, userProfile, microphoneId]);
+  }, [client, channelName, isConnected, createLocalAudioTrack, agoraAppId, userProfile, microphoneId]);
 
   const leave = useCallback(async () => {
     if (!isConnected) {
