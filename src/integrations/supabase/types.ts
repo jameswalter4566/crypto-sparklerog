@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       coins: {
         Row: {
-          created_at: string
+          change_24h: number | null
           id: string
           image_url: string | null
           liquidity: number | null
@@ -19,11 +19,11 @@ export type Database = {
           name: string
           price: number | null
           symbol: string
-          updated_at: string
+          updated_at: string | null
           volume_24h: number | null
         }
         Insert: {
-          created_at?: string
+          change_24h?: number | null
           id: string
           image_url?: string | null
           liquidity?: number | null
@@ -31,11 +31,11 @@ export type Database = {
           name: string
           price?: number | null
           symbol: string
-          updated_at?: string
+          updated_at?: string | null
           volume_24h?: number | null
         }
         Update: {
-          created_at?: string
+          change_24h?: number | null
           id?: string
           image_url?: string | null
           liquidity?: number | null
@@ -43,29 +43,8 @@ export type Database = {
           name?: string
           price?: number | null
           symbol?: string
-          updated_at?: string
+          updated_at?: string | null
           volume_24h?: number | null
-        }
-        Relationships: []
-      }
-      secrets: {
-        Row: {
-          created_at: string
-          name: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          created_at?: string
-          name: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          created_at?: string
-          name?: string
-          updated_at?: string
-          value?: string
         }
         Relationships: []
       }
@@ -79,10 +58,7 @@ export type Database = {
           secret_name: string
         }
         Returns: {
-          created_at: string
-          name: string
-          updated_at: string
-          value: string
+          secret: string
         }[]
       }
     }
