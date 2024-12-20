@@ -11,8 +11,11 @@ export const getAgoraAppId = async () => {
       return null;
     }
     
-    // Extract the secret string from the array of objects
-    return data[0]?.secret || null;
+    if (Array.isArray(data) && data.length > 0 && data[0].secret) {
+      return data[0].secret;
+    }
+    
+    return null;
   } catch (err) {
     console.error('Failed to fetch Agora App ID:', err);
     return null;
