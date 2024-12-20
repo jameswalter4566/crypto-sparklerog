@@ -6,19 +6,19 @@ export const useRemoteUsers = () => {
   const client = useRTCClient();
 
   const handleUserJoined = useCallback(async (user: IAgoraRTCRemoteUser) => {
-    console.log("Remote user joined:", user.uid);
+    console.log("[Remote Users] Remote user joined:", user.uid);
     
     if (user.hasAudio) {
       try {
         await client.subscribe(user, "audio");
-        console.log("Subscribed to audio track of user:", user.uid);
+        console.log("[Remote Users] Subscribed to audio track of user:", user.uid);
         
         if (user.audioTrack) {
           user.audioTrack.play();
-          console.log("Started playing audio for user:", user.uid);
+          console.log("[Remote Users] Started playing audio for user:", user.uid);
         }
       } catch (error) {
-        console.error("Error subscribing to audio:", error);
+        console.error("[Remote Users] Error subscribing to audio:", error);
       }
     }
     
@@ -26,7 +26,7 @@ export const useRemoteUsers = () => {
   }, [client]);
 
   const handleUserLeft = useCallback((user: UID) => {
-    console.log("Remote user left:", user);
+    console.log("[Remote Users] Remote user left:", user);
     setRemoteUsers(prev => {
       const updatedUsers = prev.filter(u => u.uid !== user);
       const leavingUser = prev.find(u => u.uid === user);

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
-import type { UID } from 'agora-rtc-sdk-ng';
+import type { IAgoraRTCRemoteUser, UID } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
-import { createParticipant } from './participantUtils';
+import { createParticipant, updateParticipantTalkingState } from './participantUtils';
 import type { Participant } from './types';
 
 interface UseVoiceChatProps {
