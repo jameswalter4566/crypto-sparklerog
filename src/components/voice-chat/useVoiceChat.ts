@@ -49,7 +49,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
       const audioTrack = await createLocalAudioTrack();
       const trackToPublish = getTrackForPublishing();
       if (trackToPublish.length > 0) {
-        await client.publish(trackToPublish[0] as ILocalTrack);
+        // Double cast to avoid type mismatch between SDK versions
+        await client.publish((trackToPublish[0] as unknown) as ILocalTrack);
       }
       console.log("Published local audio track");
 
