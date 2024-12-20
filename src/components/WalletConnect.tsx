@@ -18,7 +18,7 @@ export const WalletConnect = () => {
         .from('profiles')
         .select('display_name, avatar_url')
         .eq('wallet_address', address)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error loading profile:", error);
@@ -30,6 +30,7 @@ export const WalletConnect = () => {
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
       } else {
+        // No profile found, show the setup dialog
         setShowProfileSetup(true);
       }
     } catch (error) {
@@ -87,15 +88,17 @@ export const WalletConnect = () => {
   const handleProfileSaved = (newDisplayName: string, newAvatarUrl: string | null) => {
     setDisplayName(newDisplayName);
     setAvatarUrl(newAvatarUrl);
+    setShowProfileSetup(false);
   };
 
   useEffect(() => {
+    // Check if wallet is already connected
     // @ts-ignore
     const { solana } = window;
     if (solana?.isPhantom && solana.isConnected) {
-      setConnected(true);
       const address = solana.publicKey.toString();
       setWalletAddress(address);
+      setConnected(true);
       loadProfile(address);
     }
   }, []);
