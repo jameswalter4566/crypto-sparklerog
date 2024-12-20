@@ -6,7 +6,6 @@ export const createParticipant = (
 ): Participant => {
   const participant = {
     id: uid,
-    // Only use the user's chosen display_name, fallback to "User" if none is provided
     username: profile?.display_name || "User",
     avatar: profile?.avatar_url || "/placeholder.svg",
     isMuted: false,
@@ -21,7 +20,6 @@ export const createParticipant = (
   return participant;
 };
 
-// No changes needed for updateParticipantTalkingState or updateParticipantMuteState
 export const updateParticipantTalkingState = (participants: Participant[], uid: number, isTalking: boolean): Participant[] => {
   return participants.map((p) => p.id === uid ? { ...p, isTalking } : p);
 };

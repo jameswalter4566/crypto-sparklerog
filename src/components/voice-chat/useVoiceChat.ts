@@ -4,7 +4,7 @@ import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
 import type { ParticipantProfile } from './types';
-import { fetchUserProfile } from '@/services/fetchUserProfile';
+import { fetchUserProfile, storeVoiceChatUID } from '@/services/fetchUserProfile';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -57,18 +57,23 @@ export const useVoiceChat = ({
     }
 
     try {
-      // Create the local audio track first
+      // First create the local audio track
       const audioTrack = await createLocalAudioTrack();
       if (!audioTrack) {
         throw new Error("Failed to create audio track");
       }
 
-      // Connect to the channel
+      // Then connect to the channel
       const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
-      // Now that we're connected, publish the audio track
+      // Store the UID mapping for the local user
+      if (userProfile?.wallet_address) {
+        await storeVoiceChatUID(uidNumber, userProfile.wallet_address);
+      }
+
+      // After connecting, publish the track
       console.log("[Voice Chat] Publishing audio track");
       await client.publish([audioTrack]);
       console.log("[Voice Chat] Published audio track successfully");
