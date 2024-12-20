@@ -57,19 +57,16 @@ export const useVoiceChat = ({
     }
 
     try {
+      // Create the local audio track
       const audioTrack = await createLocalAudioTrack();
       if (!audioTrack) {
         throw new Error("Failed to create audio track");
       }
 
-      // Connect and publish the audio track
-      const uid = await connect(channelName, agoraAppId);
+      // Connect to the channel and publish the track
+      const uid = await connect(channelName, agoraAppId, audioTrack as unknown as ILocalTrack);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
-
-      // Publish the audio track
-      await client.publish([audioTrack as unknown as ILocalTrack]);
-      console.log("[Voice Chat] Published audio track successfully");
 
       addLocalParticipant(uidNumber, userProfile);
       console.log("[Voice Chat] Successfully connected to voice chat with UID:", uidNumber);
@@ -78,7 +75,7 @@ export const useVoiceChat = ({
       cleanupLocalAudio();
       throw error;
     }
-  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
+  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile]);
 
   const leave = useCallback(async () => {
     try {
@@ -129,46 +126,4 @@ export const useVoiceChat = ({
     };
 
     const handleUserPublished = async (user: any, mediaType: string) => {
-      console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
-      if (mediaType === "audio") {
-        await client.subscribe(user, mediaType);
-        console.log("[Voice Chat] Subscribed to remote audio:", user.uid);
-        user.audioTrack?.play();
-      }
-    };
-
-    const handleUserUnpublished = (user: any, mediaType: string) => {
-      console.log("[Voice Chat] User unpublished:", user.uid, "MediaType:", mediaType);
-      if (mediaType === "audio") {
-        user.audioTrack?.stop();
-      }
-    };
-
-    client.on("user-joined", handleUserJoined);
-    client.on("user-left", handleUserLeft);
-    client.on("user-published", handleUserPublished);
-    client.on("user-unpublished", handleUserUnpublished);
-
-    // Enable volume indicator
-    client.enableAudioVolumeIndicator();
-
-    return () => {
-      console.log("[Voice Chat] Cleaning up voice chat event listeners");
-      client.off("user-joined", handleUserJoined);
-      client.off("user-left", handleUserLeft);
-      client.off("user-published", handleUserPublished);
-      client.off("user-unpublished", handleUserUnpublished);
-    };
-  }, [client, addRemoteParticipant, removeParticipant, localUid]);
-
-  return {
-    isConnected,
-    localAudioTrack,
-    isMuted,
-    participants,
-    handleToggleMute,
-    join,
-    leave,
-    toggleMute
-  };
-};
+     
