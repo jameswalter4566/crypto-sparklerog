@@ -18,13 +18,13 @@ export const getAgoraAppId = async () => {
     
     // Check if data exists and has the expected structure
     if (!data || !Array.isArray(data) || data.length === 0) {
-      console.error('Invalid data structure received:', data);
+      console.error('No data received from Supabase');
       return null;
     }
     
     const secret = data[0]?.secret;
     if (!secret) {
-      console.error('No secret found in response');
+      console.error('No secret value found in response');
       return null;
     }
     
