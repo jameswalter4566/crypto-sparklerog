@@ -11,10 +11,7 @@ interface VoiceChatProps {
 
 export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   const [isJoined, setIsJoined] = useState(false);
-  const client = useRTCClient({
-    codec: "vp8",
-    mode: "rtc"
-  });
+  const client = useRTCClient();
 
   const handleJoinVoiceChat = () => {
     setIsJoined(true);
