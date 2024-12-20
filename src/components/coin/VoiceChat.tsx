@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
 import { useState } from "react";
 import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
-import { AgoraRTCProvider, createClient } from "agora-rtc-react";
+import { AgoraRTCProvider } from "agora-rtc-react";
+import AgoraRTC from "agora-rtc-sdk-ng";
 
 interface VoiceChatProps {
   coinId: string;
 }
 
-// Initialize AgoraRTC client using agora-rtc-react's createClient
-const client = createClient({ 
+// Initialize AgoraRTC client using the SDK directly
+const client = AgoraRTC.createClient({ 
   mode: "rtc", 
   codec: "vp8" 
 });
