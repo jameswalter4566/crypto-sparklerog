@@ -4,8 +4,8 @@ import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
 import type { ILocalTrack } from 'agora-rtc-react';
-import type { ParticipantProfile } from './types'; // Ensure this type is imported
-import { fetchUserProfile } from '@/services/fetchUserProfile'; // A function you write to fetch profile data
+import type { ParticipantProfile } from './types';
+import { fetchUserProfile } from '@/services/fetchUserProfile';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -63,7 +63,7 @@ export const useVoiceChat = ({
       }
 
       // Connect and publish the audio track
-      const uid = await connect(channelName, agoraAppId, audioTrack as unknown as ILocalTrack);
+      const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
@@ -107,7 +107,6 @@ export const useVoiceChat = ({
       }
       console.log("[Voice Chat] Remote user joined:", uidNumber);
 
-      // **New Code: Fetch the remote user's profile before adding them**
       let fetchedProfile: ParticipantProfile | null = null;
       try {
         fetchedProfile = await fetchUserProfile(uidNumber);
@@ -132,7 +131,7 @@ export const useVoiceChat = ({
     const handleUserPublished = async (user: any, mediaType: string) => {
       console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
       if (mediaType === "audio") {
-        await client.subscribe(user, "audio");
+        await client.subscribe(user, mediaType);
         console.log("[Voice Chat] Subscribed to remote audio:", user.uid);
         user.audioTrack?.play();
       }
