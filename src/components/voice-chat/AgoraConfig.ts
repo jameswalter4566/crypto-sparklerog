@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const getAgoraAppId = async () => {
   try {
+    console.log('Fetching Agora App ID from Supabase...');
+    
     const { data, error } = await supabase.rpc('get_secret', {
       secret_name: 'AGORA_APP_ID'
     });
@@ -11,13 +13,23 @@ export const getAgoraAppId = async () => {
       return null;
     }
     
-    // Extract the secret value from the returned data
-    if (Array.isArray(data) && data.length > 0 && data[0].secret) {
-      return data[0].secret;
+    // Add debug logging
+    console.log('Received data from Supabase:', data);
+    
+    // Check if data exists and has the expected structure
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.error('Invalid data structure received:', data);
+      return null;
     }
     
-    console.error('Invalid data structure returned from get_secret');
-    return null;
+    const secret = data[0]?.secret;
+    if (!secret) {
+      console.error('No secret found in response');
+      return null;
+    }
+    
+    console.log('Successfully retrieved Agora App ID');
+    return secret;
   } catch (err) {
     console.error('Failed to fetch Agora App ID:', err);
     return null;

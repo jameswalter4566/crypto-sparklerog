@@ -42,14 +42,21 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAgora = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const appId = await getAgoraAppId();
         
+        console.log('Initializing Agora...');
+        const appId = await getAgoraAppId();
+        console.log('Received Agora App ID:', appId ? 'Valid ID' : 'No ID');
+        
+        if (!isMounted) return;
+
         if (!appId) {
-          const errorMsg = "Voice chat is currently unavailable. Please try again later.";
+          const errorMsg = "Failed to initialize voice chat. Please try again later.";
           setError(errorMsg);
           toast({
             variant: "destructive",
@@ -63,6 +70,8 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
         setCalling(true);
       } catch (err) {
         console.error('Failed to initialize Agora:', err);
+        if (!isMounted) return;
+        
         setError("An error occurred while setting up voice chat.");
         toast({
           variant: "destructive",
@@ -70,11 +79,17 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
           description: "An error occurred while setting up voice chat.",
         });
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeAgora();
+
+    return () => {
+      isMounted = false;
+    };
   }, [toast]);
 
   useEffect(() => {
@@ -82,6 +97,7 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
 
     const initVoiceChat = async () => {
       try {
+        console.log('Joining voice chat with App ID:', agoraAppId ? 'Valid ID' : 'No ID');
         await client.join(agoraAppId, channelName, DEFAULT_TOKEN, null);
         console.log("Joined voice chat successfully");
         
