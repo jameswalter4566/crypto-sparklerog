@@ -43,9 +43,10 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        // Convert to any to bypass type checking temporarily
-        await client.publish([audioTrack as any]);
-        setLocalAudioTrack(audioTrack as unknown as ILocalAudioTrack);
+        // Publish the audio track to the channel
+        await client.publish(audioTrack as any);
+        console.log("Published local audio track");
+        setLocalAudioTrack(audioTrack);
 
         // Add local user to participants
         if (userProfile) {
@@ -80,11 +81,16 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
     // Handle remote users joining
     const handleUserJoined = async (user: IAgoraRTCRemoteUser) => {
       try {
+        console.log("Remote user joined:", user.uid);
+        
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          // Use user.uid directly for subscription
-          await client.subscribe(user.uid as UID, "audio");
-          console.log("Subscribed to remote user:", user.uid);
+          await client.subscribe(user, "audio");
+          console.log("Subscribed to remote user audio:", user.uid);
+          
+          // Play the remote user's audio track
+          user.audioTrack?.play();
+          console.log("Playing remote user audio:", user.uid);
         }
 
         // Get user profile from Supabase
@@ -98,12 +104,16 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         setParticipants(prev => [...prev, createParticipant(Number(user.uid), profile)]);
 
       } catch (error) {
-        console.error("Error subscribing to remote user:", error);
+        console.error("Error handling remote user:", error);
       }
     };
 
     const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
       console.log("Remote user left:", user.uid);
+      // Stop the remote user's audio track if it exists
+      if (user.audioTrack) {
+        user.audioTrack.stop();
+      }
       setParticipants(prev => prev.filter(p => p.id !== Number(user.uid)));
     };
 
@@ -138,6 +148,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
       if (localAudioTrack) {
         localAudioTrack.close();
       }
+      // Leave the channel and remove all event listeners
       client.leave();
       client.removeAllListeners();
     };
