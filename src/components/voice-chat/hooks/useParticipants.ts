@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Participant } from '../types';
+import type { Participant, ParticipantProfile } from '../types';
 import { createParticipant } from '../participantUtils';
 
 export const useParticipants = () => {
@@ -23,7 +23,7 @@ export const useParticipants = () => {
     });
   }, []);
 
-  const addRemoteParticipant = useCallback((uid: number) => {
+  const addRemoteParticipant = useCallback((uid: number, profile: ParticipantProfile | null = null) => {
     console.log("[Participants] Adding remote participant:", uid);
     setParticipants((prev) => {
       // Check if the participant already exists
@@ -33,7 +33,7 @@ export const useParticipants = () => {
         return prev;
       }
       // Add new remote participant at the end, preserving existing participants
-      const newParticipant = createParticipant(uid, null);
+      const newParticipant = createParticipant(uid, profile);
       console.log("[Participants] Created remote participant:", newParticipant);
       return [...prev, newParticipant];
     });
