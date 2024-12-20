@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { ProfileSetup } from "./wallet/ProfileSetup";
 import { ProfileAvatar } from "./wallet/ProfileAvatar";
+import { Settings } from "./wallet/Settings";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -30,7 +31,6 @@ export const WalletConnect = () => {
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
       } else {
-        // No profile found, show the setup dialog
         setShowProfileSetup(true);
       }
     } catch (error) {
@@ -49,7 +49,6 @@ export const WalletConnect = () => {
         return;
       }
 
-      // Force re-authentication by disconnecting first
       if (solana.isConnected) {
         await solana.disconnect();
       }
@@ -115,6 +114,13 @@ export const WalletConnect = () => {
             />
             <span className="text-white">{displayName}</span>
           </div>
+          {walletAddress && (
+            <Settings
+              walletAddress={walletAddress}
+              currentDisplayName={displayName}
+              onProfileUpdate={handleProfileSaved}
+            />
+          )}
           <button
             onClick={disconnectWallet}
             className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"

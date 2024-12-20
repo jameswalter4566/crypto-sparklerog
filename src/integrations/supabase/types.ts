@@ -53,6 +53,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           display_name: string | null
+          last_profile_update: string | null
           updated_at: string | null
           wallet_address: string
         }
@@ -60,6 +61,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
+          last_profile_update?: string | null
           updated_at?: string | null
           wallet_address: string
         }
@@ -67,6 +69,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
+          last_profile_update?: string | null
           updated_at?: string | null
           wallet_address?: string
         }
