@@ -23,12 +23,17 @@ serve(async (req) => {
     const arrayBuffer = await (audioFile as File).arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
 
+    // Create a new FormData instance for the OpenAI API request
+    const openAIFormData = new FormData();
+    openAIFormData.append('file', new Blob([buffer], { type: 'audio/webm' }), 'audio.webm');
+    openAIFormData.append('model', 'whisper-1');
+
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
       },
-      body: new FormData().append('file', new Blob([buffer], { type: 'audio/webm' }), 'audio.webm').append('model', 'whisper-1'),
+      body: openAIFormData,
     });
 
     const data = await response.json();
