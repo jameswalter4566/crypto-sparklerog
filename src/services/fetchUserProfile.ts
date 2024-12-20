@@ -1,5 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ParticipantProfile } from '@/components/voice-chat/types';
+import type { Database } from '@/integrations/supabase/types';
+
+type VoiceChatUser = Database['public']['Tables']['voice_chat_users']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export async function fetchUserProfile(uid: number): Promise<ParticipantProfile | null> {
   try {
@@ -8,7 +12,7 @@ export async function fetchUserProfile(uid: number): Promise<ParticipantProfile 
       .from('voice_chat_users')
       .select('wallet_address')
       .eq('uid', uid)
-      .maybeSingle();
+      .single();
 
     if (mappingError) {
       console.error("[fetchUserProfile] Error fetching voice chat user mapping:", mappingError);
@@ -25,7 +29,7 @@ export async function fetchUserProfile(uid: number): Promise<ParticipantProfile 
       .from('profiles')
       .select('display_name, avatar_url')
       .eq('wallet_address', mappingData.wallet_address)
-      .maybeSingle();
+      .single();
 
     if (profileError) {
       console.error("[fetchUserProfile] Error fetching profile:", profileError);
@@ -39,16 +43,15 @@ export async function fetchUserProfile(uid: number): Promise<ParticipantProfile 
   }
 }
 
-// Add a new function to store the UID mapping
 export async function storeVoiceChatUID(uid: number, walletAddress: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('voice_chat_users')
       .upsert({ 
         uid,
-        wallet_address: walletAddress
-      })
-      .select();
+        wallet_address: walletAddress,
+        created_at: new Date().toISOString()
+      });
 
     if (error) {
       console.error("[storeVoiceChatUID] Error storing voice chat UID:", error);

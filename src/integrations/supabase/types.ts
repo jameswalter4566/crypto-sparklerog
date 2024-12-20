@@ -75,6 +75,32 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_chat_users: {
+        Row: {
+          created_at: string | null
+          uid: number
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          uid: number
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          uid?: number
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_chat_users_wallet_address_fkey"
+            columns: ["wallet_address"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["wallet_address"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useRTCClient } from 'agora-rtc-react';
+import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
@@ -26,7 +26,6 @@ export const useVoiceChat = ({
   const client = useRTCClient();
   const [localUid, setLocalUid] = useState<number | null>(null);
 
-  // useLocalAudio should return an IMicrophoneAudioTrack from agora-rtc-sdk-ng
   const {
     localAudioTrack,
     isMuted,
@@ -64,7 +63,7 @@ export const useVoiceChat = ({
       }
 
       // Then connect to the channel
-      const uid = await connect(channelName, agoraAppId);
+      const uid = await connect(channelName);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
@@ -75,7 +74,7 @@ export const useVoiceChat = ({
 
       // After connecting, publish the track
       console.log("[Voice Chat] Publishing audio track");
-      await client.publish([audioTrack]);
+      await client.publish([audioTrack as unknown as ILocalTrack]);
       console.log("[Voice Chat] Published audio track successfully");
 
       addLocalParticipant(uidNumber, userProfile);
@@ -85,12 +84,12 @@ export const useVoiceChat = ({
       cleanupLocalAudio();
       throw error;
     }
-  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
+  }, [isConnected, connect, channelName, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
   const leave = useCallback(async () => {
     try {
       if (localAudioTrack) {
-        await client.unpublish([localAudioTrack]);
+        await client.unpublish([localAudioTrack as unknown as ILocalTrack]);
       }
       await disconnect();
       cleanupLocalAudio();
