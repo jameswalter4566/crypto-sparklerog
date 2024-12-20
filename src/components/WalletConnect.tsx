@@ -49,8 +49,18 @@ export const WalletConnect = () => {
         return;
       }
 
-      if (solana.isConnected) {
-        await solana.disconnect();
+      // Try to reconnect to an existing session first
+      try {
+        const resp = await solana.connect({ onlyIfTrusted: true });
+        const address = resp.publicKey.toString();
+        setWalletAddress(address);
+        setConnected(true);
+        toast.success("Wallet reconnected!");
+        await loadProfile(address);
+        return;
+      } catch (e) {
+        // No trusted connection, proceed with new connection
+        console.log("No trusted connection found, requesting new connection");
       }
 
       const response = await solana.connect({ onlyIfTrusted: false });
@@ -59,6 +69,9 @@ export const WalletConnect = () => {
       setConnected(true);
       toast.success("Wallet connected!");
       await loadProfile(address);
+
+      // Store connection in localStorage
+      localStorage.setItem('phantomConnected', 'true');
     } catch (error) {
       console.error(error);
       toast.error("Error connecting wallet");
@@ -76,6 +89,8 @@ export const WalletConnect = () => {
         setShowProfileSetup(false);
         setDisplayName(null);
         setAvatarUrl(null);
+        // Clear localStorage on manual disconnect
+        localStorage.removeItem('phantomConnected');
         toast.success("Wallet disconnected!");
       }
     } catch (error) {
@@ -91,15 +106,29 @@ export const WalletConnect = () => {
   };
 
   useEffect(() => {
-    // Check if wallet is already connected
-    // @ts-ignore
-    const { solana } = window;
-    if (solana?.isPhantom && solana.isConnected) {
-      const address = solana.publicKey.toString();
-      setWalletAddress(address);
-      setConnected(true);
-      loadProfile(address);
-    }
+    const initializeWallet = async () => {
+      // @ts-ignore
+      const { solana } = window;
+      
+      // Check if we have a stored connection and Phantom is available
+      const wasConnected = localStorage.getItem('phantomConnected') === 'true';
+      
+      if (wasConnected && solana?.isPhantom) {
+        try {
+          const response = await solana.connect({ onlyIfTrusted: true });
+          const address = response.publicKey.toString();
+          setWalletAddress(address);
+          setConnected(true);
+          await loadProfile(address);
+        } catch (error) {
+          console.error("Error reconnecting:", error);
+          // Clear localStorage if auto-reconnect fails
+          localStorage.removeItem('phantomConnected');
+        }
+      }
+    };
+
+    initializeWallet();
   }, []);
 
   return (
