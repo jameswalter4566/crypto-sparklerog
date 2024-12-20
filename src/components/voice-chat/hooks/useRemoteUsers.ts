@@ -19,8 +19,8 @@ export const useRemoteUsers = () => {
           audioElement.id = `audio-${user.uid}`;
           document.body.appendChild(audioElement);
           
-          // Play the audio track through the created element
-          user.audioTrack.play(`audio-${user.uid}`);
+          // Play the audio track - call play() without arguments
+          user.audioTrack.play();
           console.log("Started playing audio for user:", user.uid);
         }
       } catch (error) {
