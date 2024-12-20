@@ -6,6 +6,7 @@ import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
 import { AgoraRTCProvider } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import type { ClientConfig } from "agora-rtc-sdk-ng";
+import type { IAgoraRTCClient } from "agora-rtc-react";
 
 interface VoiceChatProps {
   coinId: string;
@@ -17,8 +18,8 @@ const config: ClientConfig = {
   codec: "vp8"
 };
 
-// Create the Agora RTC client
-const client = AgoraRTC.createClient(config);
+// Create the Agora RTC client and cast it to the expected type
+const client = AgoraRTC.createClient(config) as unknown as IAgoraRTCClient;
 
 export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   const [isJoined, setIsJoined] = useState(false);
