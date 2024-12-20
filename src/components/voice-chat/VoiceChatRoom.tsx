@@ -46,6 +46,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
         }
         
         await join();
+        console.log("Successfully joined voice chat");
         setIsLoading(false);
       } catch (err) {
         console.error('Failed to initialize Agora:', err);
@@ -63,6 +64,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     initializeVoiceChat();
 
     return () => {
+      console.log("Cleaning up voice chat...");
       leave();
     };
   }, [join, leave, toast]);

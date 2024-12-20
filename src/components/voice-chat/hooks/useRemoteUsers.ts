@@ -8,14 +8,21 @@ export const useRemoteUsers = () => {
   const handleUserJoined = useCallback(async (user: IAgoraRTCRemoteUser) => {
     console.log("Remote user joined:", user.uid);
     
-    // Subscribe to the user's audio track if available
     if (user.hasAudio) {
       try {
         await client.subscribe(user, "audio");
         console.log("Subscribed to audio track of user:", user.uid);
         
-        // Play the audio track
-        user.audioTrack?.play();
+        if (user.audioTrack) {
+          // Create a dedicated audio element for this user
+          const audioElement = document.createElement('audio');
+          audioElement.id = `audio-${user.uid}`;
+          document.body.appendChild(audioElement);
+          
+          // Play the audio track through the created element
+          user.audioTrack.play(`audio-${user.uid}`);
+          console.log("Started playing audio for user:", user.uid);
+        }
       } catch (error) {
         console.error("Error subscribing to audio:", error);
       }
@@ -28,11 +35,18 @@ export const useRemoteUsers = () => {
     console.log("Remote user left:", user);
     setRemoteUsers(prev => {
       const updatedUsers = prev.filter(u => u.uid !== user);
-      // Stop and close the audio track of the leaving user
       const leavingUser = prev.find(u => u.uid === user);
+      
       if (leavingUser?.audioTrack) {
         leavingUser.audioTrack.stop();
+        
+        // Remove the audio element from DOM
+        const audioElement = document.getElementById(`audio-${user}`);
+        if (audioElement) {
+          document.body.removeChild(audioElement);
+        }
       }
+      
       return updatedUsers;
     });
   }, []);
@@ -42,10 +56,23 @@ export const useRemoteUsers = () => {
     remoteUsers.forEach(user => {
       if (user.audioTrack) {
         user.audioTrack.stop();
+        
+        // Remove audio elements during cleanup
+        const audioElement = document.getElementById(`audio-${user.uid}`);
+        if (audioElement) {
+          document.body.removeChild(audioElement);
+        }
       }
     });
     setRemoteUsers([]);
   }, [remoteUsers]);
+
+  // Ensure audio elements are cleaned up when component unmounts
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 
   return {
     remoteUsers,
