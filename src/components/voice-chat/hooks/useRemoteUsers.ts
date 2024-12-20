@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { IAgoraRTCRemoteUser, UID, useClient } from 'agora-rtc-react';
+import { IAgoraRTCRemoteUser, UID, useRTCClient } from 'agora-rtc-react';
 
 export const useRemoteUsers = () => {
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
-  const client = useClient();
+  const client = useRTCClient();
 
   const handleUserJoined = useCallback(async (user: IAgoraRTCRemoteUser) => {
     console.log("Remote user joined:", user.uid);
