@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import type { IAgoraRTCClient } from 'agora-rtc-react';
-import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 
 export const useVoiceChatConnection = (client: IAgoraRTCClient) => {
   const [isConnected, setIsConnected] = useState(false);
