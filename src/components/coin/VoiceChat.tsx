@@ -28,25 +28,61 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
     display_name: string | null;
     avatar_url: string | null;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('wallet_address, display_name, avatar_url')
-          .eq('wallet_address', session.user.id)
-          .single();
+      try {
+        setIsLoading(true);
+        // Get the current session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (profile) {
-          setUserProfile(profile);
+        if (session?.user) {
+          // Get the user's profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('wallet_address, display_name, avatar_url')
+            .eq('wallet_address', session.user.id)
+            .maybeSingle();
+          
+          if (profile) {
+            setUserProfile(profile);
+          }
         }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        toast.error("Error loading profile");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_address, display_name, avatar_url')
+          .eq('wallet_address', session.user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          setUserProfile(profile);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUserProfile(null);
+        if (isJoined) {
+          setIsJoined(false);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isJoined]);
 
   const handleJoinVoiceChat = () => {
     if (!userProfile) {
@@ -69,15 +105,17 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
               size="lg"
               onClick={handleJoinVoiceChat}
               className="gap-2"
-              disabled={!userProfile}
+              disabled={isLoading || !userProfile}
             >
               <Mic className="h-5 w-5" />
               Join Voice Chat
             </Button>
             <p className="text-sm text-muted-foreground">
-              {userProfile 
-                ? "Join the voice chat to discuss with other traders"
-                : "Please connect your wallet to join voice chat"}
+              {isLoading 
+                ? "Loading..."
+                : userProfile 
+                  ? "Join the voice chat to discuss with other traders"
+                  : "Please connect your wallet to join voice chat"}
             </p>
           </div>
         ) : (
