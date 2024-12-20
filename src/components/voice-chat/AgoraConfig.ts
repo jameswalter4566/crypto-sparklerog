@@ -12,7 +12,7 @@ export const getAgoraAppId = async () => {
     }
     
     // Extract the secret value from the returned data
-    if (Array.isArray(data) && data.length > 0 && 'secret' in data[0]) {
+    if (Array.isArray(data) && data.length > 0 && data[0].secret) {
       return data[0].secret;
     }
     

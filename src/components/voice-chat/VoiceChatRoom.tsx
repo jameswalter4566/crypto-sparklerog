@@ -49,11 +49,12 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
         const appId = await getAgoraAppId();
         
         if (!appId) {
-          setError("Voice chat is currently unavailable. Please try again later.");
+          const errorMsg = "Voice chat is currently unavailable. Please try again later.";
+          setError(errorMsg);
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Voice chat is currently unavailable. Please try again later.",
+            description: errorMsg,
           });
           return;
         }
