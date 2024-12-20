@@ -3,10 +3,10 @@ import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
 import type { UID } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
-import { createParticipant, updateParticipantTalkingState } from './participantUtils';
+import { createParticipant } from './participantUtils';
 import type { Participant } from './types';
 
-export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
+interface UseVoiceChatProps {
   channelName: string;
   userProfile: {
     wallet_address: string;
@@ -14,7 +14,15 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
     avatar_url: string | null;
   } | null;
   agoraAppId: string;
-}) => {
+  microphoneId?: string;
+}
+
+export const useVoiceChat = ({ 
+  channelName, 
+  userProfile, 
+  agoraAppId,
+  microphoneId 
+}: UseVoiceChatProps) => {
   const client = useRTCClient();
   const [isConnected, setIsConnected] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -26,7 +34,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
     toggleMute,
     cleanup: cleanupLocalAudio,
     getTrackForPublishing
-  } = useLocalAudio();
+  } = useLocalAudio(microphoneId);
   
   const {
     remoteUsers,
@@ -68,7 +76,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
       console.log("Joined voice chat with UID:", uid);
 
       const audioTrack = await createLocalAudioTrack();
-      console.log("Created local audio track");
+      console.log("Created local audio track with device:", microphoneId);
 
       const trackToPublish = getTrackForPublishing();
       if (trackToPublish.length > 0) {
@@ -76,7 +84,6 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
         console.log("Published local audio track");
       }
 
-      // Add local participant
       const localParticipant = createParticipant(Number(uid), userProfile);
       setParticipants([localParticipant]);
       console.log("Added local participant:", localParticipant);
@@ -87,7 +94,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
       cleanup();
       throw error;
     }
-  }, [client, channelName, isConnected, createLocalAudioTrack, getTrackForPublishing, agoraAppId, userProfile]);
+  }, [client, channelName, isConnected, createLocalAudioTrack, getTrackForPublishing, agoraAppId, userProfile, microphoneId]);
 
   const leave = useCallback(async () => {
     if (!isConnected) {

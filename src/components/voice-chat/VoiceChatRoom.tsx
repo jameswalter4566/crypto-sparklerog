@@ -4,6 +4,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { VoiceChatControls } from "./VoiceChatControls";
 import { VoiceChatParticipants } from "./VoiceChatParticipants";
 import { useVoiceChat } from "./useVoiceChat";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import AgoraRTC from "agora-rtc-sdk-ng";
 
 interface VoiceChatRoomProps {
   channelName: string;
@@ -20,6 +29,9 @@ const AGORA_APP_ID = "c6f7a2828b774baebabd8ece87268954";
 export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRoomProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>("");
+  const [isDeviceSelected, setIsDeviceSelected] = useState(false);
   const { toast } = useToast();
 
   const { 
@@ -32,25 +44,29 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   } = useVoiceChat({
     channelName,
     userProfile,
-    agoraAppId: AGORA_APP_ID
+    agoraAppId: AGORA_APP_ID,
+    microphoneId: selectedMicrophoneId
   });
 
   useEffect(() => {
-    const initializeVoiceChat = async () => {
+    const getDevices = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        // Request permission to access audio devices
+        await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        if (!AGORA_APP_ID) {
-          throw new Error("Failed to initialize voice chat. Please try again later.");
+        // Get list of audio input devices
+        const devices = await AgoraRTC.getMicrophones();
+        setAudioDevices(devices);
+        
+        // Set default device if available
+        if (devices.length > 0) {
+          setSelectedMicrophoneId(devices[0].deviceId);
         }
         
-        await join();
-        console.log("Successfully joined voice chat");
         setIsLoading(false);
       } catch (err) {
-        console.error('Failed to initialize Agora:', err);
-        const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
+        console.error('Failed to get audio devices:', err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to access microphone. Please check your browser permissions.";
         setError(errorMsg);
         toast({
           variant: "destructive",
@@ -61,13 +77,36 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
       }
     };
 
-    initializeVoiceChat();
+    getDevices();
+  }, [toast]);
 
+  const handleDeviceSelect = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await join();
+      setIsDeviceSelected(true);
+      console.log("Successfully joined voice chat with device:", selectedMicrophoneId);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to initialize Agora:', err);
+      const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
+      setError(errorMsg);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMsg,
+      });
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     return () => {
       console.log("Cleaning up voice chat...");
       leave();
     };
-  }, [join, leave, toast]);
+  }, [leave]);
 
   if (isLoading) {
     return (
@@ -83,6 +122,45 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
         <p className="text-muted-foreground mb-4">{error}</p>
         <Button onClick={onLeave}>Close</Button>
       </div>
+    );
+  }
+
+  if (!isDeviceSelected) {
+    return (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Select Audio Device</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Microphone</label>
+            <Select
+              value={selectedMicrophoneId}
+              onValueChange={setSelectedMicrophoneId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select microphone..." />
+              </SelectTrigger>
+              <SelectContent>
+                {audioDevices.map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onLeave}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeviceSelect}
+              disabled={!selectedMicrophoneId}
+            >
+              Join Voice Chat
+            </Button>
+          </div>
+        </div>
+      </Card>
     );
   }
 
