@@ -35,11 +35,12 @@ export const useVoiceChat = ({
     cleanup: cleanupLocalAudio
   } = useLocalAudio(microphoneId);
 
-  // useRemoteUsers should handle subscribing to audio and updating `remoteUsers`
   const {
     remoteUsers,
     handleUserJoined,
     handleUserLeft,
+    handleUserPublished,
+    handleUserUnpublished,
     cleanup: cleanupRemoteUsers
   } = useRemoteUsers();
 
@@ -106,18 +107,22 @@ export const useVoiceChat = ({
     );
   }, []);
 
-  // Set up event listeners for user join/leave
+  // Set up event listeners for user join/leave and published/unpublished tracks
   useEffect(() => {
     console.log("[Voice Chat] Setting up voice chat event listeners");
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
+    client.on("user-published", handleUserPublished);
+    client.on("user-unpublished", handleUserUnpublished);
 
     return () => {
       console.log("[Voice Chat] Cleaning up voice chat event listeners");
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
+      client.off("user-published", handleUserPublished);
+      client.off("user-unpublished", handleUserUnpublished);
     };
-  }, [client, handleUserJoined, handleUserLeft]);
+  }, [client, handleUserJoined, handleUserLeft, handleUserPublished, handleUserUnpublished]);
 
   // Update participants whenever remoteUsers change
   useEffect(() => {
@@ -125,8 +130,8 @@ export const useVoiceChat = ({
       // Build a map of current participants
       const participantMap = new Map(prev.map(p => [p.id, p]));
 
-      // The first participant in the array should be the local participant
-      const localParticipant = prev.find(p => p.id === prev[0]?.id) || null;
+      // The first participant should be the local participant
+      const localParticipant = prev.length > 0 ? prev[0] : null;
 
       // Add or update remote participants
       for (const user of remoteUsers) {
@@ -139,6 +144,7 @@ export const useVoiceChat = ({
       // Remove participants no longer in remoteUsers (except the local one)
       const remoteUserIds = new Set(remoteUsers.map(u => Number(u.uid)));
       const finalParticipants = [...participantMap.values()].filter(p => {
+        // Keep local participant even if not in remoteUsers
         if (localParticipant && p.id === localParticipant.id) return true;
         return remoteUserIds.has(p.id);
       });
