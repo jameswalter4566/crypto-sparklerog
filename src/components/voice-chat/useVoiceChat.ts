@@ -3,6 +3,7 @@ import { useRTCClient } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
+import type { ILocalTrack } from 'agora-rtc-sdk-ng';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -60,12 +61,12 @@ export const useVoiceChat = ({
       }
 
       // Connect and publish the audio track
-      const uid = await connect(channelName, agoraAppId, audioTrack);
+      const uid = await connect(channelName, agoraAppId, audioTrack as ILocalTrack);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
       // Publish the audio track
-      await client.publish(audioTrack);
+      await client.publish(audioTrack as ILocalTrack);
       console.log("[Voice Chat] Published audio track successfully");
 
       addLocalParticipant(uidNumber, userProfile);
@@ -80,7 +81,7 @@ export const useVoiceChat = ({
   const leave = useCallback(async () => {
     try {
       if (localAudioTrack) {
-        await client.unpublish(localAudioTrack);
+        await client.unpublish(localAudioTrack as ILocalTrack);
       }
       await disconnect();
       cleanupLocalAudio();

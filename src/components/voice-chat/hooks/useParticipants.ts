@@ -6,17 +6,20 @@ export const useParticipants = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
 
   const addLocalParticipant = useCallback((uid: number, userProfile: any) => {
-    console.log("[Participants] Adding local participant:", { uid, userProfile });
+    console.log("[Participants] Adding or updating local participant:", { uid, userProfile });
     setParticipants(prev => {
-      // Check if participant already exists
-      const exists = prev.find(p => p.id === uid);
-      if (exists) {
-        console.log("[Participants] Local participant already exists:", exists);
-        return prev;
-      }
+      const existing = prev.find(p => p.id === uid);
       const localParticipant = createParticipant(uid, userProfile);
-      console.log("[Participants] Created local participant:", localParticipant);
-      return [localParticipant];
+
+      if (existing) {
+        console.log("[Participants] Local participant already exists. Updating profile:", existing);
+        // Update the local participant in place
+        return prev.map(p => p.id === uid ? localParticipant : p);
+      } else {
+        // Insert local participant at the start, while preserving remote participants
+        const filtered = prev.filter(p => p.id !== uid);
+        return [localParticipant, ...filtered];
+      }
     });
   }, []);
 
