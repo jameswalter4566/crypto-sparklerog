@@ -31,6 +31,7 @@ export const saveCoinData = async (coinData: TokenData) => {
       market_cap: coinData.marketCap,
       volume_24h: coinData.volume24h,
       liquidity: coinData.liquidity,
+      updated_at: new Date().toISOString(),
     });
 
   if (upsertError) {
