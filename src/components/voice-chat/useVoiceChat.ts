@@ -5,7 +5,8 @@ import type {
   ILocalAudioTrack,
   UID,
   IMicrophoneAudioTrack,
-  IRemoteAudioTrack
+  IRemoteAudioTrack,
+  ITrack
 } from "agora-rtc-sdk-ng";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,8 +45,9 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         }
 
         // Publish the track - using type assertion to resolve compatibility
-        await client.publish([audioTrack as unknown as ILocalAudioTrack]);
-        setLocalAudioTrack(audioTrack as ILocalAudioTrack);
+        const track = audioTrack as unknown as ITrack;
+        await client.publish([track]);
+        setLocalAudioTrack(audioTrack as unknown as ILocalAudioTrack);
 
         // Add local user to participants
         if (userProfile) {
@@ -83,7 +85,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
           // Using type assertion to resolve compatibility issues
-          await client.subscribe(user as unknown as IAgoraRTCRemoteUser, "audio");
+          const remoteUser = user as unknown as { uid: UID };
+          await client.subscribe(remoteUser, "audio");
           console.log("Subscribed to remote user:", user.uid);
         }
 
