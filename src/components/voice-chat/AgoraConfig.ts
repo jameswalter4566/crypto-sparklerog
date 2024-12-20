@@ -11,15 +11,11 @@ export const getAgoraAppId = async () => {
       return null;
     }
     
-    if (Array.isArray(data) && data.length > 0 && data[0].secret) {
-      return data[0].secret;
-    }
-    
-    return null;
+    return data;
   } catch (err) {
     console.error('Failed to fetch Agora App ID:', err);
     return null;
   }
 };
 
-export const DEFAULT_TOKEN = null; // For development, can be null. In production, implement token server
+export const DEFAULT_TOKEN = null;
