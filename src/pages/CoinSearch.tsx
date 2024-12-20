@@ -42,7 +42,7 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-      // Mock data for now since Helius is removed
+      // Mock data for demonstration
       const mockTokenData: TokenData = {
         id: mintAddress,
         name: "Test Token",
