@@ -26,6 +26,7 @@ export const useVoiceChat = ({
   const client = useRTCClient();
   const [localUid, setLocalUid] = useState<number | null>(null);
 
+  // useLocalAudio should return an IMicrophoneAudioTrack from agora-rtc-sdk-ng
   const {
     localAudioTrack,
     isMuted,
@@ -56,18 +57,18 @@ export const useVoiceChat = ({
     }
 
     try {
-      // First create the local audio track
+      // Create the local audio track first
       const audioTrack = await createLocalAudioTrack();
       if (!audioTrack) {
         throw new Error("Failed to create audio track");
       }
 
-      // Then connect to the channel
+      // Connect to the channel
       const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
-      // After connecting, publish the track
+      // Now that we're connected, publish the audio track
       console.log("[Voice Chat] Publishing audio track");
       await client.publish([audioTrack]);
       console.log("[Voice Chat] Published audio track successfully");
