@@ -45,7 +45,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         }
 
         // Publish the audio track to the channel
-        await client.publish([audioTrack]);
+        await client.publish(audioTrack as unknown as ILocalAudioTrack);
         console.log("Published local audio track");
         setLocalAudioTrack(audioTrack);
 
@@ -86,11 +86,11 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          await client.subscribe(user, "audio");
+          await client.subscribe(user as unknown as IAgoraRTCRemoteUser, "audio");
           console.log("Subscribed to remote user audio:", user.uid);
           
           if (user.audioTrack) {
-            user.audioTrack.play();
+            (user.audioTrack as IRemoteAudioTrack).play();
             console.log("Playing remote user audio:", user.uid);
           } else {
             console.warn("No audio track available for user:", user.uid);
@@ -118,7 +118,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
       console.log("Remote user left:", user.uid);
       // Stop the remote user's audio track if it exists
       if (user.audioTrack) {
-        user.audioTrack.stop();
+        (user.audioTrack as IRemoteAudioTrack).stop();
       }
       setParticipants(prev => prev.filter(p => p.id !== Number(user.uid)));
     };
