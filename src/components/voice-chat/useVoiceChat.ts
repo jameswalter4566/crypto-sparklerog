@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useRTCClient } from "agora-rtc-react";
-import type { IAgoraRTCRemoteUser, IMicrophoneAudioTrack } from "agora-rtc-sdk-ng";
+import type { 
+  IAgoraRTCRemoteUser, 
+  ILocalAudioTrack, 
+  IRemoteAudioTrack,
+  UID
+} from "agora-rtc-sdk-ng";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +35,7 @@ interface Participant {
 export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceChatProps) => {
   const client = useRTCClient();
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
+  const [localAudioTrack, setLocalAudioTrack] = useState<ILocalAudioTrack | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const { toast } = useToast();
 
@@ -63,7 +68,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           return;
         }
 
-        await client.publish([audioTrack]);
+        await client.publish(audioTrack);
         setLocalAudioTrack(audioTrack);
 
         // Add local user to participants
@@ -74,8 +79,8 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           ]);
         }
 
-        // Set up volume indicator for local audio
-        audioTrack.enableVolumeIndicator();
+        // Set up volume detection for local audio
+        audioTrack.setVolume(100);
         audioTrack.on("volume-indicator", (volume) => {
           setParticipants(prev => 
             prev.map(p => 
@@ -113,11 +118,11 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
           .single();
 
         // Add remote user to participants
-        setParticipants(prev => [...prev, createParticipant(user.uid, profile)]);
+        setParticipants(prev => [...prev, createParticipant(user.uid as number, profile)]);
 
-        // Set up volume indicator for remote user
+        // Set up volume detection for remote user
         if (user.audioTrack) {
-          user.audioTrack.enableVolumeIndicator();
+          user.audioTrack.setVolume(100);
           user.audioTrack.on("volume-indicator", (volume) => {
             setParticipants(prev => 
               prev.map(p => 
