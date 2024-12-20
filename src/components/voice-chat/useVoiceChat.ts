@@ -85,12 +85,15 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          await client.subscribe(user, "audio");
+          await client.subscribe(user.uid as UID, "audio");
           console.log("Subscribed to remote user audio:", user.uid);
           
-          // Play the remote user's audio track
-          user.audioTrack?.play();
-          console.log("Playing remote user audio:", user.uid);
+          // Play the remote user's audio track after subscription
+          const audioTrack = user.audioTrack as IRemoteAudioTrack;
+          if (audioTrack) {
+            audioTrack.play();
+            console.log("Playing remote user audio:", user.uid);
+          }
         }
 
         // Get user profile from Supabase
