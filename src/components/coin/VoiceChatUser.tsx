@@ -18,8 +18,8 @@ interface VoiceChatUserProps {
 }
 
 export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
-  // Fallback logic for username
-  const displayName = user.username || "Anonymous";
+  // Since createParticipant now ensures we have a "User" fallback, just use user.username directly.
+  const displayName = user.username?.trim() || "User";
 
   return (
     <div
@@ -31,12 +31,17 @@ export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
     >
       <Avatar className="w-24 h-24 mb-3">
         <AvatarImage src={user.avatar} alt={displayName} />
-        <AvatarFallback>
-          {displayName.charAt(0).toUpperCase()}
-        </AvatarFallback>
+        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-sm font-medium text-center">{displayName}</span>
+        {/* Removed the (Dev) tag entirely */}
+      </div>
+      <div className="text-xs text-center text-muted-foreground">
+        <div>${user.tokenHolding.amount} (USD)</div>
+        <div className="text-muted-foreground">
+          {user.tokenHolding.percentage.toFixed(2)}% of supply
+        </div>
       </div>
       <Button
         variant="ghost"
