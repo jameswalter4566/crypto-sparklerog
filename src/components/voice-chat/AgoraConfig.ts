@@ -11,8 +11,13 @@ export const getAgoraAppId = async () => {
       return null;
     }
     
-    // Return the secret string directly since the function returns a single value
-    return data as string;
+    // Extract the secret value from the returned data
+    if (Array.isArray(data) && data.length > 0 && 'secret' in data[0]) {
+      return data[0].secret;
+    }
+    
+    console.error('Invalid data structure returned from get_secret');
+    return null;
   } catch (err) {
     console.error('Failed to fetch Agora App ID:', err);
     return null;
