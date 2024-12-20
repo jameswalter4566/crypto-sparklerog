@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useClient } from "agora-rtc-react";
+import { useRTCClient } from "agora-rtc-react";
 import { Button } from "@/components/ui/button";
 import { getAgoraAppId, DEFAULT_TOKEN } from "./AgoraConfig";
 import { VoiceChatUser } from "../coin/VoiceChatUser";
@@ -22,8 +22,18 @@ const useIsConnected = () => {
 };
 
 export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
-  const client = useClient();
-  const [users, setUsers] = useState<string[]>([]);
+  const client = useRTCClient();
+  const [users, setUsers] = useState<Array<{
+    id: number;
+    username: string;
+    avatar: string;
+    isMuted: boolean;
+    isTalking: boolean;
+    tokenHolding: {
+      amount: string;
+      percentage: number;
+    };
+  }>>([]);
   const [calling, setCalling] = useState(false);
   const [agoraAppId, setAgoraAppId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,6 +83,19 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
       try {
         await client.join(agoraAppId, channelName, DEFAULT_TOKEN, null);
         console.log("Joined voice chat successfully");
+        
+        // Add a mock user for testing
+        setUsers([{
+          id: 1,
+          username: "Test User",
+          avatar: "/placeholder.svg",
+          isMuted: false,
+          isTalking: false,
+          tokenHolding: {
+            amount: "1000",
+            percentage: 25
+          }
+        }]);
       } catch (error) {
         console.error("Error joining voice chat:", error);
         toast({
@@ -91,6 +114,14 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
       client.leave();
     };
   }, [agoraAppId, calling, channelName, client, isConnected, toast]);
+
+  const handleToggleMute = (userId: number) => {
+    setUsers(prevUsers =>
+      prevUsers.map(user =>
+        user.id === userId ? { ...user, isMuted: !user.isMuted } : user
+      )
+    );
+  };
 
   if (isLoading) {
     return (
@@ -121,8 +152,12 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {users.map((userId) => (
-          <VoiceChatUser key={userId} userId={userId} />
+        {users.map((user) => (
+          <VoiceChatUser 
+            key={user.id} 
+            user={user}
+            onToggleMute={handleToggleMute}
+          />
         ))}
       </div>
 
