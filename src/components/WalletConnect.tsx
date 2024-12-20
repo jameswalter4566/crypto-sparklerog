@@ -22,7 +22,7 @@ export const WalletConnect = () => {
         .maybeSingle();
 
       if (error) {
-        console.error("Error loading profile:", error);
+        console.error("[WalletConnect] Error loading profile:", error);
         return;
       }
 
@@ -40,7 +40,7 @@ export const WalletConnect = () => {
         setShowProfileSetup(true);
       }
     } catch (error) {
-      console.error("Error in loadProfile:", error);
+      console.error("[WalletConnect] Error in loadProfile:", error);
     }
   };
 
@@ -67,7 +67,7 @@ export const WalletConnect = () => {
       localStorage.setItem("phantomConnected", "true");
       localStorage.setItem("walletAddress", address);
     } catch (error) {
-      console.error(error);
+      console.error("[WalletConnect] Error connecting wallet:", error);
       toast.error("Error connecting wallet");
     }
   };
@@ -93,7 +93,7 @@ export const WalletConnect = () => {
         toast.success("Wallet disconnected!");
       }
     } catch (error) {
-      console.error(error);
+      console.error("[WalletConnect] Error disconnecting wallet:", error);
       toast.error("Error disconnecting wallet");
     }
   };
@@ -134,8 +134,10 @@ export const WalletConnect = () => {
           } else {
             await loadProfile(address);
           }
+
+          toast.success("Reconnected to wallet!");
         } catch (error) {
-          console.error("Error reconnecting:", error);
+          console.error("[WalletConnect] Error reconnecting:", error);
           localStorage.removeItem("phantomConnected");
           localStorage.removeItem("walletAddress");
           localStorage.removeItem("userProfile");
