@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useRTCClient } from 'agora-rtc-react';
-import type { UID, ILocalTrack } from 'agora-rtc-sdk-ng';
+import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
+import type { UID } from 'agora-rtc-sdk-ng';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useRemoteUsers } from './hooks/useRemoteUsers';
 import { createParticipant } from './participantUtils';
@@ -48,7 +48,9 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: {
       // Create and publish local audio track
       const audioTrack = await createLocalAudioTrack();
       const trackToPublish = getTrackForPublishing();
-      await client.publish(trackToPublish as unknown as ILocalTrack[]);
+      if (trackToPublish.length > 0) {
+        await client.publish(trackToPublish[0] as ILocalTrack);
+      }
       console.log("Published local audio track");
 
       // Add local participant
