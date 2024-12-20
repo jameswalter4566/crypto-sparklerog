@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
 import { useState } from "react";
 import { VoiceChatRoom } from "../voice-chat/VoiceChatRoom";
-import { AgoraRTCProvider, useClient, ClientConfig } from "agora-rtc-react";
+import { AgoraRTCProvider, useRTCClient } from "agora-rtc-react";
+import type { ClientConfig } from "agora-rtc-sdk-ng";
 
 interface VoiceChatProps {
   coinId: string;
@@ -17,7 +18,7 @@ const config: ClientConfig = {
 
 export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   const [isJoined, setIsJoined] = useState(false);
-  const client = useClient(config);
+  const client = useRTCClient(config);
 
   const handleJoinVoiceChat = () => {
     setIsJoined(true);
