@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CandlestickChart, Users, Mic, Shuffle } from "lucide-react";
+import { CandlestickChart, Users, Shuffle } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
@@ -135,18 +135,9 @@ const CoinProfile = () => {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <Button 
-          variant="outline" 
-          className="flex-1 max-w-[200px]"
-          onClick={() => console.log('Voice Chat clicked')}
-        >
-          <Mic className="mr-2" />
-          Join Voice Chat
-        </Button>
       </div>
 
-      <VoiceChat />
+      <VoiceChat coinId={coin.id} />
     </div>
   );
 };
