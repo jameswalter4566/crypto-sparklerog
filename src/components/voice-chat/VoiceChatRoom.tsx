@@ -23,22 +23,39 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
   const [calling, setCalling] = useState(false);
   const [agoraAppId, setAgoraAppId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const isConnected = useIsConnected();
   const { toast } = useToast();
 
   useEffect(() => {
     const initializeAgora = async () => {
-      const appId = await getAgoraAppId();
-      setAgoraAppId(appId);
-      setIsLoading(false);
-      if (appId) {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const appId = await getAgoraAppId();
+        
+        if (!appId) {
+          setError("Failed to initialize voice chat. Please try again later.");
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to initialize voice chat. Please try again later.",
+          });
+          return;
+        }
+        
+        setAgoraAppId(appId);
         setCalling(true);
-      } else {
+      } catch (err) {
+        console.error('Failed to initialize Agora:', err);
+        setError("An error occurred while setting up voice chat.");
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to initialize voice chat. Please try again later.",
+          description: "An error occurred while setting up voice chat.",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -84,11 +101,11 @@ export const VoiceChatRoom = ({ channelName, onLeave }: VoiceChatRoomProps) => {
     );
   }
 
-  if (!agoraAppId) {
+  if (error || !agoraAppId) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-muted-foreground mb-4">
-          Voice chat is currently unavailable. Please try again later.
+          {error || "Voice chat is currently unavailable. Please try again later."}
         </p>
         <Button onClick={onLeave}>Close</Button>
       </div>
