@@ -16,9 +16,9 @@ export const WalletConnect = () => {
   const loadProfile = async (address: string) => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_url')
-        .eq('wallet_address', address)
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("wallet_address", address)
         .maybeSingle();
 
       if (error) {
@@ -30,6 +30,12 @@ export const WalletConnect = () => {
         setDisplayName(data.display_name);
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
+
+        // Save profile data in local storage
+        localStorage.setItem(
+          "userProfile",
+          JSON.stringify({ displayName: data.display_name, avatarUrl: data.avatar_url })
+        );
       } else {
         setShowProfileSetup(true);
       }
@@ -49,29 +55,17 @@ export const WalletConnect = () => {
         return;
       }
 
-      // Try to reconnect to an existing session first
-      try {
-        const resp = await solana.connect({ onlyIfTrusted: true });
-        const address = resp.publicKey.toString();
-        setWalletAddress(address);
-        setConnected(true);
-        toast.success("Wallet reconnected!");
-        await loadProfile(address);
-        return;
-      } catch (e) {
-        // No trusted connection, proceed with new connection
-        console.log("No trusted connection found, requesting new connection");
-      }
-
       const response = await solana.connect({ onlyIfTrusted: false });
       const address = response.publicKey.toString();
       setWalletAddress(address);
       setConnected(true);
+
       toast.success("Wallet connected!");
       await loadProfile(address);
 
       // Store connection in localStorage
-      localStorage.setItem('phantomConnected', 'true');
+      localStorage.setItem("phantomConnected", "true");
+      localStorage.setItem("walletAddress", address);
     } catch (error) {
       console.error(error);
       toast.error("Error connecting wallet");
@@ -82,6 +76,7 @@ export const WalletConnect = () => {
     try {
       // @ts-ignore
       const { solana } = window;
+
       if (solana) {
         await solana.disconnect();
         setConnected(false);
@@ -89,8 +84,12 @@ export const WalletConnect = () => {
         setShowProfileSetup(false);
         setDisplayName(null);
         setAvatarUrl(null);
+
         // Clear localStorage on manual disconnect
-        localStorage.removeItem('phantomConnected');
+        localStorage.removeItem("phantomConnected");
+        localStorage.removeItem("walletAddress");
+        localStorage.removeItem("userProfile");
+
         toast.success("Wallet disconnected!");
       }
     } catch (error) {
@@ -103,27 +102,43 @@ export const WalletConnect = () => {
     setDisplayName(newDisplayName);
     setAvatarUrl(newAvatarUrl);
     setShowProfileSetup(false);
+
+    // Update local storage with new profile data
+    localStorage.setItem(
+      "userProfile",
+      JSON.stringify({ displayName: newDisplayName, avatarUrl: newAvatarUrl })
+    );
   };
 
   useEffect(() => {
     const initializeWallet = async () => {
       // @ts-ignore
       const { solana } = window;
-      
-      // Check if we have a stored connection and Phantom is available
-      const wasConnected = localStorage.getItem('phantomConnected') === 'true';
-      
+
+      const wasConnected = localStorage.getItem("phantomConnected") === "true";
+      const savedWalletAddress = localStorage.getItem("walletAddress");
+      const savedProfile = localStorage.getItem("userProfile");
+
       if (wasConnected && solana?.isPhantom) {
         try {
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
           setWalletAddress(address);
           setConnected(true);
-          await loadProfile(address);
+
+          // Load profile if available in local storage
+          if (savedProfile) {
+            const parsedProfile = JSON.parse(savedProfile);
+            setDisplayName(parsedProfile.displayName || null);
+            setAvatarUrl(parsedProfile.avatarUrl || null);
+          } else {
+            await loadProfile(address);
+          }
         } catch (error) {
           console.error("Error reconnecting:", error);
-          // Clear localStorage if auto-reconnect fails
-          localStorage.removeItem('phantomConnected');
+          localStorage.removeItem("phantomConnected");
+          localStorage.removeItem("walletAddress");
+          localStorage.removeItem("userProfile");
         }
       }
     };
@@ -136,12 +151,8 @@ export const WalletConnect = () => {
       {connected ? (
         <div className="fixed top-4 right-4 flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <ProfileAvatar 
-              displayName={displayName}
-              avatarUrl={avatarUrl}
-              size="sm"
-            />
-            <span className="text-white">{displayName}</span>
+            <ProfileAvatar displayName={displayName} avatarUrl={avatarUrl} size="sm" />
+            <span className="text-white">{displayName || "Unknown User"}</span>
           </div>
           {walletAddress && (
             <Settings
@@ -153,7 +164,6 @@ export const WalletConnect = () => {
           <button
             onClick={disconnectWallet}
             className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
-            aria-label="Disconnect wallet"
           >
             <LogOut className="w-4 h-4" />
             Disconnect
