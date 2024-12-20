@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { useRTCClient } from "agora-rtc-react";
 import type { 
   IAgoraRTCRemoteUser,
-  ILocalAudioTrack,
   UID,
   IMicrophoneAudioTrack,
-  IRemoteAudioTrack,
-  ILocalTrack
+  IRemoteAudioTrack
 } from "agora-rtc-sdk-ng";
+import type { ILocalTrack } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +23,7 @@ import {
 export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceChatProps) => {
   const client = useRTCClient();
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [localAudioTrack, setLocalAudioTrack] = useState<ILocalAudioTrack | null>(null);
+  const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const { toast } = useToast();
 
@@ -46,7 +45,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         }
 
         // Publish the audio track to the channel
-        await client.publish([audioTrack as unknown as ILocalTrack]);
+        await client.publish([audioTrack] as ILocalTrack[]);
         console.log("Published local audio track");
         setLocalAudioTrack(audioTrack);
 
