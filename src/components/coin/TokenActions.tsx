@@ -5,9 +5,23 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { RadialBar, RadialBarChart } from 'recharts';
 import { useToast } from "@/components/ui/use-toast";
 import { AskAgentButton } from "./AskAgentButton";
+import { useState } from "react";
 
 export const TokenActions = ({ symbol }: { symbol: string }) => {
   const { toast } = useToast();
+  const [rugAnalysis, setRugAnalysis] = useState({
+    devAnalysis: "22.31% of supply ($6,780 USD)",
+    launchAnalysis: "Dev wallet has been linked to 3 coin launches that all sold within 24 hours!",
+    socialMediaStatus: "Token does not have any verified social media profiles linked.",
+    rugScore: 90
+  });
+
+  // Mock data for demonstration - in a real app, this would come from your backend
+  const mockCoinData = {
+    devHoldings: "22.31% of supply ($6,780 USD)",
+    launchHistory: "3 previous launches, all sold within 24h",
+    socialMedia: "No verified profiles"
+  };
 
   const handleCopyToken = () => {
     navigator.clipboard.writeText(symbol);
@@ -29,10 +43,19 @@ export const TokenActions = ({ symbol }: { symbol: string }) => {
     });
   };
 
+  const handleAnalysisComplete = (analysis: {
+    devAnalysis: string;
+    launchAnalysis: string;
+    socialMediaStatus: string;
+    rugScore: number;
+  }) => {
+    setRugAnalysis(analysis);
+  };
+
   const rugData = [
     {
       name: 'Rug Score',
-      value: 90,
+      value: rugAnalysis.rugScore,
       fill: '#ea384c'
     }
   ];
@@ -101,16 +124,16 @@ export const TokenActions = ({ symbol }: { symbol: string }) => {
             <div>
               <h3 className="font-bold mb-2">Dev Holdings</h3>
               <p className="text-[#ea384c] font-semibold">
-                22.31% of supply ($6,780 USD)
+                {rugAnalysis.devAnalysis}
               </p>
             </div>
             
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                Dev wallet has been linked to 3 coin launches that all sold within 24 hours!
+                {rugAnalysis.launchAnalysis}
               </p>
               <p className="text-sm text-muted-foreground">
-                Token does not have any verified social media profiles linked.
+                {rugAnalysis.socialMediaStatus}
               </p>
             </div>
 
@@ -133,14 +156,17 @@ export const TokenActions = ({ symbol }: { symbol: string }) => {
               </div>
               <div>
                 <p className="text-sm font-semibold mb-1">RUG SCORE</p>
-                <p className="text-2xl font-bold text-[#ea384c]">90%</p>
+                <p className="text-2xl font-bold text-[#ea384c]">{rugAnalysis.rugScore}%</p>
               </div>
             </div>
           </div>
         </PopoverContent>
       </Popover>
 
-      <AskAgentButton />
+      <AskAgentButton 
+        onAnalysisComplete={handleAnalysisComplete}
+        coinData={mockCoinData}
+      />
     </div>
   );
 };
