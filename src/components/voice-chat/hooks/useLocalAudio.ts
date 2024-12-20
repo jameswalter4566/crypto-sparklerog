@@ -15,7 +15,7 @@ export const useLocalAudio = (microphoneId?: string) => {
       console.log("[Local Audio] Created audio track:", audioTrack);
       
       // Test the audio track
-      const enabled = audioTrack.isEnabled;
+      const enabled = audioTrack.enabled;
       const muted = audioTrack.muted;
       console.log("[Local Audio] Track state - Enabled:", enabled, "Muted:", muted);
       
