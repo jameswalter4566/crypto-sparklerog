@@ -43,54 +43,40 @@ export const useVoiceChat = ({
     cleanup: cleanupRemoteUsers
   } = useRemoteUsers();
 
-  // Handle remote users joining and update participants list
-  useEffect(() => {
-    if (remoteUsers.length > 0) {
-      setParticipants(prev => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const newParticipants = remoteUsers
-          .filter(user => !existingIds.has(Number(user.uid)))
-          .map(user => {
-            const participant = createParticipant(Number(user.uid));
-            console.log("Created new participant:", participant);
-            return participant;
-          });
-        
-        if (newParticipants.length === 0) return prev;
-        const updatedParticipants = [...prev, ...newParticipants];
-        console.log("Updated participants list:", updatedParticipants);
-        return updatedParticipants;
-      });
-    }
-  }, [remoteUsers]);
-
   const join = useCallback(async () => {
     if (isConnected) {
-      console.log("Already connected to voice chat");
+      console.log("[Voice Chat] Already connected to voice chat");
       return;
     }
 
     try {
-      console.log("Joining channel:", channelName);
+      console.log("[Voice Chat] Joining channel:", channelName);
       const uid = await client.join(agoraAppId, channelName, null, undefined);
-      console.log("Joined voice chat with UID:", uid);
+      console.log("[Voice Chat] Joined channel with UID:", uid);
 
+      console.log("[Voice Chat] Creating local audio track with device:", microphoneId);
       const audioTrack = await createLocalAudioTrack();
-      console.log("Created local audio track with device:", microphoneId);
+      console.log("[Voice Chat] Created local audio track:", audioTrack);
 
       const trackToPublish = getTrackForPublishing();
+      console.log("[Voice Chat] Tracks to publish:", trackToPublish);
+
       if (trackToPublish.length > 0) {
+        console.log("[Voice Chat] Publishing audio track");
         await client.publish((trackToPublish[0] as unknown) as ILocalTrack);
-        console.log("Published local audio track");
+        console.log("[Voice Chat] Published audio track successfully");
+      } else {
+        console.warn("[Voice Chat] No audio track to publish");
       }
 
       const localParticipant = createParticipant(Number(uid), userProfile);
       setParticipants([localParticipant]);
-      console.log("Added local participant:", localParticipant);
+      console.log("[Voice Chat] Added local participant:", localParticipant);
       
       setIsConnected(true);
+      console.log("[Voice Chat] Successfully connected to voice chat");
     } catch (error) {
-      console.error("Error joining voice chat:", error);
+      console.error("[Voice Chat] Error joining voice chat:", error);
       cleanup();
       throw error;
     }
@@ -98,15 +84,15 @@ export const useVoiceChat = ({
 
   const leave = useCallback(async () => {
     if (!isConnected) {
-      console.log("Not connected to voice chat");
+      console.log("[Voice Chat] Not connected to voice chat");
       return;
     }
 
     try {
       cleanup();
-      console.log("Left voice chat");
+      console.log("[Voice Chat] Left voice chat");
     } catch (error) {
-      console.error("Error leaving voice chat:", error);
+      console.error("[Voice Chat] Error leaving voice chat:", error);
       throw error;
     }
   }, [isConnected]);
@@ -117,7 +103,7 @@ export const useVoiceChat = ({
     client.leave();
     setIsConnected(false);
     setParticipants([]);
-    console.log("Cleaned up voice chat resources");
+    console.log("[Voice Chat] Cleaned up voice chat resources");
   }, [client, cleanupLocalAudio, cleanupRemoteUsers]);
 
   const handleToggleMute = useCallback((userId: number) => {
@@ -128,12 +114,12 @@ export const useVoiceChat = ({
 
   // Set up event listeners for user join/leave
   useEffect(() => {
-    console.log("Setting up voice chat event listeners");
+    console.log("[Voice Chat] Setting up voice chat event listeners");
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
 
     return () => {
-      console.log("Cleaning up voice chat event listeners");
+      console.log("[Voice Chat] Cleaning up voice chat event listeners");
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
     };
