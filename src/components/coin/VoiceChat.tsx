@@ -29,64 +29,71 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
     avatar_url: string | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [walletConnected, setWalletConnected] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkWalletAndProfile = async () => {
       try {
         setIsLoading(true);
-        // Get the current session
-        const { data: { session } } = await supabase.auth.getSession();
+        // @ts-ignore
+        const { solana } = window;
         
-        if (session?.user) {
+        // Check if wallet is connected
+        if (solana?.isPhantom && solana.isConnected) {
+          setWalletConnected(true);
+          const address = solana.publicKey.toString();
+          
           // Get the user's profile
           const { data: profile } = await supabase
             .from('profiles')
             .select('wallet_address, display_name, avatar_url')
-            .eq('wallet_address', session.user.id)
+            .eq('wallet_address', address)
             .maybeSingle();
           
           if (profile) {
             setUserProfile(profile);
           }
+        } else {
+          setWalletConnected(false);
+          setUserProfile(null);
         }
       } catch (error) {
-        console.error("Error checking auth:", error);
+        console.error("Error checking wallet and profile:", error);
         toast.error("Error loading profile");
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkAuth();
+    checkWalletAndProfile();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('wallet_address, display_name, avatar_url')
-          .eq('wallet_address', session.user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          setUserProfile(profile);
-        }
-      } else if (event === 'SIGNED_OUT') {
+    // Listen for wallet connection changes
+    // @ts-ignore
+    const { solana } = window;
+    if (solana) {
+      solana.on('connect', checkWalletAndProfile);
+      solana.on('disconnect', () => {
+        setWalletConnected(false);
         setUserProfile(null);
         if (isJoined) {
           setIsJoined(false);
         }
-      }
-    });
+      });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        solana.removeListener('connect', checkWalletAndProfile);
+        solana.removeListener('disconnect', () => {});
+      };
+    }
   }, [isJoined]);
 
   const handleJoinVoiceChat = () => {
-    if (!userProfile) {
+    if (!walletConnected) {
       toast.error("Please connect your wallet to join voice chat");
+      return;
+    }
+    if (!userProfile) {
+      toast.error("Please set up your profile to join voice chat");
       return;
     }
     setIsJoined(true);
@@ -105,7 +112,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
               size="lg"
               onClick={handleJoinVoiceChat}
               className="gap-2"
-              disabled={isLoading || !userProfile}
+              disabled={isLoading || !walletConnected || !userProfile}
             >
               <Mic className="h-5 w-5" />
               Join Voice Chat
@@ -113,9 +120,11 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
             <p className="text-sm text-muted-foreground">
               {isLoading 
                 ? "Loading..."
-                : userProfile 
-                  ? "Join the voice chat to discuss with other traders"
-                  : "Please connect your wallet to join voice chat"}
+                : !walletConnected
+                  ? "Please connect your wallet to join voice chat"
+                  : !userProfile
+                    ? "Please set up your profile to join voice chat"
+                    : "Join the voice chat to discuss with other traders"}
             </p>
           </div>
         ) : (
