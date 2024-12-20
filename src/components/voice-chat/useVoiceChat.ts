@@ -32,9 +32,10 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
 
     const initVoiceChat = async () => {
       try {
+        console.log("Initializing voice chat...");
         // Join the Agora channel
         const uid = await client.join(agoraAppId, channelName, null, null);
-        console.log("Successfully joined channel:", channelName);
+        console.log("Successfully joined channel:", channelName, "with UID:", uid);
 
         // Create and publish local audio track
         const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
@@ -44,7 +45,7 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         }
 
         // Publish the audio track to the channel
-        await client.publish(audioTrack as any);
+        await client.publish([audioTrack]);
         console.log("Published local audio track");
         setLocalAudioTrack(audioTrack);
 
@@ -85,15 +86,17 @@ export const useVoiceChat = ({ channelName, userProfile, agoraAppId }: UseVoiceC
         
         // Subscribe to the remote user's audio track
         if (user.hasAudio) {
-          await client.subscribe(user.uid as UID, "audio");
+          await client.subscribe(user, "audio");
           console.log("Subscribed to remote user audio:", user.uid);
           
-          // Play the remote user's audio track after subscription
-          const audioTrack = user.audioTrack as IRemoteAudioTrack;
-          if (audioTrack) {
-            audioTrack.play();
+          if (user.audioTrack) {
+            user.audioTrack.play();
             console.log("Playing remote user audio:", user.uid);
+          } else {
+            console.warn("No audio track available for user:", user.uid);
           }
+        } else {
+          console.log("Remote user has no audio:", user.uid);
         }
 
         // Get user profile from Supabase
