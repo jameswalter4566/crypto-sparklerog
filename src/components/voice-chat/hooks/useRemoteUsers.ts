@@ -14,12 +14,6 @@ export const useRemoteUsers = () => {
         console.log("Subscribed to audio track of user:", user.uid);
         
         if (user.audioTrack) {
-          // Create a dedicated audio element for this user
-          const audioElement = document.createElement('audio');
-          audioElement.id = `audio-${user.uid}`;
-          document.body.appendChild(audioElement);
-          
-          // Play the audio track without arguments as per Agora's API
           user.audioTrack.play();
           console.log("Started playing audio for user:", user.uid);
         }
@@ -39,35 +33,21 @@ export const useRemoteUsers = () => {
       
       if (leavingUser?.audioTrack) {
         leavingUser.audioTrack.stop();
-        
-        // Remove the audio element from DOM
-        const audioElement = document.getElementById(`audio-${user}`);
-        if (audioElement) {
-          document.body.removeChild(audioElement);
-        }
       }
       
       return updatedUsers;
     });
   }, []);
 
-  // Cleanup function for remote users' audio tracks
   const cleanup = useCallback(() => {
     remoteUsers.forEach(user => {
       if (user.audioTrack) {
         user.audioTrack.stop();
-        
-        // Remove audio elements during cleanup
-        const audioElement = document.getElementById(`audio-${user.uid}`);
-        if (audioElement) {
-          document.body.removeChild(audioElement);
-        }
       }
     });
     setRemoteUsers([]);
   }, [remoteUsers]);
 
-  // Ensure audio elements are cleaned up when component unmounts
   useEffect(() => {
     return () => {
       cleanup();
