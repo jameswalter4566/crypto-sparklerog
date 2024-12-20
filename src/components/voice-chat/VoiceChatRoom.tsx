@@ -82,6 +82,11 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
 
   const handleDeviceSelect = async () => {
     try {
+      if (!selectedMicrophoneId) {
+        setError("Please select a microphone device.");
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       await join();
@@ -104,9 +109,11 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   useEffect(() => {
     return () => {
       console.log("Cleaning up voice chat...");
-      leave();
+      if (isDeviceSelected) {
+        leave();
+      }
     };
-  }, [leave]);
+  }, [leave, isDeviceSelected]);
 
   if (isLoading) {
     return (
