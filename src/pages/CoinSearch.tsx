@@ -9,11 +9,19 @@ interface TokenData {
   id: string;
   name: string;
   symbol: string;
-  image?: string;
-  price?: number;
-  market_cap?: number;
-  volume_24h?: number;
-  liquidity?: number;
+  image: string | null;
+  price: number;
+  description: string;
+  tokenStandard: string;
+  decimals: number;
+  marketCap: number;
+  volume24h: number;
+  liquidity: number;
+  supply: {
+    total: number;
+    circulating: number;
+    nonCirculating: number;
+  };
 }
 
 const CoinSearch = () => {
@@ -39,7 +47,19 @@ const CoinSearch = () => {
         id: mintAddress,
         name: "Test Token",
         symbol: "TEST",
+        image: null,
         price: 0.1,
+        description: "A test token for demonstration",
+        tokenStandard: "SPL",
+        decimals: 9,
+        marketCap: 1000000,
+        volume24h: 50000,
+        liquidity: 25000,
+        supply: {
+          total: 1000000000,
+          circulating: 750000000,
+          nonCirculating: 250000000
+        }
       };
       
       setCoinData(mockTokenData);

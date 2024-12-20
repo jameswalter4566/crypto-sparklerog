@@ -4,11 +4,19 @@ interface TokenData {
   id: string;
   name: string;
   symbol: string;
-  image?: string;
-  price?: number;
-  market_cap?: number;
-  volume_24h?: number;
-  liquidity?: number;
+  image: string | null;
+  price: number;
+  description: string;
+  tokenStandard: string;
+  decimals: number;
+  marketCap: number;
+  volume24h: number;
+  liquidity: number;
+  supply: {
+    total: number;
+    circulating: number;
+    nonCirculating: number;
+  };
 }
 
 export const saveCoinData = async (coinData: TokenData) => {
@@ -20,8 +28,8 @@ export const saveCoinData = async (coinData: TokenData) => {
       symbol: coinData.symbol,
       image_url: coinData.image,
       price: coinData.price,
-      market_cap: coinData.market_cap,
-      volume_24h: coinData.volume_24h,
+      market_cap: coinData.marketCap,
+      volume_24h: coinData.volume24h,
       liquidity: coinData.liquidity,
     });
 
