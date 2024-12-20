@@ -10,7 +10,7 @@ import {
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, PhoneOff } from "lucide-react";
-import { getAgoraAppId } from "./AgoraConfig";
+import { getAgoraAppId, DEFAULT_TOKEN } from "./AgoraConfig";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 

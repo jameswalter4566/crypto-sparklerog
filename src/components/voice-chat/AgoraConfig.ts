@@ -10,7 +10,8 @@ export const getAgoraAppId = async () => {
     return null;
   }
   
-  return data;
+  // Extract the secret string from the array of objects
+  return data[0]?.secret || null;
 };
 
 export const DEFAULT_TOKEN = null; // For development, can be null. In production, implement token server
