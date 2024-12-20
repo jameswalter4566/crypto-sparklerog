@@ -33,7 +33,7 @@ export const fetchHeliusApiKey = async (): Promise<string> => {
     throw new Error('API key not found');
   }
 
-  return data[0].value;
+  return data[0].secret;
 };
 
 export const fetchTokenMetadata = async (mintAddress: string): Promise<TokenMetadata> => {
