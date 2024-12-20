@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import AgoraRTC from 'agora-rtc-sdk-ng';
-import type { IMicrophoneAudioTrack, ILocalTrack } from 'agora-rtc-sdk-ng';
+import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 
 export const useLocalAudio = (microphoneId?: string) => {
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
@@ -45,6 +45,7 @@ export const useLocalAudio = (microphoneId?: string) => {
     }
   }, [localAudioTrack]);
 
+  // Return the actual track for publishing
   const getTrackForPublishing = useCallback(() => {
     console.log("[Local Audio] Getting track for publishing:", localAudioTrack ? [localAudioTrack] : []);
     return localAudioTrack ? [localAudioTrack] : [];

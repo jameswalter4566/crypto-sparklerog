@@ -3,7 +3,6 @@ import { useRTCClient } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
-import type { ILocalTrack } from 'agora-rtc-sdk-ng';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -60,10 +59,14 @@ export const useVoiceChat = ({
         throw new Error("Failed to create audio track");
       }
 
-      // Connect returns the local user's UID
-      const uid = await connect(channelName, agoraAppId, audioTrack as ILocalTrack);
+      // Connect and publish the audio track
+      const uid = await connect(channelName, agoraAppId, audioTrack);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
+
+      // Publish the audio track
+      await client.publish(audioTrack);
+      console.log("[Voice Chat] Published audio track successfully");
 
       addLocalParticipant(uidNumber, userProfile);
       console.log("[Voice Chat] Successfully connected to voice chat with UID:", uidNumber);
@@ -72,10 +75,13 @@ export const useVoiceChat = ({
       cleanupLocalAudio();
       throw error;
     }
-  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile]);
+  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
   const leave = useCallback(async () => {
     try {
+      if (localAudioTrack) {
+        await client.unpublish(localAudioTrack);
+      }
       await disconnect();
       cleanupLocalAudio();
       clearParticipants();
@@ -85,14 +91,13 @@ export const useVoiceChat = ({
       console.error("[Voice Chat] Error leaving voice chat:", error);
       throw error;
     }
-  }, [disconnect, cleanupLocalAudio, clearParticipants]);
+  }, [disconnect, cleanupLocalAudio, clearParticipants, client, localAudioTrack]);
 
   useEffect(() => {
     console.log("[Voice Chat] Setting up voice chat event listeners");
 
     const handleUserJoined = (user: any) => {
       const uidNumber = Number(user.uid);
-      // If the user who joined is actually the local user, do not add them as remote.
       if (localUid !== null && uidNumber === localUid) {
         console.log("[Voice Chat] Local user reported as joined (ignoring remote add):", uidNumber);
         return;
@@ -103,7 +108,6 @@ export const useVoiceChat = ({
 
     const handleUserLeft = (user: any) => {
       const uidNumber = Number(user.uid);
-      // If the user who left matches the local user, do not remove them as remote.
       if (localUid !== null && uidNumber === localUid) {
         console.log("[Voice Chat] Local user left event received, ignoring removal:", uidNumber);
         return;
@@ -115,7 +119,7 @@ export const useVoiceChat = ({
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
 
-    // Enable volume indicator if needed
+    // Enable volume indicator
     client.enableAudioVolumeIndicator();
 
     return () => {
