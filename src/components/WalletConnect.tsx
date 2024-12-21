@@ -5,10 +5,9 @@ import { LogOut } from "lucide-react";
 import { ProfileSetup } from "./wallet/ProfileSetup";
 import { ProfileAvatar } from "./wallet/ProfileAvatar";
 import { Settings } from "./wallet/Settings";
-import { useGlobalWallet } from "./WalletProvider";
 
 export const WalletConnect = () => {
-  const { connected, walletAvailable } = useGlobalWallet();
+  const [connected, setConnected] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -32,6 +31,7 @@ export const WalletConnect = () => {
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
 
+        // Save profile data in local storage
         localStorage.setItem(
           "userProfile",
           JSON.stringify({ displayName: data.display_name, avatarUrl: data.avatar_url })
@@ -50,23 +50,20 @@ export const WalletConnect = () => {
       const { solana } = window;
 
       if (!solana?.isPhantom) {
-        toast.error("Please install Phantom wallet", {
-          description: "Click to install Phantom",
-          action: {
-            label: "Install",
-            onClick: () => window.open("https://phantom.app/", "_blank"),
-          },
-        });
+        toast.error("Please install Phantom wallet");
+        window.open("https://phantom.app/", "_blank");
         return;
       }
 
       const response = await solana.connect({ onlyIfTrusted: false });
       const address = response.publicKey.toString();
       setWalletAddress(address);
+      setConnected(true);
 
       toast.success("Wallet connected!");
       await loadProfile(address);
 
+      // Store connection in localStorage
       localStorage.setItem("phantomConnected", "true");
       localStorage.setItem("walletAddress", address);
     } catch (error) {
@@ -82,11 +79,13 @@ export const WalletConnect = () => {
 
       if (solana) {
         await solana.disconnect();
+        setConnected(false);
         setWalletAddress(null);
         setShowProfileSetup(false);
         setDisplayName(null);
         setAvatarUrl(null);
 
+        // Clear localStorage on manual disconnect
         localStorage.removeItem("phantomConnected");
         localStorage.removeItem("walletAddress");
         localStorage.removeItem("userProfile");
@@ -104,6 +103,7 @@ export const WalletConnect = () => {
     setAvatarUrl(newAvatarUrl);
     setShowProfileSetup(false);
 
+    // Update local storage with new profile data
     localStorage.setItem(
       "userProfile",
       JSON.stringify({ displayName: newDisplayName, avatarUrl: newAvatarUrl })
@@ -124,7 +124,9 @@ export const WalletConnect = () => {
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
           setWalletAddress(address);
+          setConnected(true);
 
+          // Load profile if available in local storage
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
             setDisplayName(parsedProfile.displayName || null);
