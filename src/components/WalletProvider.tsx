@@ -9,7 +9,6 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  BackpackWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -29,7 +28,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),
-    new BackpackWalletAdapter(),
   ], []);
 
   return (
