@@ -112,10 +112,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       stack: error.stack 
     });
 
-    // Don't show errors for user cancellation or connection issues
-    if (error.name === "WalletNotSelectedError" || 
-        error.name === "WalletConnectionError" ||
-        error.name === "WalletDisconnectedError") {
+    // Silently handle expected errors
+    if (
+      error.name === "WalletNotSelectedError" || 
+      error.name === "WalletConnectionError" ||
+      error.name === "WalletDisconnectedError" ||
+      error.name === "WalletNotConnectedError"
+    ) {
       return;
     }
 

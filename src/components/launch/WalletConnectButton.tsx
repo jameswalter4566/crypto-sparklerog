@@ -15,7 +15,7 @@ export const WalletConnectButton = ({
   hasEnoughBalance,
   onWalletConnected,
 }: WalletConnectButtonProps) => {
-  const { connect, connecting } = useWallet();
+  const { connect, disconnect, connecting } = useWallet();
   const { connected, walletAvailable } = useGlobalWallet();
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -42,12 +42,6 @@ export const WalletConnectButton = ({
       return;
     }
 
-    if (connected) {
-      console.log("[WalletConnectButton] Already connected");
-      onWalletConnected();
-      return;
-    }
-
     // Prevent multiple connection attempts
     if (isConnecting || connecting) {
       console.log("[WalletConnectButton] Connection already in progress");
@@ -58,30 +52,45 @@ export const WalletConnectButton = ({
       setIsConnecting(true);
       console.log("[WalletConnectButton] Initiating connection...");
 
-      // Try to connect directly to Phantom first
+      // First, disconnect any existing sessions
+      if (connected) {
+        await disconnect();
+        console.log("[WalletConnectButton] Disconnected existing wallet adapter session");
+      }
+
+      // Force Phantom to disconnect
       try {
-        // Force a new connection attempt by disconnecting first
         await phantom.disconnect();
-        console.log("[WalletConnectButton] Disconnected existing session");
-        
-        // Small delay to ensure disconnect completes
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Connect with a fresh session
-        const response = await phantom.connect();
+        console.log("[WalletConnectButton] Disconnected Phantom session");
+      } catch (disconnectError) {
+        console.log("[WalletConnectButton] Phantom disconnect error (non-critical):", disconnectError);
+      }
+
+      // Small delay to ensure disconnect completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Now try to establish a fresh connection
+      try {
+        const response = await phantom.connect({ onlyIfTrusted: false });
         console.log("[WalletConnectButton] Connected to Phantom:", response);
-        onWalletConnected();
-      } catch (phantomError) {
-        console.log("[WalletConnectButton] Phantom direct connection failed:", phantomError);
-        // If direct connection fails, try wallet adapter as fallback
+        
+        // Now connect with wallet adapter
         await connect();
+        console.log("[WalletConnectButton] Wallet adapter connection successful");
+        
         onWalletConnected();
+        toast.success("Wallet connected successfully!");
+      } catch (connectError) {
+        console.error("[WalletConnectButton] Connection failed:", connectError);
+        throw connectError; // Re-throw to be caught by outer try-catch
       }
     } catch (error) {
       console.error("[WalletConnectButton] Connection error:", error);
       
       // Only show error toast if it's not a user cancellation
-      if (error instanceof Error && error.name !== "WalletNotSelectedError") {
+      if (error instanceof Error && 
+          error.name !== "WalletNotSelectedError" && 
+          error.name !== "WalletConnectionError") {
         toast.error("Failed to connect wallet", {
           description: error.message,
         });
