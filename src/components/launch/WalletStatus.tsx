@@ -1,37 +1,29 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { useState, useEffect, useRef } from "react";
+import { useGlobalWallet } from "../WalletProvider";
 
 interface WalletStatusProps {
   onBalanceChange: (balance: number) => void;
 }
 
 export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey } = useWallet();
   const { connection } = useConnection();
+  const { connected, selectedWallet } = useGlobalWallet();
   const [solBalance, setSolBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const lastFetchRef = useRef<number>(0);
+  const retryTimeoutRef = useRef<number>();
 
-  const fetchSolBalance = async () => {
-    if (!publicKey) {
-      console.log('[WalletStatus] Cannot fetch balance - no public key available', {
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastFetchRef.current < 2000) {
-      console.log('[WalletStatus] Skipping balance fetch - too soon', {
-        timeSinceLastFetch: now - lastFetchRef.current,
+  const fetchSolBalance = async (retryCount = 0) => {
+    if (!publicKey || !connected) {
+      console.log('[WalletStatus] Cannot fetch balance - no connection', {
         timestamp: new Date().toISOString()
       });
       return;
     }
 
     setIsLoading(true);
-    lastFetchRef.current = now;
 
     try {
       console.log('[WalletStatus] Fetching balance...', {
@@ -50,36 +42,43 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
 
       setSolBalance(solBalanceValue);
       onBalanceChange(solBalanceValue);
+      setIsLoading(false);
     } catch (error) {
       console.error('[WalletStatus] Error fetching balance', {
         error,
-        stack: error instanceof Error ? error.stack : undefined,
+        retryCount,
         wallet: publicKey.toBase58(),
         timestamp: new Date().toISOString()
       });
       
-      if (solBalance !== 0) {
+      // Retry up to 3 times with exponential backoff
+      if (retryCount < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        retryTimeoutRef.current = window.setTimeout(
+          () => fetchSolBalance(retryCount + 1),
+          delay
+        );
+      } else {
+        setIsLoading(false);
         setSolBalance(0);
         onBalanceChange(0);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (connected && publicKey) {
       fetchSolBalance();
-      
-      // Set up balance polling
-      const intervalId = setInterval(fetchSolBalance, 10000); // Poll every 10 seconds
-      return () => clearInterval(intervalId);
-    } else if (!connected || !publicKey) {
-      if (solBalance !== 0) {
-        setSolBalance(0);
-        onBalanceChange(0);
-      }
+    } else {
+      setSolBalance(0);
+      onBalanceChange(0);
     }
+
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
   }, [connected, publicKey]);
 
   if (!connected || !publicKey) return null;
@@ -92,7 +91,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
             Wallet: {publicKey.toBase58().slice(0, 8)}...
           </span>
           <span className="text-xs text-muted-foreground">
-            {wallet?.adapter.name || 'Unknown Wallet'}
+            {selectedWallet || 'Unknown Wallet'}
           </span>
         </div>
         <span className="text-sm font-medium">

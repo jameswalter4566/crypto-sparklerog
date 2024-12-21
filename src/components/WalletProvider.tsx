@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, createContext, useContext } from "react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   ConnectionProvider, 
@@ -7,16 +7,43 @@ import {
 } from "@solana/wallet-adapter-react";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ErrorBoundary } from "./ErrorBoundary";
-import {
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { toast } from "sonner";
+
+interface WalletContextState {
+  connected: boolean;
+  connecting: boolean;
+  disconnecting: boolean;
+  publicKey: string | null;
+  walletAvailable: boolean;
+  selectedWallet: string | null;
+}
+
+const WalletContext = createContext<WalletContextState>({
+  connected: false,
+  connecting: false,
+  disconnecting: false,
+  publicKey: null,
+  walletAvailable: false,
+  selectedWallet: null,
+});
+
+export const useGlobalWallet = () => useContext(WalletContext);
 
 // Monitor component to handle global wallet state changes
 const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) => {
   const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
   
+  const walletAvailable = useMemo(() => {
+    // @ts-ignore
+    const phantom = window?.solana?.isPhantom;
+    console.log('[WalletProvider] Wallet availability:', {
+      phantom,
+      timestamp: new Date().toISOString()
+    });
+    return !!phantom;
+  }, []);
+
   useEffect(() => {
     console.log('[WalletProvider] Connection state changed:', {
       connected,
@@ -27,18 +54,29 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
       timestamp: new Date().toISOString()
     });
 
-    if (connected && publicKey) {
+    // Only show toasts for final states to avoid spam
+    if (connected && publicKey && !connecting && !disconnecting) {
       toast.success(`Connected to ${wallet?.adapter.name || 'wallet'}`);
     }
-    if (disconnecting) {
-      toast.info("Disconnecting wallet...");
-    }
-    if (connecting) {
-      toast.info("Connecting wallet...");
+    if (!connected && !connecting && disconnecting) {
+      toast.info("Wallet disconnected");
     }
   }, [connected, connecting, disconnecting, publicKey, wallet]);
 
-  return <>{children}</>;
+  const contextValue = useMemo(() => ({
+    connected,
+    connecting,
+    disconnecting,
+    publicKey: publicKey?.toBase58() || null,
+    walletAvailable,
+    selectedWallet: wallet?.adapter.name || null,
+  }), [connected, connecting, disconnecting, publicKey, walletAvailable, wallet]);
+
+  return (
+    <WalletContext.Provider value={contextValue}>
+      {children}
+    </WalletContext.Provider>
+  );
 };
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -55,10 +93,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [network]);
 
   const wallets = useMemo(() => {
-    const adapters = [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ];
+    // Only using Phantom as the primary wallet
+    const adapters = [new PhantomWalletAdapter()];
     console.log('[WalletProvider] Wallet adapters initialized:', {
       adapters: adapters.map(a => a.name),
       timestamp: new Date().toISOString()
@@ -81,14 +117,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             });
             
             if (error.name === "WalletNotSelectedError") {
-              toast.error("Wallet connection cancelled", {
-                description: "Please select a wallet to continue"
-              });
-            } else {
-              toast.error("Wallet error", {
-                description: error.message
-              });
+              // Don't show error for user cancellation
+              return;
             }
+            
+            toast.error("Wallet error", {
+              description: error.message
+            });
           }}
         >
           <WalletConnectionMonitor>
