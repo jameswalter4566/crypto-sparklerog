@@ -16,10 +16,12 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ['@solana/web3.js', '@solana/spl-token', 'buffer'],
   },
   define: {
     'global': 'globalThis',
-    'process.env': {}
+    'process.env': {},
+    'process.env.BROWSER': true
   },
   optimizeDeps: {
     include: [
@@ -28,13 +30,22 @@ export default defineConfig(({ mode }) => ({
       "buffer"
     ],
     esbuildOptions: {
-      target: 'esnext'
+      target: 'esnext',
+      platform: 'browser'
     }
   },
   build: {
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'solana-web3': ['@solana/web3.js'],
+          'solana-spl-token': ['@solana/spl-token']
+        }
+      }
     }
   }
 }));
