@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -20,6 +20,19 @@ export const WalletConnectButton = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second delay between retries
+
+  // Reset retry attempts when connection status changes
+  useEffect(() => {
+    if (!connected) {
+      setRetryAttempt(0);
+    }
+  }, [connected]);
+
+  const handleRetry = async () => {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+    handleConnect();
+  };
 
   const handleConnect = async () => {
     console.log("[WalletConnectButton] Handle connect triggered", {
@@ -97,19 +110,26 @@ export const WalletConnectButton = ({
         
         if (connectError.name === "WalletNotSelectedError") {
           setRetryAttempt(prev => prev + 1);
-          toast.error("Connection canceled", {
-            description: "Please try connecting again.",
-            action: {
-              label: "Retry",
-              onClick: () => handleConnect(),
-            },
-          });
+          if (retryAttempt + 1 < MAX_RETRIES) {
+            toast.error("Connection canceled", {
+              description: "Automatically retrying in 1 second...",
+            });
+            setTimeout(() => handleRetry(), RETRY_DELAY);
+          } else {
+            toast.error("Connection canceled", {
+              description: "Please try connecting again.",
+              action: {
+                label: "Retry",
+                onClick: () => handleRetry(),
+              },
+            });
+          }
         } else {
           toast.error("Failed to connect wallet", {
             description: connectError.message,
             action: {
               label: "Try Again",
-              onClick: () => handleConnect(),
+              onClick: () => handleRetry(),
             },
           });
         }
@@ -120,7 +140,7 @@ export const WalletConnectButton = ({
         description: error.message,
         action: {
           label: "Try Again",
-          onClick: () => handleConnect(),
+          onClick: () => handleRetry(),
         },
       });
     } finally {
