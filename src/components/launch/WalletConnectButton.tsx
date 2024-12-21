@@ -3,7 +3,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useGlobalWallet } from "../WalletProvider";
-import { debounce } from "lodash";
 
 interface WalletConnectButtonProps {
   isSubmitting: boolean;
@@ -44,7 +43,7 @@ export const WalletConnectButton = ({
     }
 
     if (connected) {
-      console.log('[WalletConnectButton] Already connected, proceeding...');
+      console.log('[WalletConnectButton] Already connected');
       onWalletConnected();
       return;
     }
