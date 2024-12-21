@@ -1,6 +1,6 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface WalletStatusProps {
   onBalanceChange: (balance: number) => void;
@@ -11,54 +11,70 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const lastFetchRef = useRef<number>(0);
 
   const fetchSolBalance = async () => {
     if (!publicKey) {
-      console.log('WalletStatus: Cannot fetch balance - no public key available', {
+      console.log('[WalletStatus] Cannot fetch balance - no public key available', {
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastFetchRef.current < 2000) { // Prevent fetches within 2 seconds
+      console.log('[WalletStatus] Skipping balance fetch - too soon', {
+        timeSinceLastFetch: now - lastFetchRef.current,
         timestamp: new Date().toISOString()
       });
       return;
     }
 
     setIsLoading(true);
+    lastFetchRef.current = now;
+
     try {
-      console.log('WalletStatus: Fetching balance...', {
+      console.log('[WalletStatus] Fetching balance...', {
         wallet: publicKey.toBase58(),
-        selectedWallet: wallet?.adapter.name,
         timestamp: new Date().toISOString()
       });
 
       const balance = await connection.getBalance(publicKey);
       const solBalanceValue = balance / 1e9;
       
-      console.log('WalletStatus: Balance fetched successfully', {
+      console.log('[WalletStatus] Balance fetched successfully', {
         wallet: publicKey.toBase58(),
         balance: solBalanceValue,
-        rawBalance: balance,
         timestamp: new Date().toISOString()
       });
 
       setSolBalance(solBalanceValue);
       onBalanceChange(solBalanceValue);
     } catch (error) {
-      console.error('WalletStatus: Error fetching balance', {
+      console.error('[WalletStatus] Error fetching balance', {
         error,
+        stack: error instanceof Error ? error.stack : undefined,
         wallet: publicKey.toBase58(),
         timestamp: new Date().toISOString()
       });
-      setSolBalance(0);
-      onBalanceChange(0);
+      
+      if (solBalance !== 0) {
+        setSolBalance(0);
+        onBalanceChange(0);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (connected && publicKey && !isLoading) {
+    if (connected && publicKey) {
       fetchSolBalance();
     } else if (!connected || !publicKey) {
-      setSolBalance(0);
-      onBalanceChange(0);
+      if (solBalance !== 0) {
+        setSolBalance(0);
+        onBalanceChange(0);
+      }
     }
   }, [connected, publicKey]);
 

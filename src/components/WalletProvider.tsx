@@ -18,8 +18,8 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
   const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
   
   useEffect(() => {
-    // Log wallet state changes
-    console.log('WalletProvider: Connection state changed:', {
+    // Enhanced logging with consistent format
+    console.log('[WalletProvider] Connection state changed:', {
       connected,
       connecting,
       disconnecting,
@@ -28,7 +28,6 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
       timestamp: new Date().toISOString()
     });
 
-    // Show user feedback for connection states
     if (connected && publicKey) {
       toast.success(`Connected to ${wallet?.adapter.name || 'wallet'}`);
     }
@@ -41,11 +40,12 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
 };
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const network = WalletAdapterNetwork.Devnet;
+  // Allow network configuration through environment
+  const network = (process.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
 
   const endpoint = useMemo(() => {
     const url = clusterApiUrl(network);
-    console.log('WalletProvider: Solana endpoint configured:', {
+    console.log('[WalletProvider] Solana endpoint configured:', {
       network,
       url,
       timestamp: new Date().toISOString()
@@ -58,7 +58,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
     ];
-    console.log('WalletProvider: Wallet adapters initialized:', {
+    console.log('[WalletProvider] Wallet adapters initialized:', {
       adapters: adapters.map(a => a.name),
       timestamp: new Date().toISOString()
     });
@@ -72,7 +72,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           wallets={wallets} 
           autoConnect
           onError={(error) => {
-            console.error('WalletProvider: Error:', error);
+            // Enhanced error logging with stack trace
+            console.error('[WalletProvider] Error:', {
+              message: error.message,
+              stack: error.stack,
+              timestamp: new Date().toISOString()
+            });
             toast.error("Wallet error", {
               description: error.message
             });

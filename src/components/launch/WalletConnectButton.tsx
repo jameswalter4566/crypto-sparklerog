@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -17,31 +17,53 @@ export const WalletConnectButton = ({
   const { connect, connecting, connected, wallet, publicKey } = useWallet();
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
 
+  // Reset retry count on successful connection
   useEffect(() => {
     if (connected && publicKey) {
-      console.log("WalletConnectButton: Wallet connected", {
-        address: publicKey.toBase58(),
-        wallet: wallet?.adapter.name,
-        timestamp: new Date().toISOString()
-      });
-      onWalletConnected();
+      setRetryCount(0);
     }
-  }, [connected, publicKey, wallet, onWalletConnected]);
+  }, [connected, publicKey]);
 
-  const handleConnect = async () => {
+  // Implement delayed retry mechanism
+  useEffect(() => {
+    if (retryCount > 0 && retryCount < MAX_RETRIES && !connected) {
+      const retryTimeout = setTimeout(() => {
+        console.log('[WalletConnectButton] Retrying connection...', {
+          attempt: retryCount,
+          timestamp: new Date().toISOString()
+        });
+        connect();
+      }, RETRY_DELAY);
+
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [retryCount, connected, connect]);
+
+  const handleConnect = useCallback(async () => {
+    if (connecting) return;
+
     try {
-      if (connecting) return;
-
-      console.log('WalletConnectButton: Initiating connection...', {
+      console.log('[WalletConnectButton] Initiating connection...', {
         retryCount,
         timestamp: new Date().toISOString()
       });
 
       await connect();
+      
+      if (connected && publicKey) {
+        console.log('[WalletConnectButton] Connection successful', {
+          address: publicKey.toBase58(),
+          wallet: wallet?.adapter.name,
+          timestamp: new Date().toISOString()
+        });
+        onWalletConnected();
+      }
     } catch (error) {
-      console.error('WalletConnectButton: Connection error:', {
+      console.error('[WalletConnectButton] Connection error:', {
         error,
+        stack: error instanceof Error ? error.stack : undefined,
         retryCount,
         timestamp: new Date().toISOString()
       });
@@ -51,7 +73,7 @@ export const WalletConnectButton = ({
           if (retryCount < MAX_RETRIES) {
             setRetryCount(prev => prev + 1);
             toast.error("Wallet connection cancelled", {
-              description: "Please try connecting again"
+              description: `Retrying in ${RETRY_DELAY/1000} seconds...`
             });
           } else {
             toast.error("Multiple connection attempts failed", {
@@ -64,13 +86,9 @@ export const WalletConnectButton = ({
             description: error.message
           });
         }
-      } else {
-        toast.error("Unexpected error occurred", {
-          description: "Please try again or refresh the page"
-        });
       }
     }
-  };
+  }, [connecting, connect, connected, publicKey, wallet, retryCount, onWalletConnected]);
 
   const buttonDisabled = connected && (!hasEnoughBalance || isSubmitting);
   const buttonText = !connected 
