@@ -7,7 +7,7 @@ interface WalletStatusProps {
 }
 
 export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
-  const { publicKey, connected, connecting, disconnecting, wallet } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,36 +54,15 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   };
 
   useEffect(() => {
-    console.log('WalletStatus: Wallet state changed', {
-      connected,
-      connecting,
-      disconnecting,
-      publicKey: publicKey?.toBase58(),
-      selectedWallet: wallet?.adapter.name,
-      isLoading,
-      currentBalance: solBalance,
-      timestamp: new Date().toISOString()
-    });
-
     if (connected && publicKey && !isLoading) {
       fetchSolBalance();
     } else if (!connected || !publicKey) {
-      console.log('WalletStatus: Resetting balance', {
-        reason: !connected ? 'disconnected' : 'no public key',
-        timestamp: new Date().toISOString()
-      });
       setSolBalance(0);
       onBalanceChange(0);
     }
-  }, [connected, publicKey, connecting, disconnecting, wallet]);
+  }, [connected, publicKey]);
 
-  if (!connected || !publicKey) {
-    console.log('WalletStatus: Component not rendering', {
-      reason: !connected ? 'not connected' : 'no public key',
-      timestamp: new Date().toISOString()
-    });
-    return null;
-  }
+  if (!connected || !publicKey) return null;
 
   return (
     <div className="bg-secondary/20 rounded-lg p-4 mb-6">
