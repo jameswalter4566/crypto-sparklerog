@@ -14,22 +14,30 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   const fetchSolBalance = async () => {
     if (publicKey) {
       try {
+        console.log('WalletStatus: Fetching balance for wallet:', publicKey.toBase58());
         const balance = await connection.getBalance(publicKey);
         const solBalance = balance / 1e9;
+        console.log('WalletStatus: Balance fetched:', solBalance);
         setSolBalance(solBalance);
         onBalanceChange(solBalance);
       } catch (error) {
-        console.error("Error fetching balance:", error);
+        console.error("WalletStatus: Error fetching balance:", error);
+        setSolBalance(0);
+        onBalanceChange(0);
       }
     }
   };
 
   useEffect(() => {
+    console.log('WalletStatus: Connection state changed:', {
+      connected,
+      publicKey: publicKey?.toBase58()
+    });
+
     if (connected && publicKey) {
-      console.log("Wallet connected:", publicKey.toString());
       fetchSolBalance();
     } else {
-      console.log("Wallet not connected");
+      console.log('WalletStatus: Wallet disconnected or no public key');
       setSolBalance(0);
       onBalanceChange(0);
     }

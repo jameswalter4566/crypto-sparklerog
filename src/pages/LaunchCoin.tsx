@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createToken } from "@/lib/solana/tokenCreator";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -16,15 +16,33 @@ export default function LaunchCoin() {
   const [isCreating, setIsCreating] = useState(false);
   const [solBalance, setSolBalance] = useState(0);
 
+  // Add debug logging for wallet connection state
+  useEffect(() => {
+    console.log('LaunchCoin: Wallet connection status:', {
+      connected,
+      publicKey: publicKey?.toBase58(),
+      solBalance
+    });
+  }, [connected, publicKey, solBalance]);
+
   const handleBalanceChange = (balance: number) => {
+    console.log('LaunchCoin: Balance updated:', balance);
     setSolBalance(balance);
   };
 
   const handleSubmit = async (formData: TokenFormData) => {
+    console.log('LaunchCoin: Attempting to create token with data:', formData);
+    console.log('LaunchCoin: Current wallet state:', {
+      connected,
+      publicKey: publicKey?.toBase58(),
+      solBalance
+    });
+
     setIsCreating(true);
 
     try {
-      if (!publicKey) {
+      if (!publicKey || !connected) {
+        console.log('LaunchCoin: Wallet not connected or no public key');
         toast({
           variant: "destructive",
           title: "Wallet Not Connected",
@@ -34,6 +52,7 @@ export default function LaunchCoin() {
       }
 
       if (solBalance < 0.1) {
+        console.log('LaunchCoin: Insufficient balance:', solBalance);
         toast({
           variant: "destructive",
           title: "Insufficient Balance",
@@ -51,15 +70,18 @@ export default function LaunchCoin() {
         connection
       };
 
+      console.log('LaunchCoin: Creating token with config:', tokenConfig);
       const result = await createToken(tokenConfig);
 
       if (result.success) {
+        console.log('LaunchCoin: Token created successfully:', result);
         toast({
           title: "Token Created Successfully!",
           description: `Mint Address: ${result.mintAddress}`,
         });
         navigate('/rocket-launch');
       } else {
+        console.error('LaunchCoin: Token creation failed:', result.error);
         toast({
           variant: "destructive",
           title: "Error Creating Token",
@@ -67,6 +89,7 @@ export default function LaunchCoin() {
         });
       }
     } catch (error) {
+      console.error('LaunchCoin: Unexpected error:', error);
       toast({
         variant: "destructive",
         title: "Error",
