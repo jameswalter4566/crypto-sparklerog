@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "sonner";
 
 export interface TokenFormData {
   name: string;
@@ -26,7 +27,7 @@ export const TokenForm = ({
   isWalletConnected,
   hasEnoughBalance 
 }: TokenFormProps) => {
-  const { connect, connecting } = useWallet();
+  const { connect, connecting, wallet } = useWallet();
   const [formData, setFormData] = useState<TokenFormData>({
     name: "",
     symbol: "",
@@ -72,8 +73,22 @@ export const TokenForm = ({
   const handleConnectOrSubmit = () => {
     if (!isWalletConnected) {
       console.log('TokenForm: Initiating wallet connection');
+      
+      // Check if wallet is available
+      if (!wallet) {
+        console.log('TokenForm: No wallet detected');
+        toast.error("Please install Phantom wallet", {
+          action: {
+            label: "Install",
+            onClick: () => window.open("https://phantom.app/", "_blank")
+          }
+        });
+        return;
+      }
+
       connect().catch(error => {
         console.error('TokenForm: Wallet connection error:', error);
+        toast.error("Failed to connect wallet. Please try again.");
       });
     } else if (hasEnoughBalance && !isSubmitting) {
       console.log('TokenForm: Proceeding with form submission');
@@ -81,6 +96,7 @@ export const TokenForm = ({
     }
   };
 
+  // Button is only disabled if wallet is connected but has insufficient balance or is submitting
   const buttonDisabled = isWalletConnected && (!hasEnoughBalance || isSubmitting);
   const buttonText = !isWalletConnected 
     ? connecting ? "Connecting..." : "Connect Wallet to Create"
