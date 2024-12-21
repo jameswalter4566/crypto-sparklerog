@@ -11,6 +11,16 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
 
+  // Add logging for component mount
+  useEffect(() => {
+    console.log('WalletStatus: Component mounted');
+    console.log('WalletStatus: Initial state:', {
+      connected,
+      publicKey: publicKey?.toBase58(),
+      solBalance
+    });
+  }, []);
+
   const fetchSolBalance = async () => {
     if (publicKey) {
       try {
@@ -28,22 +38,33 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     }
   };
 
+  // Add logging for connection state changes
   useEffect(() => {
     console.log('WalletStatus: Connection state changed:', {
       connected,
-      publicKey: publicKey?.toBase58()
+      publicKey: publicKey?.toBase58(),
+      hasPublicKey: !!publicKey
     });
 
     if (connected && publicKey) {
+      console.log('WalletStatus: Initiating balance fetch');
       fetchSolBalance();
     } else {
-      console.log('WalletStatus: Wallet disconnected or no public key');
+      console.log('WalletStatus: Resetting balance - wallet disconnected or no public key');
       setSolBalance(0);
       onBalanceChange(0);
     }
   }, [connected, publicKey]);
 
-  if (!connected) return null;
+  // Add logging for balance changes
+  useEffect(() => {
+    console.log('WalletStatus: Balance state updated:', solBalance);
+  }, [solBalance]);
+
+  if (!connected) {
+    console.log('WalletStatus: Not rendering - wallet not connected');
+    return null;
+  }
 
   return (
     <div className="bg-secondary/20 rounded-lg p-4 mb-6">

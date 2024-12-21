@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface TokenFormData {
   name: string;
@@ -33,6 +33,15 @@ export const TokenForm = ({
     initialSupply: "1000000"
   });
 
+  // Add logging for prop changes
+  useEffect(() => {
+    console.log('TokenForm: Props updated:', {
+      isSubmitting,
+      isWalletConnected,
+      hasEnoughBalance
+    });
+  }, [isSubmitting, isWalletConnected, hasEnoughBalance]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -40,8 +49,24 @@ export const TokenForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('TokenForm: Form submitted with data:', formData);
     onSubmit(formData);
   };
+
+  // Add logging for button state
+  const buttonDisabled = isSubmitting || !isWalletConnected || !hasEnoughBalance;
+  useEffect(() => {
+    console.log('TokenForm: Button state:', {
+      buttonDisabled,
+      reason: !isWalletConnected 
+        ? 'Wallet not connected' 
+        : !hasEnoughBalance 
+          ? 'Insufficient balance' 
+          : isSubmitting 
+            ? 'Submitting' 
+            : 'Enabled'
+    });
+  }, [buttonDisabled, isWalletConnected, hasEnoughBalance, isSubmitting]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,7 +158,7 @@ export const TokenForm = ({
       <Button 
         type="submit" 
         className="w-full" 
-        disabled={isSubmitting || !isWalletConnected || !hasEnoughBalance}
+        disabled={buttonDisabled}
       >
         {!isWalletConnected 
           ? "Connect Wallet to Create" 

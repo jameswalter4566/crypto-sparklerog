@@ -16,33 +16,51 @@ export default function LaunchCoin() {
   const [isCreating, setIsCreating] = useState(false);
   const [solBalance, setSolBalance] = useState(0);
 
-  // Add debug logging for wallet connection state
+  // Add detailed logging for component mount and updates
   useEffect(() => {
-    console.log('LaunchCoin: Wallet connection status:', {
+    console.log('LaunchCoin: Component mounted/updated');
+    console.log('LaunchCoin: Initial state:', {
       connected,
       publicKey: publicKey?.toBase58(),
-      solBalance
+      solBalance,
+      isCreating
     });
-  }, [connected, publicKey, solBalance]);
+  }, []);
+
+  // Add logging for wallet connection changes
+  useEffect(() => {
+    console.log('LaunchCoin: Wallet connection changed:', {
+      connected,
+      publicKey: publicKey?.toBase58()
+    });
+  }, [connected, publicKey]);
+
+  // Add logging for balance changes
+  useEffect(() => {
+    console.log('LaunchCoin: Balance state changed:', {
+      solBalance,
+      hasEnoughBalance: solBalance >= 0.1
+    });
+  }, [solBalance]);
 
   const handleBalanceChange = (balance: number) => {
-    console.log('LaunchCoin: Balance updated:', balance);
+    console.log('LaunchCoin: Balance update received:', balance);
     setSolBalance(balance);
   };
 
   const handleSubmit = async (formData: TokenFormData) => {
-    console.log('LaunchCoin: Attempting to create token with data:', formData);
-    console.log('LaunchCoin: Current wallet state:', {
+    console.log('LaunchCoin: Form submission attempted', {
       connected,
       publicKey: publicKey?.toBase58(),
-      solBalance
+      solBalance,
+      formData
     });
 
     setIsCreating(true);
 
     try {
       if (!publicKey || !connected) {
-        console.log('LaunchCoin: Wallet not connected or no public key');
+        console.log('LaunchCoin: Submission blocked - wallet not connected');
         toast({
           variant: "destructive",
           title: "Wallet Not Connected",
@@ -52,7 +70,7 @@ export default function LaunchCoin() {
       }
 
       if (solBalance < 0.1) {
-        console.log('LaunchCoin: Insufficient balance:', solBalance);
+        console.log('LaunchCoin: Submission blocked - insufficient balance');
         toast({
           variant: "destructive",
           title: "Insufficient Balance",
