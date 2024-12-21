@@ -33,12 +33,13 @@ export const TokenForm = ({
     initialSupply: "1000000"
   });
 
-  // Add logging for prop changes
+  // Add debug logging for props
   useEffect(() => {
-    console.log('TokenForm: Props updated:', {
+    console.log('TokenForm: Props state:', {
       isSubmitting,
       isWalletConnected,
-      hasEnoughBalance
+      hasEnoughBalance,
+      buttonDisabled: isSubmitting || !isWalletConnected || !hasEnoughBalance
     });
   }, [isSubmitting, isWalletConnected, hasEnoughBalance]);
 
@@ -53,20 +54,15 @@ export const TokenForm = ({
     onSubmit(formData);
   };
 
-  // Add logging for button state
-  const buttonDisabled = isSubmitting || !isWalletConnected || !hasEnoughBalance;
-  useEffect(() => {
-    console.log('TokenForm: Button state:', {
-      buttonDisabled,
-      reason: !isWalletConnected 
-        ? 'Wallet not connected' 
-        : !hasEnoughBalance 
-          ? 'Insufficient balance' 
-          : isSubmitting 
-            ? 'Submitting' 
-            : 'Enabled'
-    });
-  }, [buttonDisabled, isWalletConnected, hasEnoughBalance, isSubmitting]);
+  // Calculate button state
+  const buttonDisabled = !isWalletConnected || !hasEnoughBalance || isSubmitting;
+  const buttonText = !isWalletConnected 
+    ? "Connect Wallet to Create" 
+    : !hasEnoughBalance
+      ? "Insufficient SOL Balance"
+      : isSubmitting 
+        ? "Creating coin..." 
+        : "Create coin";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -160,14 +156,7 @@ export const TokenForm = ({
         className="w-full" 
         disabled={buttonDisabled}
       >
-        {!isWalletConnected 
-          ? "Connect Wallet to Create" 
-          : !hasEnoughBalance
-            ? "Insufficient SOL Balance"
-            : isSubmitting 
-              ? "Creating coin..." 
-              : "Create coin"
-        }
+        {buttonText}
       </Button>
 
       <p className="text-sm text-muted-foreground text-center">

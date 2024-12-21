@@ -16,32 +16,15 @@ export default function LaunchCoin() {
   const [isCreating, setIsCreating] = useState(false);
   const [solBalance, setSolBalance] = useState(0);
 
-  // Add detailed logging for component mount and updates
+  // Add debug logging for wallet state
   useEffect(() => {
-    console.log('LaunchCoin: Component mounted/updated');
-    console.log('LaunchCoin: Initial state:', {
+    console.log('LaunchCoin: Component State:', {
       connected,
       publicKey: publicKey?.toBase58(),
       solBalance,
       isCreating
     });
-  }, []);
-
-  // Add logging for wallet connection changes
-  useEffect(() => {
-    console.log('LaunchCoin: Wallet connection changed:', {
-      connected,
-      publicKey: publicKey?.toBase58()
-    });
-  }, [connected, publicKey]);
-
-  // Add logging for balance changes
-  useEffect(() => {
-    console.log('LaunchCoin: Balance state changed:', {
-      solBalance,
-      hasEnoughBalance: solBalance >= 0.1
-    });
-  }, [solBalance]);
+  }, [connected, publicKey, solBalance, isCreating]);
 
   const handleBalanceChange = (balance: number) => {
     console.log('LaunchCoin: Balance update received:', balance);
@@ -49,36 +32,18 @@ export default function LaunchCoin() {
   };
 
   const handleSubmit = async (formData: TokenFormData) => {
-    console.log('LaunchCoin: Form submission attempted', {
-      connected,
-      publicKey: publicKey?.toBase58(),
-      solBalance,
-      formData
-    });
+    if (!publicKey || !connected) {
+      toast({
+        variant: "destructive",
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet before creating a token.",
+      });
+      return;
+    }
 
     setIsCreating(true);
 
     try {
-      if (!publicKey || !connected) {
-        console.log('LaunchCoin: Submission blocked - wallet not connected');
-        toast({
-          variant: "destructive",
-          title: "Wallet Not Connected",
-          description: "Please connect your wallet before creating a token.",
-        });
-        return;
-      }
-
-      if (solBalance < 0.1) {
-        console.log('LaunchCoin: Submission blocked - insufficient balance');
-        toast({
-          variant: "destructive",
-          title: "Insufficient Balance",
-          description: "You need at least 0.1 SOL to create a token.",
-        });
-        return;
-      }
-
       const tokenConfig = {
         name: formData.name,
         symbol: formData.symbol,
@@ -88,26 +53,23 @@ export default function LaunchCoin() {
         connection
       };
 
-      console.log('LaunchCoin: Creating token with config:', tokenConfig);
       const result = await createToken(tokenConfig);
 
-      if (result.success) {
-        console.log('LaunchCoin: Token created successfully:', result);
+      if ('success' in result && result.success) {
         toast({
           title: "Token Created Successfully!",
           description: `Mint Address: ${result.mintAddress}`,
         });
         navigate('/rocket-launch');
       } else {
-        console.error('LaunchCoin: Token creation failed:', result.error);
         toast({
           variant: "destructive",
           title: "Error Creating Token",
-          description: result.error,
+          description: result.error || "Failed to create token",
         });
       }
     } catch (error) {
-      console.error('LaunchCoin: Unexpected error:', error);
+      console.error('LaunchCoin: Token creation error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -130,7 +92,7 @@ export default function LaunchCoin() {
       <TokenForm 
         onSubmit={handleSubmit}
         isSubmitting={isCreating}
-        isWalletConnected={connected}
+        isWalletConnected={!!connected}
         hasEnoughBalance={solBalance >= 0.1}
       />
     </div>

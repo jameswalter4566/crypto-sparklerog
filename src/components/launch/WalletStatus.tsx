@@ -11,34 +11,26 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
 
-  // Add logging for component mount
-  useEffect(() => {
-    console.log('WalletStatus: Component mounted');
-    console.log('WalletStatus: Initial state:', {
-      connected,
-      publicKey: publicKey?.toBase58(),
-      solBalance
-    });
-  }, []);
-
   const fetchSolBalance = async () => {
-    if (publicKey) {
-      try {
-        console.log('WalletStatus: Fetching balance for wallet:', publicKey.toBase58());
-        const balance = await connection.getBalance(publicKey);
-        const solBalance = balance / 1e9;
-        console.log('WalletStatus: Balance fetched:', solBalance);
-        setSolBalance(solBalance);
-        onBalanceChange(solBalance);
-      } catch (error) {
-        console.error("WalletStatus: Error fetching balance:", error);
-        setSolBalance(0);
-        onBalanceChange(0);
-      }
+    if (!publicKey) {
+      console.log('WalletStatus: No public key available');
+      return;
+    }
+
+    try {
+      console.log('WalletStatus: Fetching balance for wallet:', publicKey.toBase58());
+      const balance = await connection.getBalance(publicKey);
+      const solBalanceValue = balance / 1e9;
+      console.log('WalletStatus: Balance fetched:', solBalanceValue);
+      setSolBalance(solBalanceValue);
+      onBalanceChange(solBalanceValue);
+    } catch (error) {
+      console.error("WalletStatus: Error fetching balance:", error);
+      setSolBalance(0);
+      onBalanceChange(0);
     }
   };
 
-  // Add logging for connection state changes
   useEffect(() => {
     console.log('WalletStatus: Connection state changed:', {
       connected,
@@ -47,7 +39,6 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     });
 
     if (connected && publicKey) {
-      console.log('WalletStatus: Initiating balance fetch');
       fetchSolBalance();
     } else {
       console.log('WalletStatus: Resetting balance - wallet disconnected or no public key');
@@ -55,11 +46,6 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
       onBalanceChange(0);
     }
   }, [connected, publicKey]);
-
-  // Add logging for balance changes
-  useEffect(() => {
-    console.log('WalletStatus: Balance state updated:', solBalance);
-  }, [solBalance]);
 
   if (!connected) {
     console.log('WalletStatus: Not rendering - wallet not connected');
