@@ -18,7 +18,6 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
   const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
   
   useEffect(() => {
-    // Enhanced logging with consistent format
     console.log('[WalletProvider] Connection state changed:', {
       connected,
       connecting,
@@ -34,13 +33,15 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
     if (disconnecting) {
       toast.info("Disconnecting wallet...");
     }
+    if (connecting) {
+      toast.info("Connecting wallet...");
+    }
   }, [connected, connecting, disconnecting, publicKey, wallet]);
 
   return <>{children}</>;
 };
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  // Allow network configuration through environment
   const network = (process.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) || WalletAdapterNetwork.Devnet;
 
   const endpoint = useMemo(() => {
@@ -72,15 +73,22 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           wallets={wallets} 
           autoConnect
           onError={(error) => {
-            // Enhanced error logging with stack trace
             console.error('[WalletProvider] Error:', {
               message: error.message,
+              name: error.name,
               stack: error.stack,
               timestamp: new Date().toISOString()
             });
-            toast.error("Wallet error", {
-              description: error.message
-            });
+            
+            if (error.name === "WalletNotSelectedError") {
+              toast.error("Wallet connection cancelled", {
+                description: "Please select a wallet to continue"
+              });
+            } else {
+              toast.error("Wallet error", {
+                description: error.message
+              });
+            }
           }}
         >
           <WalletConnectionMonitor>

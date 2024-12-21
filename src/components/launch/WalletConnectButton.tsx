@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,85 +15,81 @@ export const WalletConnectButton = ({
   onWalletConnected 
 }: WalletConnectButtonProps) => {
   const { connect, connecting, connected, wallet, publicKey } = useWallet();
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000; // 2 seconds
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Reset retry count on successful connection
+  // Check for wallet availability on mount
   useEffect(() => {
-    if (connected && publicKey) {
-      setRetryCount(0);
-    }
-  }, [connected, publicKey]);
-
-  // Implement delayed retry mechanism
-  useEffect(() => {
-    if (retryCount > 0 && retryCount < MAX_RETRIES && !connected) {
-      const retryTimeout = setTimeout(() => {
-        console.log('[WalletConnectButton] Retrying connection...', {
-          attempt: retryCount,
-          timestamp: new Date().toISOString()
-        });
-        connect();
-      }, RETRY_DELAY);
-
-      return () => clearTimeout(retryTimeout);
-    }
-  }, [retryCount, connected, connect]);
-
-  const handleConnect = useCallback(async () => {
-    if (connecting) return;
-
-    try {
-      console.log('[WalletConnectButton] Initiating connection...', {
-        retryCount,
+    const checkWallet = () => {
+      const phantom = (window as any).solana;
+      console.log('[WalletConnectButton] Checking wallet availability:', {
+        phantomExists: !!phantom,
+        isPhantom: phantom?.isPhantom,
         timestamp: new Date().toISOString()
       });
 
-      await connect();
-      
-      if (connected && publicKey) {
-        console.log('[WalletConnectButton] Connection successful', {
-          address: publicKey.toBase58(),
-          wallet: wallet?.adapter.name,
-          timestamp: new Date().toISOString()
+      if (!phantom?.isPhantom) {
+        toast.error("Phantom wallet not found", {
+          description: "Please install Phantom to continue",
+          action: {
+            label: "Install",
+            onClick: () => window.open("https://phantom.app/", "_blank")
+          }
         });
-        onWalletConnected();
       }
+    };
+
+    checkWallet();
+    setIsInitializing(false);
+  }, []);
+
+  // Handle existing connections
+  useEffect(() => {
+    if (connected && publicKey) {
+      console.log('[WalletConnectButton] Using existing connection:', {
+        wallet: wallet?.adapter.name,
+        publicKey: publicKey.toBase58(),
+        timestamp: new Date().toISOString()
+      });
+      onWalletConnected();
+    }
+  }, [connected, publicKey, wallet, onWalletConnected]);
+
+  const handleConnect = async () => {
+    if (connecting || isInitializing) return;
+
+    if (connected && publicKey) {
+      console.log('[WalletConnectButton] Already connected:', {
+        wallet: wallet?.adapter.name,
+        publicKey: publicKey.toBase58(),
+        timestamp: new Date().toISOString()
+      });
+      onWalletConnected();
+      return;
+    }
+
+    try {
+      console.log('[WalletConnectButton] Initiating connection...');
+      await connect();
     } catch (error) {
       console.error('[WalletConnectButton] Connection error:', {
         error,
         stack: error instanceof Error ? error.stack : undefined,
-        retryCount,
         timestamp: new Date().toISOString()
       });
 
-      if (error instanceof Error) {
-        if (error.name === "WalletNotSelectedError") {
-          if (retryCount < MAX_RETRIES) {
-            setRetryCount(prev => prev + 1);
-            toast.error("Wallet connection cancelled", {
-              description: `Retrying in ${RETRY_DELAY/1000} seconds...`
-            });
-          } else {
-            toast.error("Multiple connection attempts failed", {
-              description: "Please refresh the page and try again"
-            });
-            setRetryCount(0);
-          }
-        } else {
-          toast.error("Failed to connect wallet", {
-            description: error.message
-          });
-        }
+      // Don't show error for user cancellation
+      if (error instanceof Error && error.name !== "WalletNotSelectedError") {
+        toast.error("Failed to connect wallet", {
+          description: error.message
+        });
       }
     }
-  }, [connecting, connect, connected, publicKey, wallet, retryCount, onWalletConnected]);
+  };
 
-  const buttonDisabled = connected && (!hasEnoughBalance || isSubmitting);
+  const buttonDisabled = isInitializing || connecting || (connected && (!hasEnoughBalance || isSubmitting));
   const buttonText = !connected 
     ? connecting 
-      ? `Connecting${".".repeat(retryCount + 1)}` 
+      ? "Connecting..." 
       : "Connect Wallet to Create"
     : !hasEnoughBalance
       ? "Insufficient SOL Balance"
@@ -105,8 +101,8 @@ export const WalletConnectButton = ({
     <Button 
       type="button"
       className="w-full" 
-      disabled={buttonDisabled || connecting}
-      onClick={connected ? onWalletConnected : handleConnect}
+      disabled={buttonDisabled}
+      onClick={handleConnect}
     >
       {buttonText}
     </Button>

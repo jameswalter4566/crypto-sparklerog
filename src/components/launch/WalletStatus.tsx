@@ -22,7 +22,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     }
 
     const now = Date.now();
-    if (now - lastFetchRef.current < 2000) { // Prevent fetches within 2 seconds
+    if (now - lastFetchRef.current < 2000) {
       console.log('[WalletStatus] Skipping balance fetch - too soon', {
         timeSinceLastFetch: now - lastFetchRef.current,
         timestamp: new Date().toISOString()
@@ -70,6 +70,10 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   useEffect(() => {
     if (connected && publicKey) {
       fetchSolBalance();
+      
+      // Set up balance polling
+      const intervalId = setInterval(fetchSolBalance, 10000); // Poll every 10 seconds
+      return () => clearInterval(intervalId);
     } else if (!connected || !publicKey) {
       if (solBalance !== 0) {
         setSolBalance(0);
