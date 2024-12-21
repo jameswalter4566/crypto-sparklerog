@@ -33,7 +33,7 @@ export const TokenForm = ({
     initialSupply: "1000000"
   });
 
-  // Add debug logging for props
+  // Add debug logging for props and button state
   useEffect(() => {
     console.log('TokenForm: Props state:', {
       isSubmitting,

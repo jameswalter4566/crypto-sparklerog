@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   ConnectionProvider, 
@@ -25,10 +25,18 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [network]);
 
   // Initialize wallet adapters
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-  ], []);
+  const wallets = useMemo(() => {
+    const adapters = [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ];
+    console.log('WalletProvider: Initialized wallets:', adapters);
+    return adapters;
+  }, []);
+
+  useEffect(() => {
+    console.log('WalletProvider: Component mounted with wallets:', wallets);
+  }, [wallets]);
 
   return (
     <ErrorBoundary>
