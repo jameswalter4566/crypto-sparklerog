@@ -67,6 +67,12 @@ export const TokenForm = ({
     onSubmit(formData);
   };
 
+  // Create a wrapper function that doesn't expect any parameters
+  const handleWalletSubmit = () => {
+    console.log('TokenForm: Wallet submit wrapper called');
+    handleSubmit(new Event('submit') as React.FormEvent);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
@@ -157,7 +163,7 @@ export const TokenForm = ({
       <WalletConnectButton 
         isSubmitting={isSubmitting}
         hasEnoughBalance={hasEnoughBalance}
-        onWalletConnected={handleSubmit}
+        onWalletConnected={handleWalletSubmit}
       />
 
       <p className="text-sm text-muted-foreground text-center">
