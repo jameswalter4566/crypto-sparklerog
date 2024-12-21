@@ -7,42 +7,54 @@ interface WalletStatusProps {
   onBalanceChange: (balance: number) => void;
 }
 
+const BALANCE_POLLING_INTERVAL = 10000; // 10 seconds
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 seconds
+
 export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
   const { connected, selectedWallet } = useGlobalWallet();
   const [solBalance, setSolBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const retryTimeoutRef = useRef<number>();
+  const retryCountRef = useRef(0);
+  const pollingIntervalRef = useRef<number>();
 
   const fetchSolBalance = async (retryCount = 0) => {
     if (!publicKey || !connected) {
-      console.log('[WalletStatus] Cannot fetch balance - no connection', {
-        timestamp: new Date().toISOString()
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletStatus] Cannot fetch balance - no connection', {
+          timestamp: new Date().toISOString()
+        });
+      }
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('[WalletStatus] Fetching balance...', {
-        wallet: publicKey.toBase58(),
-        timestamp: new Date().toISOString()
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletStatus] Fetching balance...', {
+          wallet: publicKey.toBase58(),
+          timestamp: new Date().toISOString()
+        });
+      }
 
       const balance = await connection.getBalance(publicKey);
       const solBalanceValue = balance / 1e9;
       
-      console.log('[WalletStatus] Balance fetched successfully', {
-        wallet: publicKey.toBase58(),
-        balance: solBalanceValue,
-        timestamp: new Date().toISOString()
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletStatus] Balance fetched successfully', {
+          wallet: publicKey.toBase58(),
+          balance: solBalanceValue,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       setSolBalance(solBalanceValue);
       onBalanceChange(solBalanceValue);
       setIsLoading(false);
+      retryCountRef.current = 0;
     } catch (error) {
       console.error('[WalletStatus] Error fetching balance', {
         error,
@@ -51,13 +63,10 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
         timestamp: new Date().toISOString()
       });
       
-      // Retry up to 3 times with exponential backoff
-      if (retryCount < 3) {
-        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        retryTimeoutRef.current = window.setTimeout(
-          () => fetchSolBalance(retryCount + 1),
-          delay
-        );
+      // Retry up to MAX_RETRIES times with exponential backoff
+      if (retryCount < MAX_RETRIES) {
+        const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), 10000);
+        setTimeout(() => fetchSolBalance(retryCount + 1), delay);
       } else {
         setIsLoading(false);
         setSolBalance(0);
@@ -69,14 +78,16 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   useEffect(() => {
     if (connected && publicKey) {
       fetchSolBalance();
+      // Start polling
+      pollingIntervalRef.current = window.setInterval(fetchSolBalance, BALANCE_POLLING_INTERVAL);
     } else {
       setSolBalance(0);
       onBalanceChange(0);
     }
 
     return () => {
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
       }
     };
   }, [connected, publicKey]);

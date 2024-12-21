@@ -3,6 +3,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useGlobalWallet } from "../WalletProvider";
+import { debounce } from "lodash";
 
 interface WalletConnectButtonProps {
   isSubmitting: boolean;
@@ -17,6 +18,34 @@ export const WalletConnectButton = ({
 }: WalletConnectButtonProps) => {
   const { connect, connecting } = useWallet();
   const { connected, walletAvailable } = useGlobalWallet();
+  const [isDebouncing, setIsDebouncing] = useState(false);
+
+  const debouncedConnect = debounce(async () => {
+    try {
+      setIsDebouncing(true);
+      await connect();
+      onWalletConnected();
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[WalletConnectButton] Connection error:', error);
+      }
+      // Don't show error for user cancellation
+      if (error instanceof Error && error.name !== "WalletNotSelectedError") {
+        toast.error("Failed to connect wallet", {
+          description: error.message
+        });
+      }
+    } finally {
+      setIsDebouncing(false);
+    }
+  }, 500);
+
+  useEffect(() => {
+    // Cleanup debounce on unmount
+    return () => {
+      debouncedConnect.cancel();
+    };
+  }, []);
 
   const handleConnect = async () => {
     if (!walletAvailable) {
@@ -31,30 +60,22 @@ export const WalletConnectButton = ({
     }
 
     if (connected) {
-      console.log('[WalletConnectButton] Already connected, proceeding...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletConnectButton] Already connected, proceeding...');
+      }
       onWalletConnected();
       return;
     }
 
-    try {
+    if (process.env.NODE_ENV === 'development') {
       console.log('[WalletConnectButton] Initiating connection...');
-      await connect();
-      console.log('[WalletConnectButton] Connection successful');
-      onWalletConnected();
-    } catch (error) {
-      console.error('[WalletConnectButton] Connection error:', error);
-      // Don't show error for user cancellation
-      if (error instanceof Error && error.name !== "WalletNotSelectedError") {
-        toast.error("Failed to connect wallet", {
-          description: error.message
-        });
-      }
     }
+    debouncedConnect();
   };
 
-  const buttonDisabled = isSubmitting || connecting || (connected && !hasEnoughBalance);
+  const buttonDisabled = isSubmitting || connecting || isDebouncing || (connected && !hasEnoughBalance);
   const buttonText = !connected 
-    ? connecting 
+    ? connecting || isDebouncing
       ? "Connecting..." 
       : "Connect Wallet to Create"
     : !hasEnoughBalance

@@ -37,22 +37,26 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
   const walletAvailable = useMemo(() => {
     // @ts-ignore
     const phantom = window?.solana?.isPhantom;
-    console.log('[WalletProvider] Wallet availability:', {
-      phantom,
-      timestamp: new Date().toISOString()
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WalletProvider] Wallet availability:', {
+        phantom,
+        timestamp: new Date().toISOString()
+      });
+    }
     return !!phantom;
   }, []);
 
   useEffect(() => {
-    console.log('[WalletProvider] Connection state changed:', {
-      connected,
-      connecting,
-      disconnecting,
-      publicKey: publicKey?.toBase58(),
-      selectedWallet: wallet?.adapter.name,
-      timestamp: new Date().toISOString()
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WalletProvider] Connection state:', {
+        connected,
+        connecting,
+        disconnecting,
+        publicKey: publicKey?.toBase58(),
+        selectedWallet: wallet?.adapter.name,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Only show toasts for final states to avoid spam
     if (connected && publicKey && !connecting && !disconnecting) {
@@ -84,21 +88,24 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const endpoint = useMemo(() => {
     const url = clusterApiUrl(network);
-    console.log('[WalletProvider] Solana endpoint configured:', {
-      network,
-      url,
-      timestamp: new Date().toISOString()
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WalletProvider] Solana endpoint:', {
+        network,
+        url,
+        timestamp: new Date().toISOString()
+      });
+    }
     return url;
   }, [network]);
 
   const wallets = useMemo(() => {
-    // Only using Phantom as the primary wallet
     const adapters = [new PhantomWalletAdapter()];
-    console.log('[WalletProvider] Wallet adapters initialized:', {
-      adapters: adapters.map(a => a.name),
-      timestamp: new Date().toISOString()
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WalletProvider] Wallet adapters:', {
+        adapters: adapters.map(a => a.name),
+        timestamp: new Date().toISOString()
+      });
+    }
     return adapters;
   }, []);
 
@@ -109,12 +116,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           wallets={wallets} 
           autoConnect
           onError={(error) => {
-            console.error('[WalletProvider] Error:', {
-              message: error.message,
-              name: error.name,
-              stack: error.stack,
-              timestamp: new Date().toISOString()
-            });
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[WalletProvider] Error:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+                timestamp: new Date().toISOString()
+              });
+            }
             
             if (error.name === "WalletNotSelectedError") {
               // Don't show error for user cancellation
