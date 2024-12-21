@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,15 +15,24 @@ export const WalletConnectButton = ({
   onWalletConnected 
 }: WalletConnectButtonProps) => {
   const { connect, connecting, connected } = useWallet();
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
-  // Check for Phantom wallet availability
+  // Enhanced wallet detection check
   useEffect(() => {
     // @ts-ignore
     const phantom = window.solana;
-    if (phantom?.isPhantom) {
-      console.log('WalletConnectButton: Phantom wallet detected');
-    } else {
-      console.log('WalletConnectButton: Phantom wallet not detected');
+    console.log("WalletConnectButton: Detected wallet", {
+      phantomExists: !!phantom,
+      isPhantom: phantom?.isPhantom,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!phantom || !phantom.isPhantom) {
+      console.warn(
+        "WalletConnectButton: Phantom wallet not detected. Please install it.",
+        { timestamp: new Date().toISOString() }
+      );
     }
   }, []);
 
@@ -32,8 +41,13 @@ export const WalletConnectButton = ({
       // @ts-ignore
       const { solana } = window;
 
-      if (!solana?.isPhantom) {
-        toast.error("Please install Phantom wallet", {
+      // Enhanced wallet detection check with user feedback
+      if (!solana) {
+        console.error("WalletConnectButton: No wallet detected in window.solana", {
+          timestamp: new Date().toISOString()
+        });
+        toast.error("No wallet detected", {
+          description: "Please install Phantom wallet to continue",
           action: {
             label: "Install",
             onClick: () => window.open("https://phantom.app/", "_blank")
@@ -42,20 +56,78 @@ export const WalletConnectButton = ({
         return;
       }
 
-      console.log('WalletConnectButton: Initiating connection...');
+      if (!solana.isPhantom) {
+        console.error("WalletConnectButton: Non-Phantom wallet detected", {
+          walletType: solana.constructor.name,
+          timestamp: new Date().toISOString()
+        });
+        toast.error("Please install Phantom wallet", {
+          description: "This app requires Phantom wallet",
+          action: {
+            label: "Install",
+            onClick: () => window.open("https://phantom.app/", "_blank")
+          }
+        });
+        return;
+      }
+
+      console.log('WalletConnectButton: Initiating connection...', {
+        retryCount,
+        timestamp: new Date().toISOString()
+      });
+
       await connect();
-      console.log('WalletConnectButton: Connection successful');
+      
+      console.log('WalletConnectButton: Connection successful', {
+        timestamp: new Date().toISOString()
+      });
+      
+      setRetryCount(0); // Reset retry count on success
       onWalletConnected();
     } catch (error) {
-      console.error('WalletConnectButton: Connection error:', error);
-      toast.error("Failed to connect wallet. Please try again.");
+      console.error('WalletConnectButton: Connection error:', {
+        error,
+        retryCount,
+        timestamp: new Date().toISOString()
+      });
+
+      // Handle different error types
+      if (error instanceof Error) {
+        if (error.name === "WalletNotSelectedError") {
+          if (retryCount < MAX_RETRIES) {
+            console.log("WalletConnectButton: Retrying connection...", {
+              attempt: retryCount + 1,
+              timestamp: new Date().toISOString()
+            });
+            setRetryCount(prev => prev + 1);
+            toast.error("Wallet connection cancelled", {
+              description: "Please try connecting again"
+            });
+          } else {
+            toast.error("Multiple connection attempts failed", {
+              description: "Please refresh the page and try again"
+            });
+            setRetryCount(0);
+          }
+        } else {
+          toast.error("Failed to connect wallet", {
+            description: error.message
+          });
+        }
+      } else {
+        toast.error("Unexpected error occurred", {
+          description: "Please try again or refresh the page"
+        });
+      }
     }
   };
 
-  // Button is only disabled if wallet is connected but has insufficient balance or is submitting
+  // Button states with improved feedback
   const buttonDisabled = connected && (!hasEnoughBalance || isSubmitting);
   const buttonText = !connected 
-    ? connecting ? "Connecting..." : "Connect Wallet to Create"
+    ? connecting 
+      ? `Connecting${".".repeat(retryCount + 1)}` 
+      : "Connect Wallet to Create"
     : !hasEnoughBalance
       ? "Insufficient SOL Balance"
       : isSubmitting 
@@ -66,7 +138,7 @@ export const WalletConnectButton = ({
     <Button 
       type="button"
       className="w-full" 
-      disabled={buttonDisabled}
+      disabled={buttonDisabled || connecting}
       onClick={connected ? onWalletConnected : handleConnect}
     >
       {buttonText}
