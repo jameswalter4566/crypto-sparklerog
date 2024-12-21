@@ -47,7 +47,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     }
   }, [connected, publicKey]);
 
-  if (!connected) {
+  if (!connected || !publicKey) {
     console.log('WalletStatus: Not rendering - wallet not connected');
     return null;
   }
@@ -56,7 +56,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     <div className="bg-secondary/20 rounded-lg p-4 mb-6">
       <div className="flex justify-between items-center">
         <span className="text-sm text-muted-foreground">
-          Wallet: {publicKey?.toBase58().slice(0, 8)}...
+          Wallet: {publicKey.toBase58().slice(0, 8)}...
         </span>
         <span className="text-sm font-medium">{solBalance.toFixed(4)} SOL</span>
       </div>

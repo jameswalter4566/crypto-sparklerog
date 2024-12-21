@@ -2,9 +2,9 @@ import React, { useMemo } from "react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   ConnectionProvider, 
-  WalletProvider as SolanaWalletProvider 
+  WalletProvider as SolanaWalletProvider,
+  useWallet
 } from "@solana/wallet-adapter-react";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ErrorBoundary } from "./ErrorBoundary";
 
@@ -21,16 +21,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return url;
   }, [network]);
 
-  // Initialize the wallet adapter with Phantom
-  const wallets = useMemo(() => {
-    console.log('Initializing wallet adapters...');
-    return [new PhantomWalletAdapter()];
-  }, []);
-
   return (
     <ErrorBoundary>
       <ConnectionProvider endpoint={endpoint}>
-        <SolanaWalletProvider wallets={wallets} autoConnect>
+        <SolanaWalletProvider autoConnect>
           {children}
         </SolanaWalletProvider>
       </ConnectionProvider>
