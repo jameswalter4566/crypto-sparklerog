@@ -10,25 +10,28 @@ interface WalletConnectButtonProps {
   onWalletConnected: () => void;
 }
 
-export const WalletConnectButton = ({ 
-  isSubmitting, 
+export const WalletConnectButton = ({
+  isSubmitting,
   hasEnoughBalance,
-  onWalletConnected 
+  onWalletConnected,
 }: WalletConnectButtonProps) => {
   const { connect, connecting } = useWallet();
   const { connected, walletAvailable } = useGlobalWallet();
   const [isDebouncing, setIsDebouncing] = useState(false);
 
   const handleConnect = async () => {
-    console.log('[WalletConnectButton] Handle connect triggered', {
+    console.log("[WalletConnectButton] Handle connect triggered", {
       walletAvailable,
       connected,
       connecting,
       isDebouncing,
     });
 
-    if (!walletAvailable) {
-      console.log('[WalletConnectButton] Phantom wallet not detected');
+    // Check Phantom Wallet availability
+    // @ts-ignore
+    const phantom = window?.solana;
+    if (!phantom?.isPhantom) {
+      console.log("[WalletConnectButton] Phantom wallet not installed");
       toast.error("Phantom wallet not found", {
         description: "Please install Phantom to continue",
         action: {
@@ -40,27 +43,28 @@ export const WalletConnectButton = ({
     }
 
     if (connected) {
-      console.log('[WalletConnectButton] Already connected');
+      console.log("[WalletConnectButton] Already connected");
       onWalletConnected();
       return;
     }
 
     try {
-      console.log('[WalletConnectButton] Initiating connection...');
+      console.log("[WalletConnectButton] Initiating connection...");
       setIsDebouncing(true);
 
-      // Connect via wallet adapter
+      // Use only wallet adapter `connect()` for consistency
       await connect();
-      console.log('[WalletConnectButton] Wallet connected successfully');
+      console.log("[WalletConnectButton] Wallet adapter connected");
       onWalletConnected();
     } catch (error) {
-      console.error('[WalletConnectButton] Connection error:', error);
+      console.error("[WalletConnectButton] Connection error:", error);
 
+      // Handle specific error types
       if (error instanceof Error) {
-        // Handle user rejection gracefully
         if (error.name === "WalletNotSelectedError") {
-          toast.error("Connection cancelled", {
-            description: "Please select your wallet to proceed",
+          console.warn("[WalletConnectButton] Wallet connection canceled by user");
+          toast.error("Wallet connection canceled", {
+            description: "Please select a wallet to proceed",
           });
         } else {
           toast.error("Failed to connect wallet", {
@@ -68,9 +72,7 @@ export const WalletConnectButton = ({
           });
         }
       } else {
-        toast.error("Unexpected error occurred", {
-          description: "Please try again",
-        });
+        toast.error("Unexpected connection error");
       }
     } finally {
       setIsDebouncing(false);
@@ -79,20 +81,20 @@ export const WalletConnectButton = ({
 
   const buttonDisabled = isSubmitting || connecting || isDebouncing || (connected && !hasEnoughBalance);
 
-  const buttonText = !connected 
+  const buttonText = !connected
     ? connecting || isDebouncing
-      ? "Connecting..." 
+      ? "Connecting..."
       : "Connect Wallet to Create"
     : !hasEnoughBalance
-      ? "Insufficient SOL Balance"
-      : isSubmitting 
-        ? "Creating coin..." 
-        : "Create coin";
+    ? "Insufficient SOL Balance"
+    : isSubmitting
+    ? "Creating coin..."
+    : "Create coin";
 
   return (
-    <Button 
+    <Button
       type="button"
-      className="w-full" 
+      className="w-full"
       disabled={buttonDisabled}
       onClick={handleConnect}
     >
