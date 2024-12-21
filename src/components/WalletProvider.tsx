@@ -17,6 +17,7 @@ interface WalletContextState {
   publicKey: string | null;
   walletAvailable: boolean;
   selectedWallet: string | null;
+  connectionAttempts: number;
 }
 
 const WalletContext = createContext<WalletContextState>({
@@ -26,19 +27,19 @@ const WalletContext = createContext<WalletContextState>({
   publicKey: null,
   walletAvailable: false,
   selectedWallet: null,
+  connectionAttempts: 0,
 });
 
 export const useGlobalWallet = () => useContext(WalletContext);
 
 const log = (message: string, data?: any) => {
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[WalletProvider] ${message}`, data);
-  }
+  console.log(`[WalletProvider] ${message}`, data);
 };
 
 // Monitor component to handle global wallet state changes
 const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) => {
   const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
+  const [connectionAttempts, setConnectionAttempts] = React.useState(0);
 
   const walletAvailable = useMemo(() => {
     // @ts-ignore
@@ -48,23 +49,32 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   useEffect(() => {
+    if (connecting) {
+      setConnectionAttempts(prev => prev + 1);
+    }
+  }, [connecting]);
+
+  useEffect(() => {
     log("Connection state changed:", {
       connected,
       connecting,
       disconnecting,
       publicKey: publicKey?.toBase58(),
       selectedWallet: wallet?.adapter.name,
+      connectionAttempts,
       timestamp: new Date().toISOString(),
     });
 
     if (connected && publicKey) {
+      setConnectionAttempts(0);
       toast.success(`Connected to ${wallet?.adapter.name || "wallet"}`);
     }
 
     if (disconnecting) {
+      setConnectionAttempts(0);
       toast.info("Wallet disconnected");
     }
-  }, [connected, connecting, disconnecting, publicKey, wallet]);
+  }, [connected, connecting, disconnecting, publicKey, wallet, connectionAttempts]);
 
   const contextValue = useMemo(
     () => ({
@@ -74,17 +84,16 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
       publicKey: publicKey?.toBase58() || null,
       walletAvailable,
       selectedWallet: wallet?.adapter.name || null,
+      connectionAttempts,
     }),
-    [connected, connecting, disconnecting, publicKey, walletAvailable, wallet]
+    [connected, connecting, disconnecting, publicKey, walletAvailable, wallet, connectionAttempts]
   );
 
   return <WalletContext.Provider value={contextValue}>{children}</WalletContext.Provider>;
 };
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const network =
-    (process.env.VITE_SOLANA_NETWORK as WalletAdapterNetwork) ||
-    WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Devnet;
 
   const endpoint = useMemo(() => {
     const url = clusterApiUrl(network);

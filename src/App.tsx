@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster"; // Ensure only the correct toaster is used
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -9,7 +9,6 @@ import { WalletProvider } from "@/components/WalletProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazy, Suspense } from "react";
 
-// Lazy load route components
 const Index = lazy(() => import("./pages/Index"));
 const CoinProfile = lazy(() => import("./pages/CoinProfile"));
 const CoinSearch = lazy(() => import("./pages/CoinSearch"));
@@ -47,7 +46,7 @@ const App = () => {
                       {/* Fixed Header */}
                       <div className="fixed top-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-sm z-20 flex items-center px-4">
                         <img
-                          src={process.env.REACT_APP_LOGO_URL || "/default-logo.png"}
+                          src={process.env.REACT_APP_LOGO_URL || "/1200x1200.png"}
                           alt="App Logo"
                           className="h-28 ml-16"
                         />
