@@ -8,13 +8,13 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { clusterApiUrl } from "@solana/web3.js";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  // You can also provide the network as a prop if you want to make it configurable
+  // Use Devnet for development
   const network = WalletAdapterNetwork.Devnet;
 
   // Generate the endpoint URL based on the selected network
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // Initialize the wallet adapter
+  // Initialize the wallet adapter with Phantom
   const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
 
   return (

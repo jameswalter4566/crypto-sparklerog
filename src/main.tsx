@@ -6,6 +6,7 @@ import './index.css';
 
 // Polyfill Buffer for the browser
 window.Buffer = Buffer;
+window.global = window;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

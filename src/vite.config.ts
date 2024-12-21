@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'global': {},
+    'global': 'globalThis',
     'process.env': {}
   },
   optimizeDeps: {
@@ -33,10 +33,10 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     commonjsOptions: {
-      include: [/@solana\/web3\.js/, /buffer/, /@solana\/spl-token/]
+      include: [/node_modules/],
+      transformMixedEsModules: true
     },
     rollupOptions: {
-      external: [],
       output: {
         manualChunks: {
           'solana-web3': ['@solana/web3.js'],
