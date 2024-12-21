@@ -1,5 +1,5 @@
 import './buffer-polyfill';
-import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as splToken from "@solana/spl-token";
 
 export interface TokenConfig {
@@ -7,13 +7,12 @@ export interface TokenConfig {
   symbol: string;
   decimals: number;
   initialSupply: number;
+  feePayer: PublicKey;
+  connection: Connection;
 }
 
 export async function createToken(config: TokenConfig) {
   try {
-    // Initialize connection to Solana devnet
-    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-    
     // Generate a new keypair for the mint authority
     const mintAuthority = Keypair.generate();
     
@@ -21,10 +20,10 @@ export async function createToken(config: TokenConfig) {
     
     // Create the token mint
     const mint = await splToken.createMint(
-      connection,
+      config.connection,
       mintAuthority,
-      mintAuthority.publicKey,
-      mintAuthority.publicKey,
+      config.feePayer,
+      config.feePayer,
       config.decimals
     );
     
@@ -32,17 +31,17 @@ export async function createToken(config: TokenConfig) {
     
     // Create associated token account
     const tokenAccount = await splToken.getOrCreateAssociatedTokenAccount(
-      connection,
+      config.connection,
       mintAuthority,
       mint,
-      mintAuthority.publicKey
+      config.feePayer
     );
     
     console.log("Token account created:", tokenAccount.address.toBase58());
     
     // Mint initial supply
     await splToken.mintTo(
-      connection,
+      config.connection,
       mintAuthority,
       mint,
       tokenAccount.address,

@@ -3,14 +3,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createToken } from "@/lib/solana/tokenCreator";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 
 export default function LaunchCoin() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const [isCreating, setIsCreating] = useState(false);
+  const [solBalance, setSolBalance] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     symbol: "",
@@ -24,11 +28,46 @@ export default function LaunchCoin() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const fetchSolBalance = async () => {
+    if (publicKey) {
+      try {
+        const balance = await connection.getBalance(publicKey);
+        setSolBalance(balance / 1e9); // Convert lamports to SOL
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      fetchSolBalance();
+    }
+  }, [connected, publicKey]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsCreating(true);
 
     try {
+      if (!publicKey) {
+        toast({
+          variant: "destructive",
+          title: "Wallet Not Connected",
+          description: "Please connect your wallet before creating a token.",
+        });
+        return;
+      }
+
+      if (solBalance < 0.1) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient Balance",
+          description: "You need at least 0.1 SOL to create a token.",
+        });
+        return;
+      }
+
       const tokenConfig = {
         name: formData.name,
         symbol: formData.symbol,
@@ -36,7 +75,11 @@ export default function LaunchCoin() {
         initialSupply: parseInt(formData.initialSupply)
       };
 
-      const result = await createToken(tokenConfig);
+      const result = await createToken({
+        ...tokenConfig,
+        feePayer: publicKey,
+        connection
+      });
 
       if (result.success) {
         toast({
@@ -68,6 +111,15 @@ export default function LaunchCoin() {
         <ArrowLeft className="h-4 w-4" />
         go back
       </Link>
+
+      {connected && (
+        <div className="bg-secondary/20 rounded-lg p-4 mb-6">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Wallet: {publicKey?.toBase58().slice(0, 8)}...</span>
+            <span className="text-sm font-medium">{solBalance.toFixed(4)} SOL</span>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
@@ -155,8 +207,17 @@ export default function LaunchCoin() {
           </Button>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isCreating}>
-          {isCreating ? "creating coin..." : "create coin"}
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isCreating || !connected || solBalance < 0.1}
+        >
+          {!connected 
+            ? "Connect Wallet to Create" 
+            : isCreating 
+              ? "creating coin..." 
+              : "create coin"
+          }
         </Button>
 
         <p className="text-sm text-muted-foreground text-center">
