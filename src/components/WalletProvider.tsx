@@ -112,9 +112,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       stack: error.stack 
     });
 
-    // Don't show errors for user cancellation
+    // Don't show errors for user cancellation or connection issues
     if (error.name === "WalletNotSelectedError" || 
-        error.name === "WalletConnectionError") {
+        error.name === "WalletConnectionError" ||
+        error.name === "WalletDisconnectedError") {
       return;
     }
 
@@ -128,7 +129,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       <ConnectionProvider endpoint={endpoint}>
         <SolanaWalletProvider 
           wallets={wallets} 
-          autoConnect={false} 
+          autoConnect={false}
           onError={handleError}
         >
           <WalletConnectionMonitor>{children}</WalletConnectionMonitor>

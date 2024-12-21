@@ -58,18 +58,25 @@ export const WalletConnectButton = ({
       setIsConnecting(true);
       console.log("[WalletConnectButton] Initiating connection...");
 
-      // First try to connect directly to Phantom
+      // Try to connect directly to Phantom first
       try {
-        const response = await phantom.connect({ onlyIfTrusted: false });
+        // Force a new connection attempt by disconnecting first
+        await phantom.disconnect();
+        console.log("[WalletConnectButton] Disconnected existing session");
+        
+        // Small delay to ensure disconnect completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Connect with a fresh session
+        const response = await phantom.connect();
         console.log("[WalletConnectButton] Connected to Phantom:", response);
+        onWalletConnected();
       } catch (phantomError) {
         console.log("[WalletConnectButton] Phantom direct connection failed:", phantomError);
-        // If direct connection fails, try wallet adapter
+        // If direct connection fails, try wallet adapter as fallback
         await connect();
+        onWalletConnected();
       }
-
-      console.log("[WalletConnectButton] Connection successful");
-      onWalletConnected();
     } catch (error) {
       console.error("[WalletConnectButton] Connection error:", error);
       
