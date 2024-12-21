@@ -8,7 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // Debug logging
 console.log('Initializing application...');
 
-// Polyfill Buffer for the browser
+// Polyfill Buffer and global for the browser
 window.Buffer = Buffer;
 window.global = window;
 

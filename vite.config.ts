@@ -18,16 +18,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'global': {},
+    'global': 'globalThis',
     'process.env': {}
-  },
-  build: {
-    rollupOptions: {
-      external: [
-        "@solana/web3.js",
-        "@solana/spl-token"
-      ]
-    }
   },
   optimizeDeps: {
     include: [
@@ -37,6 +29,12 @@ export default defineConfig(({ mode }) => ({
     ],
     esbuildOptions: {
       target: 'esnext'
+    }
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true
     }
   }
 }));
