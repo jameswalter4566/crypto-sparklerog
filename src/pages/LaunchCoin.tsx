@@ -40,8 +40,12 @@ export default function LaunchCoin() {
   };
 
   useEffect(() => {
+    // Check wallet connection status and fetch balance
     if (connected && publicKey) {
+      console.log("Wallet connected:", publicKey.toString());
       fetchSolBalance();
+    } else {
+      console.log("Wallet not connected");
     }
   }, [connected, publicKey]);
 
@@ -72,14 +76,12 @@ export default function LaunchCoin() {
         name: formData.name,
         symbol: formData.symbol,
         decimals: parseInt(formData.decimals),
-        initialSupply: parseInt(formData.initialSupply)
-      };
-
-      const result = await createToken({
-        ...tokenConfig,
+        initialSupply: parseInt(formData.initialSupply),
         feePayer: publicKey,
         connection
-      });
+      };
+
+      const result = await createToken(tokenConfig);
 
       if (result.success) {
         toast({
