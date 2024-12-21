@@ -67,10 +67,29 @@ export const TokenForm = ({
     onSubmit(formData);
   };
 
-  // Create a wrapper function that doesn't expect any parameters
+  // Create a wrapper function that creates a proper React FormEvent
   const handleWalletSubmit = () => {
     console.log('TokenForm: Wallet submit wrapper called');
-    handleSubmit(new Event('submit') as React.FormEvent);
+    // Create a synthetic form event with the required properties
+    const syntheticEvent = {
+      preventDefault: () => {},
+      target: document.createElement('form'),
+      currentTarget: document.createElement('form'),
+      bubbles: true,
+      cancelable: true,
+      defaultPrevented: false,
+      eventPhase: 0,
+      isTrusted: true,
+      nativeEvent: new Event('submit'),
+      stopPropagation: () => {},
+      isPropagationStopped: () => false,
+      persist: () => {},
+      isDefaultPrevented: () => false,
+      timeStamp: new Date().getTime(),
+      type: 'submit'
+    } as React.FormEvent;
+
+    handleSubmit(syntheticEvent);
   };
 
   return (
