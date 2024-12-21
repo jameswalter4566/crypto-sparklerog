@@ -19,6 +19,7 @@ export const WalletConnectButton = ({
   const { connected, walletAvailable } = useGlobalWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const MAX_RETRIES = 3;
 
   const handleConnect = async () => {
     console.log("[WalletConnectButton] Handle connect triggered", {
@@ -28,6 +29,14 @@ export const WalletConnectButton = ({
       isConnecting,
       retryAttempt,
     });
+
+    // Check if max retries reached
+    if (retryAttempt >= MAX_RETRIES) {
+      toast.error("Maximum connection attempts reached", {
+        description: "Please refresh the page and try again.",
+      });
+      return;
+    }
 
     // Check if Phantom is installed
     // @ts-ignore
@@ -123,7 +132,7 @@ export const WalletConnectButton = ({
 
   const buttonText = !connected
     ? connecting || isConnecting
-      ? `Connecting${retryAttempt > 0 ? ` (Attempt ${retryAttempt + 1})` : ''}...`
+      ? `Connecting${retryAttempt > 0 ? ` (Attempt ${retryAttempt + 1}/${MAX_RETRIES})` : ''}...`
       : "Connect Wallet to Create"
     : !hasEnoughBalance
     ? "Insufficient SOL Balance"
