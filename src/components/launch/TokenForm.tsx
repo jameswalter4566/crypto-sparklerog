@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { toast } from "sonner";
+import { WalletConnectButton } from "./WalletConnectButton";
 
 export interface TokenFormData {
   name: string;
@@ -27,7 +27,6 @@ export const TokenForm = ({
   isWalletConnected,
   hasEnoughBalance 
 }: TokenFormProps) => {
-  const { connect, connecting, wallet } = useWallet();
   const [formData, setFormData] = useState<TokenFormData>({
     name: "",
     symbol: "",
@@ -37,15 +36,13 @@ export const TokenForm = ({
   });
 
   useEffect(() => {
-    console.log('TokenForm: State updated', {
+    console.log('TokenForm: Props state:', {
       isSubmitting,
       isWalletConnected,
       hasEnoughBalance,
-      connecting,
-      buttonDisabled: isSubmitting || (isWalletConnected && !hasEnoughBalance),
       timestamp: new Date().toISOString()
     });
-  }, [isSubmitting, isWalletConnected, hasEnoughBalance, connecting]);
+  }, [isSubmitting, isWalletConnected, hasEnoughBalance]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -63,48 +60,12 @@ export const TokenForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TokenForm: Submitting form', {
+    console.log('TokenForm: Form submitted', {
       formData,
       timestamp: new Date().toISOString()
     });
     onSubmit(formData);
   };
-
-  const handleConnectOrSubmit = () => {
-    if (!isWalletConnected) {
-      console.log('TokenForm: Initiating wallet connection');
-      
-      // Check if wallet is available
-      if (!wallet) {
-        console.log('TokenForm: No wallet detected');
-        toast.error("Please install Phantom wallet", {
-          action: {
-            label: "Install",
-            onClick: () => window.open("https://phantom.app/", "_blank")
-          }
-        });
-        return;
-      }
-
-      connect().catch(error => {
-        console.error('TokenForm: Wallet connection error:', error);
-        toast.error("Failed to connect wallet. Please try again.");
-      });
-    } else if (hasEnoughBalance && !isSubmitting) {
-      console.log('TokenForm: Proceeding with form submission');
-      handleSubmit(new Event('submit') as any);
-    }
-  };
-
-  // Button is only disabled if wallet is connected but has insufficient balance or is submitting
-  const buttonDisabled = isWalletConnected && (!hasEnoughBalance || isSubmitting);
-  const buttonText = !isWalletConnected 
-    ? connecting ? "Connecting..." : "Connect Wallet to Create"
-    : !hasEnoughBalance
-      ? "Insufficient SOL Balance"
-      : isSubmitting 
-        ? "Creating coin..." 
-        : "Create coin";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -193,14 +154,11 @@ export const TokenForm = ({
         </Button>
       </div>
 
-      <Button 
-        type="button"
-        className="w-full" 
-        disabled={buttonDisabled}
-        onClick={handleConnectOrSubmit}
-      >
-        {buttonText}
-      </Button>
+      <WalletConnectButton 
+        isSubmitting={isSubmitting}
+        hasEnoughBalance={hasEnoughBalance}
+        onWalletConnected={handleSubmit}
+      />
 
       <p className="text-sm text-muted-foreground text-center">
         when your coin completes its bonding curve you receive 0.5 SOL
