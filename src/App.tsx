@@ -16,9 +16,9 @@ import RocketLaunch from "./pages/RocketLaunch";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <WalletProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <WalletProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -50,9 +50,9 @@ const App = () => (
             </div>
           </SidebarProvider>
         </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </WalletProvider>
+      </WalletProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;
