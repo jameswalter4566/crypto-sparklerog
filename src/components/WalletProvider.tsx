@@ -3,6 +3,7 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   ConnectionProvider, 
   WalletProvider as SolanaWalletProvider,
+  useWallet
 } from "@solana/wallet-adapter-react";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -11,38 +12,56 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 
-export function WalletProvider({ children }: { children: React.ReactNode }) {
-  console.log('Initializing WalletProvider...');
+const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) => {
+  const { connected, connecting, disconnecting, publicKey } = useWallet();
+  
+  useEffect(() => {
+    console.log('WalletProvider: Connection state changed:', {
+      connected,
+      connecting,
+      disconnecting,
+      publicKey: publicKey?.toBase58(),
+      timestamp: new Date().toISOString()
+    });
+  }, [connected, connecting, disconnecting, publicKey]);
 
-  // Use Devnet for development
+  return <>{children}</>;
+};
+
+export function WalletProvider({ children }: { children: React.ReactNode }) {
+  console.log('WalletProvider: Initializing...', { timestamp: new Date().toISOString() });
+
   const network = WalletAdapterNetwork.Devnet;
 
-  // Generate the endpoint URL based on the selected network
   const endpoint = useMemo(() => {
     const url = clusterApiUrl(network);
-    console.log('Solana endpoint:', url);
+    console.log('WalletProvider: Solana endpoint configured:', {
+      network,
+      url,
+      timestamp: new Date().toISOString()
+    });
     return url;
   }, [network]);
 
-  // Initialize wallet adapters
   const wallets = useMemo(() => {
     const adapters = [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
     ];
-    console.log('WalletProvider: Initialized wallets:', adapters);
+    console.log('WalletProvider: Wallet adapters initialized:', {
+      adapters: adapters.map(a => a.name),
+      timestamp: new Date().toISOString()
+    });
     return adapters;
   }, []);
-
-  useEffect(() => {
-    console.log('WalletProvider: Component mounted with wallets:', wallets);
-  }, [wallets]);
 
   return (
     <ErrorBoundary>
       <ConnectionProvider endpoint={endpoint}>
         <SolanaWalletProvider wallets={wallets} autoConnect>
-          {children}
+          <WalletConnectionMonitor>
+            {children}
+          </WalletConnectionMonitor>
         </SolanaWalletProvider>
       </ConnectionProvider>
     </ErrorBoundary>

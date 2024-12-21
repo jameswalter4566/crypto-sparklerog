@@ -7,48 +7,79 @@ interface WalletStatusProps {
 }
 
 export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, connecting, disconnecting } = useWallet();
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchSolBalance = async () => {
     if (!publicKey) {
-      console.log('WalletStatus: No public key available');
+      console.log('WalletStatus: Cannot fetch balance - no public key available', {
+        timestamp: new Date().toISOString()
+      });
       return;
     }
 
+    setIsLoading(true);
     try {
-      console.log('WalletStatus: Fetching balance for wallet:', publicKey.toBase58());
+      console.log('WalletStatus: Fetching balance...', {
+        wallet: publicKey.toBase58(),
+        timestamp: new Date().toISOString()
+      });
+
       const balance = await connection.getBalance(publicKey);
       const solBalanceValue = balance / 1e9;
-      console.log('WalletStatus: Balance fetched:', solBalanceValue, 'SOL');
+      
+      console.log('WalletStatus: Balance fetched successfully', {
+        wallet: publicKey.toBase58(),
+        balance: solBalanceValue,
+        rawBalance: balance,
+        timestamp: new Date().toISOString()
+      });
+
       setSolBalance(solBalanceValue);
       onBalanceChange(solBalanceValue);
     } catch (error) {
-      console.error("WalletStatus: Error fetching balance:", error);
+      console.error('WalletStatus: Error fetching balance', {
+        error,
+        wallet: publicKey.toBase58(),
+        timestamp: new Date().toISOString()
+      });
       setSolBalance(0);
       onBalanceChange(0);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('WalletStatus: Connection state changed:', {
+    console.log('WalletStatus: Wallet state changed', {
       connected,
+      connecting,
+      disconnecting,
       publicKey: publicKey?.toBase58(),
-      hasPublicKey: !!publicKey
+      isLoading,
+      currentBalance: solBalance,
+      timestamp: new Date().toISOString()
     });
 
-    if (connected && publicKey) {
+    if (connected && publicKey && !isLoading) {
       fetchSolBalance();
-    } else {
-      console.log('WalletStatus: Resetting balance - wallet disconnected or no public key');
+    } else if (!connected || !publicKey) {
+      console.log('WalletStatus: Resetting balance', {
+        reason: !connected ? 'disconnected' : 'no public key',
+        timestamp: new Date().toISOString()
+      });
       setSolBalance(0);
       onBalanceChange(0);
     }
-  }, [connected, publicKey]);
+  }, [connected, publicKey, connecting, disconnecting]);
 
   if (!connected || !publicKey) {
-    console.log('WalletStatus: Not rendering - wallet not connected');
+    console.log('WalletStatus: Component not rendering', {
+      reason: !connected ? 'not connected' : 'no public key',
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 
@@ -58,7 +89,9 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
         <span className="text-sm text-muted-foreground">
           Wallet: {publicKey.toBase58().slice(0, 8)}...
         </span>
-        <span className="text-sm font-medium">{solBalance.toFixed(4)} SOL</span>
+        <span className="text-sm font-medium">
+          {isLoading ? 'Loading...' : `${solBalance.toFixed(4)} SOL`}
+        </span>
       </div>
     </div>
   );

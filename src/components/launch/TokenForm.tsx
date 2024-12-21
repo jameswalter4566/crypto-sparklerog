@@ -33,28 +33,46 @@ export const TokenForm = ({
     initialSupply: "1000000"
   });
 
-  // Add debug logging for props and button state
   useEffect(() => {
-    console.log('TokenForm: Props state:', {
+    console.log('TokenForm: State updated', {
       isSubmitting,
       isWalletConnected,
       hasEnoughBalance,
-      buttonDisabled: isSubmitting || !isWalletConnected || !hasEnoughBalance
+      buttonDisabled: isSubmitting || !isWalletConnected || !hasEnoughBalance,
+      disabledReason: !isWalletConnected 
+        ? 'wallet not connected' 
+        : !hasEnoughBalance 
+          ? 'insufficient balance' 
+          : isSubmitting 
+            ? 'submission in progress' 
+            : 'none',
+      timestamp: new Date().toISOString()
     });
   }, [isSubmitting, isWalletConnected, hasEnoughBalance]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      console.log('TokenForm: Form data updated', {
+        field: name,
+        value,
+        allData: newData,
+        timestamp: new Date().toISOString()
+      });
+      return newData;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TokenForm: Form submitted with data:', formData);
+    console.log('TokenForm: Submitting form', {
+      formData,
+      timestamp: new Date().toISOString()
+    });
     onSubmit(formData);
   };
 
-  // Calculate button state
   const buttonDisabled = !isWalletConnected || !hasEnoughBalance || isSubmitting;
   const buttonText = !isWalletConnected 
     ? "Connect Wallet to Create" 
