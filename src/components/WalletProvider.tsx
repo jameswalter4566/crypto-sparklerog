@@ -3,10 +3,14 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   ConnectionProvider, 
   WalletProvider as SolanaWalletProvider,
-  useWallet
 } from "@solana/wallet-adapter-react";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ErrorBoundary } from "./ErrorBoundary";
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  BackpackWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   console.log('Initializing WalletProvider...');
@@ -21,10 +25,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return url;
   }, [network]);
 
+  // Initialize wallet adapters
+  const wallets = useMemo(() => [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter(),
+    new BackpackWalletAdapter(),
+  ], []);
+
   return (
     <ErrorBoundary>
       <ConnectionProvider endpoint={endpoint}>
-        <SolanaWalletProvider autoConnect>
+        <SolanaWalletProvider wallets={wallets} autoConnect>
           {children}
         </SolanaWalletProvider>
       </ConnectionProvider>
