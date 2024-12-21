@@ -52,25 +52,21 @@ export const WalletConnectButton = ({
       console.log("[WalletConnectButton] Initiating connection...");
       setIsDebouncing(true);
 
-      // Use only wallet adapter `connect()` for consistency
+      // Trigger the wallet adapter connection
       await connect();
       console.log("[WalletConnectButton] Wallet adapter connected");
       onWalletConnected();
     } catch (error) {
       console.error("[WalletConnectButton] Connection error:", error);
 
-      // Handle specific error types
-      if (error instanceof Error) {
-        if (error.name === "WalletNotSelectedError") {
-          console.warn("[WalletConnectButton] Wallet connection canceled by user");
-          toast.error("Wallet connection canceled", {
-            description: "Please select a wallet to proceed",
-          });
-        } else {
-          toast.error("Failed to connect wallet", {
-            description: error.message,
-          });
-        }
+      if (error instanceof Error && error.name === "WalletNotSelectedError") {
+        toast.error("Wallet connection canceled", {
+          description: "Please select a wallet to proceed",
+        });
+      } else if (error instanceof Error) {
+        toast.error("Failed to connect wallet", {
+          description: error.message,
+        });
       } else {
         toast.error("Unexpected connection error");
       }
@@ -90,6 +86,11 @@ export const WalletConnectButton = ({
     : isSubmitting
     ? "Creating coin..."
     : "Create coin";
+
+  console.log("[WalletConnectButton] Button State:", {
+    buttonDisabled,
+    buttonText,
+  });
 
   return (
     <Button
