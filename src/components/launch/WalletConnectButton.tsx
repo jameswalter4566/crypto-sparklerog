@@ -22,13 +22,13 @@ export const WalletConnectButton = ({
 
   const debouncedConnect = debounce(async () => {
     try {
+      console.log('[WalletConnectButton] Initiating connection...');
       setIsDebouncing(true);
       await connect();
+      console.log('[WalletConnectButton] Connection successful');
       onWalletConnected();
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[WalletConnectButton] Connection error:', error);
-      }
+      console.error('[WalletConnectButton] Connection error:', error);
       // Don't show error for user cancellation
       if (error instanceof Error && error.name !== "WalletNotSelectedError") {
         toast.error("Failed to connect wallet", {
@@ -48,7 +48,15 @@ export const WalletConnectButton = ({
   }, []);
 
   const handleConnect = async () => {
+    console.log('[WalletConnectButton] Handle connect triggered', {
+      walletAvailable,
+      connected,
+      connecting,
+      isDebouncing
+    });
+
     if (!walletAvailable) {
+      console.log('[WalletConnectButton] Wallet not available');
       toast.error("Phantom wallet not found", {
         description: "Please install Phantom to continue",
         action: {
@@ -60,16 +68,12 @@ export const WalletConnectButton = ({
     }
 
     if (connected) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[WalletConnectButton] Already connected, proceeding...');
-      }
+      console.log('[WalletConnectButton] Already connected, proceeding...');
       onWalletConnected();
       return;
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[WalletConnectButton] Initiating connection...');
-    }
+    console.log('[WalletConnectButton] Initiating connection...');
     debouncedConnect();
   };
 
