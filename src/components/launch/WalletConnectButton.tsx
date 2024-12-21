@@ -18,6 +18,7 @@ export const WalletConnectButton = ({
   const { connect, disconnect, connecting } = useWallet();
   const { connected, walletAvailable } = useGlobalWallet();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const handleConnect = async () => {
     console.log("[WalletConnectButton] Handle connect triggered", {
@@ -25,6 +26,7 @@ export const WalletConnectButton = ({
       connected,
       connecting,
       isConnecting,
+      retryAttempt,
     });
 
     // Check if Phantom is installed
@@ -50,9 +52,9 @@ export const WalletConnectButton = ({
 
     try {
       setIsConnecting(true);
-      console.log("[WalletConnectButton] Initiating connection...");
+      console.log("[WalletConnectButton] Initiating connection attempt:", retryAttempt + 1);
 
-      // First, disconnect any existing sessions
+      // Disconnect any existing sessions
       if (connected) {
         await disconnect();
         console.log("[WalletConnectButton] Disconnected existing wallet adapter session");
@@ -66,35 +68,52 @@ export const WalletConnectButton = ({
         console.log("[WalletConnectButton] Phantom disconnect error (non-critical):", disconnectError);
       }
 
-      // Small delay to ensure disconnect completes
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Increased delay to ensure disconnect completes
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Now try to establish a fresh connection
+      // Establish a fresh connection
       try {
         const response = await phantom.connect({ onlyIfTrusted: false });
         console.log("[WalletConnectButton] Connected to Phantom:", response);
-        
-        // Now connect with wallet adapter
+
+        // Wallet adapter connection
         await connect();
         console.log("[WalletConnectButton] Wallet adapter connection successful");
         
+        setRetryAttempt(0); // Reset retry counter on success
         onWalletConnected();
         toast.success("Wallet connected successfully!");
       } catch (connectError) {
-        console.error("[WalletConnectButton] Connection failed:", connectError);
-        throw connectError; // Re-throw to be caught by outer try-catch
+        console.error("[WalletConnectButton] Wallet connection failed:", connectError);
+        
+        if (connectError.name === "WalletNotSelectedError") {
+          setRetryAttempt(prev => prev + 1);
+          toast.error("Connection canceled", {
+            description: "Please try connecting again.",
+            action: {
+              label: "Retry",
+              onClick: () => handleConnect(),
+            },
+          });
+        } else {
+          toast.error("Failed to connect wallet", {
+            description: connectError.message,
+            action: {
+              label: "Try Again",
+              onClick: () => handleConnect(),
+            },
+          });
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[WalletConnectButton] Connection error:", error);
-      
-      // Only show error toast if it's not a user cancellation
-      if (error instanceof Error && 
-          error.name !== "WalletNotSelectedError" && 
-          error.name !== "WalletConnectionError") {
-        toast.error("Failed to connect wallet", {
-          description: error.message,
-        });
-      }
+      toast.error("Unexpected error occurred", { 
+        description: error.message,
+        action: {
+          label: "Try Again",
+          onClick: () => handleConnect(),
+        },
+      });
     } finally {
       setIsConnecting(false);
     }
@@ -104,7 +123,7 @@ export const WalletConnectButton = ({
 
   const buttonText = !connected
     ? connecting || isConnecting
-      ? "Connecting..."
+      ? `Connecting${retryAttempt > 0 ? ` (Attempt ${retryAttempt + 1})` : ''}...`
       : "Connect Wallet to Create"
     : !hasEnoughBalance
     ? "Insufficient SOL Balance"
@@ -112,9 +131,10 @@ export const WalletConnectButton = ({
     ? "Creating coin..."
     : "Create coin";
 
-  console.log("[WalletConnectButton] Button State:", {
-    buttonDisabled,
+  console.log("[WalletConnectButton] Button State:", { 
+    buttonDisabled, 
     buttonText,
+    retryAttempt 
   });
 
   return (
