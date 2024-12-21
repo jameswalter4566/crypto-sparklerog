@@ -8,6 +8,20 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { WalletStatus } from "@/components/launch/WalletStatus";
 import { TokenForm, TokenFormData } from "@/components/launch/TokenForm";
 
+// Debug component to show wallet state
+const DebugOverlay = ({ connected, publicKey, solBalance }: { 
+  connected: boolean;
+  publicKey: string | null;
+  solBalance: number;
+}) => (
+  <div className="fixed top-0 left-0 bg-black/70 text-white p-4 z-50 font-mono text-xs">
+    <h3 className="font-bold mb-2">Wallet Debug Info:</h3>
+    <p>Connected: {String(connected)}</p>
+    <p>Public Key: {publicKey || 'None'}</p>
+    <p>Balance: {solBalance} SOL</p>
+  </div>
+);
+
 export default function LaunchCoin() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -16,13 +30,14 @@ export default function LaunchCoin() {
   const [isCreating, setIsCreating] = useState(false);
   const [solBalance, setSolBalance] = useState(0);
 
-  // Add debug logging for wallet state
+  // Debug log for wallet state changes
   useEffect(() => {
-    console.log('LaunchCoin: Component State:', {
+    console.log('LaunchCoin: Wallet state updated:', {
       connected,
       publicKey: publicKey?.toBase58(),
       solBalance,
-      isCreating
+      isCreating,
+      buttonShouldBeEnabled: connected && solBalance >= 0.1 && !isCreating
     });
   }, [connected, publicKey, solBalance, isCreating]);
 
@@ -53,6 +68,7 @@ export default function LaunchCoin() {
         connection
       };
 
+      console.log('LaunchCoin: Creating token with config:', tokenConfig);
       const result = await createToken(tokenConfig);
 
       if ('success' in result && result.success) {
@@ -82,6 +98,14 @@ export default function LaunchCoin() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
+      {process.env.NODE_ENV === 'development' && (
+        <DebugOverlay 
+          connected={connected} 
+          publicKey={publicKey?.toBase58() || null} 
+          solBalance={solBalance} 
+        />
+      )}
+
       <Link to="/" className="text-primary hover:text-primary/90 inline-flex items-center gap-2 mb-8">
         <ArrowLeft className="h-4 w-4" />
         go back
