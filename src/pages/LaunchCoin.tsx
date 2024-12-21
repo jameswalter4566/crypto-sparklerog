@@ -30,6 +30,16 @@ export default function LaunchCoin() {
   const [isCreating, setIsCreating] = useState(false);
   const [solBalance, setSolBalance] = useState(0);
 
+  // Debug logs for component mount and state initialization
+  useEffect(() => {
+    console.log('LaunchCoin: Component mounted with initial state:', {
+      connected,
+      publicKey: publicKey?.toBase58(),
+      solBalance,
+      isCreating
+    });
+  }, []);
+
   // Debug log for wallet state changes
   useEffect(() => {
     console.log('LaunchCoin: Wallet state updated:', {
@@ -48,6 +58,7 @@ export default function LaunchCoin() {
 
   const handleSubmit = async (formData: TokenFormData) => {
     if (!publicKey || !connected) {
+      console.log('LaunchCoin: Submit attempted without wallet connection');
       toast({
         variant: "destructive",
         title: "Wallet Not Connected",
@@ -57,6 +68,7 @@ export default function LaunchCoin() {
     }
 
     setIsCreating(true);
+    console.log('LaunchCoin: Starting token creation...');
 
     try {
       const tokenConfig = {
@@ -72,12 +84,14 @@ export default function LaunchCoin() {
       const result = await createToken(tokenConfig);
 
       if ('success' in result && result.success) {
+        console.log('LaunchCoin: Token created successfully:', result);
         toast({
           title: "Token Created Successfully!",
           description: `Mint Address: ${result.mintAddress}`,
         });
         navigate('/rocket-launch');
       } else {
+        console.error('LaunchCoin: Token creation failed:', result.error);
         toast({
           variant: "destructive",
           title: "Error Creating Token",

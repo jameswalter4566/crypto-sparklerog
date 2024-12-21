@@ -21,7 +21,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
       console.log('WalletStatus: Fetching balance for wallet:', publicKey.toBase58());
       const balance = await connection.getBalance(publicKey);
       const solBalanceValue = balance / 1e9;
-      console.log('WalletStatus: Balance fetched:', solBalanceValue);
+      console.log('WalletStatus: Balance fetched:', solBalanceValue, 'SOL');
       setSolBalance(solBalanceValue);
       onBalanceChange(solBalanceValue);
     } catch (error) {
