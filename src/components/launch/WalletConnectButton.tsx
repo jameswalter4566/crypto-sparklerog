@@ -24,20 +24,17 @@ export const WalletConnectButton = ({
       walletAvailable,
       connected,
       connecting,
-      isDebouncing
+      isDebouncing,
     });
 
-    // @ts-ignore
-    const phantom = window?.solana;
-
-    if (!phantom?.isPhantom) {
-      console.log('[WalletConnectButton] Phantom wallet not installed');
+    if (!walletAvailable) {
+      console.log('[WalletConnectButton] Phantom wallet not detected');
       toast.error("Phantom wallet not found", {
         description: "Please install Phantom to continue",
         action: {
           label: "Install",
-          onClick: () => window.open("https://phantom.app/", "_blank")
-        }
+          onClick: () => window.open("https://phantom.app/", "_blank"),
+        },
       });
       return;
     }
@@ -51,21 +48,28 @@ export const WalletConnectButton = ({
     try {
       console.log('[WalletConnectButton] Initiating connection...');
       setIsDebouncing(true);
-      
-      // Try to connect directly to Phantom
-      const response = await phantom.connect();
-      console.log('[WalletConnectButton] Phantom connection successful:', response.publicKey.toString());
-      
-      // Now trigger the wallet adapter connection
+
+      // Connect via wallet adapter
       await connect();
-      console.log('[WalletConnectButton] Wallet adapter connected');
+      console.log('[WalletConnectButton] Wallet connected successfully');
       onWalletConnected();
     } catch (error) {
       console.error('[WalletConnectButton] Connection error:', error);
-      // Only show error if it's not a user cancellation
-      if (error instanceof Error && error.name !== "WalletNotSelectedError") {
-        toast.error("Failed to connect wallet", {
-          description: error.message
+
+      if (error instanceof Error) {
+        // Handle user rejection gracefully
+        if (error.name === "WalletNotSelectedError") {
+          toast.error("Connection cancelled", {
+            description: "Please select your wallet to proceed",
+          });
+        } else {
+          toast.error("Failed to connect wallet", {
+            description: error.message,
+          });
+        }
+      } else {
+        toast.error("Unexpected error occurred", {
+          description: "Please try again",
         });
       }
     } finally {
@@ -74,7 +78,7 @@ export const WalletConnectButton = ({
   };
 
   const buttonDisabled = isSubmitting || connecting || isDebouncing || (connected && !hasEnoughBalance);
-  
+
   const buttonText = !connected 
     ? connecting || isDebouncing
       ? "Connecting..." 
