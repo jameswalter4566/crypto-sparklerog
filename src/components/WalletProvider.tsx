@@ -13,7 +13,7 @@ import {
 } from "@solana/wallet-adapter-wallets";
 
 const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) => {
-  const { connected, connecting, disconnecting, publicKey } = useWallet();
+  const { connected, connecting, disconnecting, publicKey, wallet } = useWallet();
   
   useEffect(() => {
     console.log('WalletProvider: Connection state changed:', {
@@ -21,9 +21,10 @@ const WalletConnectionMonitor = ({ children }: { children: React.ReactNode }) =>
       connecting,
       disconnecting,
       publicKey: publicKey?.toBase58(),
+      selectedWallet: wallet?.adapter.name,
       timestamp: new Date().toISOString()
     });
-  }, [connected, connecting, disconnecting, publicKey]);
+  }, [connected, connecting, disconnecting, publicKey, wallet]);
 
   return <>{children}</>;
 };

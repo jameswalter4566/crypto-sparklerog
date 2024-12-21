@@ -7,7 +7,7 @@ interface WalletStatusProps {
 }
 
 export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
-  const { publicKey, connected, connecting, disconnecting } = useWallet();
+  const { publicKey, connected, connecting, disconnecting, wallet } = useWallet();
   const { connection } = useConnection();
   const [solBalance, setSolBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
     try {
       console.log('WalletStatus: Fetching balance...', {
         wallet: publicKey.toBase58(),
+        selectedWallet: wallet?.adapter.name,
         timestamp: new Date().toISOString()
       });
 
@@ -58,6 +59,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
       connecting,
       disconnecting,
       publicKey: publicKey?.toBase58(),
+      selectedWallet: wallet?.adapter.name,
       isLoading,
       currentBalance: solBalance,
       timestamp: new Date().toISOString()
@@ -73,7 +75,7 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
       setSolBalance(0);
       onBalanceChange(0);
     }
-  }, [connected, publicKey, connecting, disconnecting]);
+  }, [connected, publicKey, connecting, disconnecting, wallet]);
 
   if (!connected || !publicKey) {
     console.log('WalletStatus: Component not rendering', {
@@ -86,9 +88,14 @@ export const WalletStatus = ({ onBalanceChange }: WalletStatusProps) => {
   return (
     <div className="bg-secondary/20 rounded-lg p-4 mb-6">
       <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">
-          Wallet: {publicKey.toBase58().slice(0, 8)}...
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm text-muted-foreground">
+            Wallet: {publicKey.toBase58().slice(0, 8)}...
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {wallet?.adapter.name || 'Unknown Wallet'}
+          </span>
+        </div>
         <span className="text-sm font-medium">
           {isLoading ? 'Loading...' : `${solBalance.toFixed(4)} SOL`}
         </span>

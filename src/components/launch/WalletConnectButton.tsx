@@ -14,7 +14,7 @@ export const WalletConnectButton = ({
   hasEnoughBalance,
   onWalletConnected 
 }: WalletConnectButtonProps) => {
-  const { connect, connecting, connected } = useWallet();
+  const { connect, connecting, connected, wallet } = useWallet();
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
@@ -25,6 +25,7 @@ export const WalletConnectButton = ({
     console.log("WalletConnectButton: Detected wallet", {
       phantomExists: !!phantom,
       isPhantom: phantom?.isPhantom,
+      selectedWallet: wallet?.adapter.name,
       timestamp: new Date().toISOString()
     });
 
@@ -34,7 +35,7 @@ export const WalletConnectButton = ({
         { timestamp: new Date().toISOString() }
       );
     }
-  }, []);
+  }, [wallet]);
 
   const handleConnect = async () => {
     try {
@@ -79,6 +80,7 @@ export const WalletConnectButton = ({
       await connect();
       
       console.log('WalletConnectButton: Connection successful', {
+        selectedWallet: wallet?.adapter.name,
         timestamp: new Date().toISOString()
       });
       
