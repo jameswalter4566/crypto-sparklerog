@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export interface TokenFormData {
   name: string;
@@ -25,6 +26,7 @@ export const TokenForm = ({
   isWalletConnected,
   hasEnoughBalance 
 }: TokenFormProps) => {
+  const { connect, connecting } = useWallet();
   const [formData, setFormData] = useState<TokenFormData>({
     name: "",
     symbol: "",
@@ -38,17 +40,11 @@ export const TokenForm = ({
       isSubmitting,
       isWalletConnected,
       hasEnoughBalance,
-      buttonDisabled: isSubmitting || !isWalletConnected || !hasEnoughBalance,
-      disabledReason: !isWalletConnected 
-        ? 'wallet not connected' 
-        : !hasEnoughBalance 
-          ? 'insufficient balance' 
-          : isSubmitting 
-            ? 'submission in progress' 
-            : 'none',
+      connecting,
+      buttonDisabled: isSubmitting || (isWalletConnected && !hasEnoughBalance),
       timestamp: new Date().toISOString()
     });
-  }, [isSubmitting, isWalletConnected, hasEnoughBalance]);
+  }, [isSubmitting, isWalletConnected, hasEnoughBalance, connecting]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,9 +69,21 @@ export const TokenForm = ({
     onSubmit(formData);
   };
 
-  const buttonDisabled = !isWalletConnected || !hasEnoughBalance || isSubmitting;
+  const handleConnectOrSubmit = () => {
+    if (!isWalletConnected) {
+      console.log('TokenForm: Initiating wallet connection');
+      connect().catch(error => {
+        console.error('TokenForm: Wallet connection error:', error);
+      });
+    } else if (hasEnoughBalance && !isSubmitting) {
+      console.log('TokenForm: Proceeding with form submission');
+      handleSubmit(new Event('submit') as any);
+    }
+  };
+
+  const buttonDisabled = isWalletConnected && (!hasEnoughBalance || isSubmitting);
   const buttonText = !isWalletConnected 
-    ? "Connect Wallet to Create" 
+    ? connecting ? "Connecting..." : "Connect Wallet to Create"
     : !hasEnoughBalance
       ? "Insufficient SOL Balance"
       : isSubmitting 
@@ -170,9 +178,10 @@ export const TokenForm = ({
       </div>
 
       <Button 
-        type="submit" 
+        type="button"
         className="w-full" 
         disabled={buttonDisabled}
+        onClick={handleConnectOrSubmit}
       >
         {buttonText}
       </Button>
