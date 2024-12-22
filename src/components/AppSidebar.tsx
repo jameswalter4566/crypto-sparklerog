@@ -57,13 +57,16 @@ export function AppSidebar() {
                         href={item.path} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </a>
                     ) : (
-                      <Link to={item.path} className="flex items-center gap-2">
+                      <Link 
+                        to={item.path} 
+                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm"
+                      >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
