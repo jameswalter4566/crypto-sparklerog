@@ -15,36 +15,42 @@ export default function LaunchCoin() {
     description: "",
     image: null as File | null,
     imageUrl: "",
-    numDecimals: 9,
-    numberTokens: 1000000
+    numDecimals: 9, // Default decimals for the token
+    numberTokens: 1000000 // Default total supply
   });
   const [isUploading, setIsUploading] = useState(false);
   const { launchToken, requestAirdrop, isLaunching } = useTokenLaunch();
 
+  /**
+   * Handles the form submission to launch a token.
+   * @param event - The form submission event.
+   */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!formData.imageUrl) {
       toast.error("Please upload an image for your token");
       return;
     }
 
     try {
-      // Generate a new keypair for the token creator
+      console.log("--- STEP 1: Generating Wallet ---");
       const wallet = Keypair.generate();
-      
-      // Request an airdrop of SOL to pay for the transaction
+
+      console.log("--- STEP 2: Requesting Airdrop ---");
       await requestAirdrop(wallet);
 
+      console.log("--- STEP 3: Configuring Token Metadata ---");
       const tokenConfig: TokenConfig = {
         name: formData.name,
         symbol: formData.symbol,
         description: formData.description,
         image: formData.imageUrl,
         numDecimals: formData.numDecimals,
-        numberTokens: formData.numberTokens
+        numberTokens: formData.numberTokens,
       };
 
+      console.log("--- STEP 4: Launching Token ---");
       const txId = await launchToken(tokenConfig, wallet);
       toast.success(`Token launched successfully! Transaction ID: ${txId}`);
     } catch (error) {
@@ -87,7 +93,7 @@ export default function LaunchCoin() {
         </Button>
 
         <p className="text-sm text-muted-foreground text-center">
-          when your coin completes its bonding curve you receive 0.5 SOL
+          When your coin completes its bonding curve, you receive 0.5 SOL
         </p>
       </form>
     </div>
