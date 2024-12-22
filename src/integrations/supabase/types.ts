@@ -15,6 +15,7 @@ export type Database = {
           circulating_supply: number | null
           coin_id: string | null
           coingecko_id: string | null
+          description: string | null
           id: string
           image_url: string | null
           liquidity: number | null
@@ -33,6 +34,7 @@ export type Database = {
           circulating_supply?: number | null
           coin_id?: string | null
           coingecko_id?: string | null
+          description?: string | null
           id: string
           image_url?: string | null
           liquidity?: number | null
@@ -51,6 +53,7 @@ export type Database = {
           circulating_supply?: number | null
           coin_id?: string | null
           coingecko_id?: string | null
+          description?: string | null
           id?: string
           image_url?: string | null
           liquidity?: number | null

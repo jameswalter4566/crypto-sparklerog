@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster"; // Ensure only the correct toaster is used
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -18,17 +18,25 @@ const RocketLaunch = lazy(() => import("./pages/RocketLaunch"));
 
 console.log("[App] Initializing...");
 
+// Configure QueryClient with proper error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error("[QueryClient] Error:", error);
+      }
     },
   },
 });
 
 const App = () => {
   console.log("[App] Rendering...");
+
+  // Ensure logo URL is properly formatted
+  const logoUrl = process.env.REACT_APP_LOGO_URL || "/default-logo.png";
+  const sanitizedLogoUrl = logoUrl.startsWith('http') ? logoUrl : `${window.location.origin}${logoUrl}`;
 
   return (
     <ErrorBoundary>
@@ -47,9 +55,13 @@ const App = () => {
                       {/* Fixed Header */}
                       <div className="fixed top-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-sm z-20 flex items-center px-4">
                         <img
-                          src={process.env.REACT_APP_LOGO_URL || "/default-logo.png"}
+                          src={sanitizedLogoUrl}
                           alt="App Logo"
                           className="h-28 ml-16"
+                          onError={(e) => {
+                            console.error("[App] Logo load error:", e);
+                            e.currentTarget.src = "/default-logo.png";
+                          }}
                         />
                       </div>
                       <div className="h-20"></div>
