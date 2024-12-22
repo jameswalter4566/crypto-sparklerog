@@ -57,9 +57,9 @@ export class JupiterService {
 
     // Handle successful swap result
     return {
-      txid: swapResult.txid,
-      inputAmount: swapResult.inputAmount,
-      outputAmount: swapResult.outputAmount,
+      txid: swapResult.signature,
+      inputAmount: swapResult.inputAmount.toString(),
+      outputAmount: swapResult.outputAmount.toString(),
     };
   }
 }
