@@ -1,28 +1,5 @@
-import { Buffer } from 'buffer';
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-// Polyfill Buffer and global for the browser
-window.Buffer = Buffer;
-window.global = window;
-
-// Debug check for polyfills
-console.log('Buffer polyfill status:', {
-  hasBuffer: typeof window.Buffer !== 'undefined',
-  hasGlobal: typeof window.global !== 'undefined'
-});
-
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
-import { ErrorBoundary } from './components/ErrorBoundary';
-
-// Debug logging
-console.log('Initializing application...');
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<App />);
