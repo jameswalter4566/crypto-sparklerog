@@ -26,8 +26,7 @@ export default defineConfig(({ mode }) => ({
     include: [
       '@jup-ag/core',
       '@solana/web3.js',
-      'buffer',
-      '@jup-ag/common'
+      'buffer'
     ]
   },
   build: {
