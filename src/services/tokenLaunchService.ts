@@ -18,15 +18,15 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  createMetadataAccountV3, 
-  CreateMetadataAccountArgsV3,
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID
+  createMetadataV3, 
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+  DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
 import { 
   Metaplex,
   UploadMetadataInput,
   walletAdapterIdentity,
-  bundlrStorage
+  StorageDriver
 } from '@metaplex-foundation/js';
 
 export interface TokenConfig {
@@ -49,7 +49,7 @@ export class TokenLaunchService {
   initializeMetaplex(userWallet: Keypair) {
     this.metaplex = Metaplex.make(this.connection)
       .use(walletAdapterIdentity(userWallet))
-      .use(bundlrStorage({
+      .use(StorageDriver.bundlr({
         address: 'https://devnet.bundlr.network',
         providerUrl: this.connection.rpcEndpoint,
         timeout: 60000,
@@ -68,7 +68,7 @@ export class TokenLaunchService {
     destinationWallet: PublicKey,
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
-    onChainMetadata: CreateMetadataAccountArgsV3
+    onChainMetadata: DataV2
   ): Promise<VersionedTransaction> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const metadataPDA = await this.metaplex.nfts().pdas().metadata({ mint: mintKeypair.publicKey });
@@ -101,17 +101,14 @@ export class TokenLaunchService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createMetadataAccountV3(
-        {
-          metadata: metadataPDA,
-          mint: mintKeypair.publicKey,
-          mintAuthority: payer.publicKey,
-          payer: payer.publicKey,
-          updateAuthority: payer.publicKey,
-        },
-        {
-          createMetadataAccountArgsV3: onChainMetadata
-        }
+      createMetadataV3(
+        metadataPDA,
+        mintKeypair.publicKey,
+        payer.publicKey,
+        payer.publicKey,
+        payer.publicKey,
+        onChainMetadata,
+        TOKEN_METADATA_PROGRAM_ID
       )
     ];
 
@@ -137,7 +134,7 @@ export class TokenLaunchService {
 
     const metadataUri = await this.uploadMetadata(tokenMetadata);
     
-    const onChainMetadata: CreateMetadataAccountArgsV3 = {
+    const onChainMetadata: DataV2 = {
       name: config.name,
       symbol: config.symbol,
       uri: metadataUri,
