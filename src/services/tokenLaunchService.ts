@@ -30,7 +30,6 @@ export class TokenLaunchService {
     try {
       console.log("Starting token launch process...");
       
-      // Upload metadata
       const metadataUri = await this.metaplexService.uploadMetadata({
         name: config.name,
         symbol: config.symbol,
@@ -40,7 +39,6 @@ export class TokenLaunchService {
       
       console.log("Metadata uploaded, URI:", metadataUri);
 
-      // Create on-chain metadata
       const onChainMetadata = {
         name: config.name,
         symbol: config.symbol,
@@ -51,15 +49,12 @@ export class TokenLaunchService {
         uses: null
       };
 
-      // Generate mint keypair
       const mintKeypair = Keypair.generate();
       console.log("Mint address:", mintKeypair.publicKey.toString());
 
-      // Get metadata PDA
       const metadataPDA = await this.metaplexService.getMetadataPDA(mintKeypair.publicKey.toString());
       console.log("Metadata PDA:", metadataPDA.toString());
 
-      // Create token instructions
       const instructions = await this.tokenInstructionsService.createTokenInstructions(
         wallet,
         mintKeypair,
@@ -70,10 +65,8 @@ export class TokenLaunchService {
         onChainMetadata
       );
 
-      // Get latest blockhash
       const latestBlockhash = await this.connection.getLatestBlockhash();
       
-      // Create and sign transaction
       const messageV0 = new TransactionMessage({
         payerKey: wallet.publicKey,
         recentBlockhash: latestBlockhash.blockhash,
@@ -83,7 +76,6 @@ export class TokenLaunchService {
       const transaction = new VersionedTransaction(messageV0);
       transaction.sign([wallet, mintKeypair]);
 
-      // Send and confirm transaction
       const transactionId = await this.connection.sendTransaction(transaction);
       console.log("Transaction sent:", transactionId);
       
@@ -108,7 +100,7 @@ export class TokenLaunchService {
         LAMPORTS_PER_SOL
       );
       
-      const { lastValidBlockHeight, blockhash } = await this.connection.getLatestBlockhash('finalized');
+      const { lastValidBlockHeight, blockhash } = await this.connection.getLatestBlockhash();
       await this.connection.confirmTransaction({
         signature: airdropSignature,
         lastValidBlockHeight,
