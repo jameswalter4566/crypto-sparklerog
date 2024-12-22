@@ -14,6 +14,17 @@ export interface CoinData {
 
 export const mockCoins: CoinData[] = [
   {
+    id: "hoshino-ai",
+    name: "Hoshino Ai",
+    symbol: "HOSHINO",
+    price: 0.0006626,
+    change_24h: 2.5,
+    supply: 1000000000, // 1B
+    liquidity: 40000, // $40K
+    market_cap: 123230, // $123.23K
+    imageUrl: "/placeholder.svg"
+  },
+  {
     id: "xrp",
     name: "XRP",
     symbol: "XRP",
