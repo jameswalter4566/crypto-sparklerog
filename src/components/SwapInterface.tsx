@@ -5,8 +5,11 @@ import { toast } from 'sonner';
 import { TokenInputs } from './swap/TokenInputs';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
-import { Transaction, VersionedTransaction, Connection, clusterApiUrl } from '@solana/web3.js';
+import { Transaction, VersionedTransaction, Connection } from '@solana/web3.js';
 import bs58 from 'bs58';
+
+// Use a more reliable RPC endpoint
+const connection = new Connection('https://api.mainnet-beta.solana.com');
 
 export const SwapInterface = () => {
   const [amount, setAmount] = useState('');
@@ -82,9 +85,6 @@ export const SwapInterface = () => {
 
       // Sign the transaction
       const signedTransaction = await solana.signTransaction(transaction);
-      
-      // Create a new connection to the Solana network
-      const connection = new Connection(clusterApiUrl('mainnet-beta'));
       
       // Serialize and send the transaction
       const serializedTransaction = signedTransaction instanceof VersionedTransaction 
