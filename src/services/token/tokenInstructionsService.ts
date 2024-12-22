@@ -20,7 +20,6 @@ import {
 } from '@metaplex-foundation/mpl-token-metadata';
 import { MINT_CONFIG } from './types';
 
-// Hardcode the token metadata program ID since it's not exported anymore
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 
 export class TokenInstructionsService {
@@ -34,7 +33,7 @@ export class TokenInstructionsService {
     payer: Keypair,
     mintKeypair: Keypair,
     destinationWallet: PublicKey,
-    mintAuthority: PublicKey,
+    mintAuthority: Keypair,
     freezeAuthority: PublicKey,
     metadataPDA: PublicKey,
     tokenMetadata: DataV2
@@ -46,9 +45,9 @@ export class TokenInstructionsService {
       {
         metadata: metadataPDA,
         mint: mintKeypair.publicKey,
-        mintAuthority: payer.publicKey,
-        payer: payer.publicKey,
-        updateAuthority: payer.publicKey,
+        mintAuthority: payer,
+        payer,
+        updateAuthority: payer,
       },
       {
         data: {
@@ -61,9 +60,8 @@ export class TokenInstructionsService {
           uses: tokenMetadata.uses || null,
         },
         isMutable: true,
-        collectionDetails: tokenMetadata.collectionDetails || null,
       }
-    ).instruction;
+    );
 
     return [
       SystemProgram.createAccount({
@@ -76,7 +74,7 @@ export class TokenInstructionsService {
       createInitializeMintInstruction(
         mintKeypair.publicKey,
         MINT_CONFIG.numDecimals,
-        mintAuthority,
+        mintAuthority.publicKey,
         freezeAuthority,
         TOKEN_PROGRAM_ID
       ),
@@ -89,7 +87,7 @@ export class TokenInstructionsService {
       createMintToInstruction(
         mintKeypair.publicKey,
         tokenATA,
-        mintAuthority,
+        mintAuthority.publicKey,
         BigInt(MINT_CONFIG.numberTokens) * BigInt(10 ** MINT_CONFIG.numDecimals),
       ),
       metadataInstruction,
