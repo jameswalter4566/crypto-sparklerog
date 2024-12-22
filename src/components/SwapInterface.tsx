@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { TokenInputs } from './swap/TokenInputs';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
+import { Transaction, VersionedTransaction, Connection, clusterApiUrl } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export const SwapInterface = () => {
@@ -83,8 +83,8 @@ export const SwapInterface = () => {
       // Sign the transaction
       const signedTransaction = await solana.signTransaction(transaction);
       
-      // Get the proper connection from Phantom
-      const { connection } = solana;
+      // Create a new connection to the Solana network
+      const connection = new Connection(clusterApiUrl('mainnet-beta'));
       
       // Serialize and send the transaction
       const serializedTransaction = signedTransaction instanceof VersionedTransaction 
