@@ -21,7 +21,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <SidebarProvider>
-          <div className="flex min-h-screen w-full bg-[#121212] text-white">
+          <div className="min-h-screen flex w-full bg-black text-white">
             <AppSidebar />
             <main className="flex-1">
               <div className="fixed top-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-sm z-20 flex items-center px-4">
@@ -31,21 +31,19 @@ const App = () => (
                   className="h-28 ml-16"
                 />
               </div>
-              <div className="h-20" />
+              <div className="h-20"></div>
               <div className="z-30 relative">
                 <WalletConnect />
               </div>
-              <div className="p-6">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/coin/:id" element={<CoinProfile />} />
-                  <Route path="/search" element={<CoinSearch />} />
-                  <Route path="/launch" element={<LaunchCoin />} />
-                  <Route path="/rocket-launch" element={<RocketLaunch />} />
-                  <Route path="/leaderboard" element={<div>Leaderboard Coming Soon</div>} />
-                  <Route path="/holdings" element={<div>Holdings Coming Soon</div>} />
-                </Routes>
-              </div>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/coin/:id" element={<CoinProfile />} />
+                <Route path="/search" element={<CoinSearch />} />
+                <Route path="/launch" element={<LaunchCoin />} />
+                <Route path="/rocket-launch" element={<RocketLaunch />} />
+                <Route path="/leaderboard" element={<div className="p-6">Leaderboard Coming Soon</div>} />
+                <Route path="/holdings" element={<div className="p-6">Holdings Coming Soon</div>} />
+              </Routes>
             </main>
           </div>
         </SidebarProvider>

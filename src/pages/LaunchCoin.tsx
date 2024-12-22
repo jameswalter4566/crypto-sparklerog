@@ -1,62 +1,15 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useTokenLaunch } from "@/hooks/useTokenLaunch";
-import { TokenConfig } from "@/services/token/types";
-import { Keypair } from "@solana/web3.js";
-import { toast } from "sonner";
-import { TokenForm } from "@/components/launch/TokenForm";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Upload } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LaunchCoin() {
-  const [formData, setFormData] = useState({
-    name: "",
-    symbol: "",
-    description: "",
-    image: null as File | null,
-    imageUrl: "",
-    numDecimals: 9, // Default decimals for the token
-    numberTokens: 1000000 // Default total supply
-  });
-  const [isUploading, setIsUploading] = useState(false);
-  const { launchToken, requestAirdrop, isLaunching } = useTokenLaunch();
+  const navigate = useNavigate();
 
-  /**
-   * Handles the form submission to launch a token.
-   * @param event - The form submission event.
-   */
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (!formData.imageUrl) {
-      toast.error("Please upload an image for your token");
-      return;
-    }
-
-    try {
-      console.log("--- STEP 1: Generating Wallet ---");
-      const wallet = Keypair.generate();
-
-      console.log("--- STEP 2: Requesting Airdrop ---");
-      await requestAirdrop(wallet);
-
-      console.log("--- STEP 3: Configuring Token Metadata ---");
-      const tokenConfig: TokenConfig = {
-        name: formData.name,
-        symbol: formData.symbol,
-        description: formData.description,
-        image: formData.imageUrl,
-        numDecimals: formData.numDecimals,
-        numberTokens: formData.numberTokens,
-      };
-
-      console.log("--- STEP 4: Launching Token ---");
-      const txId = await launchToken(tokenConfig, wallet);
-      toast.success(`Token launched successfully! Transaction ID: ${txId}`);
-    } catch (error) {
-      console.error("Error launching token:", error);
-      toast.error("Failed to launch token. Please try again.");
-    }
+    navigate('/rocket-launch');
   };
 
   return (
@@ -67,33 +20,49 @@ export default function LaunchCoin() {
       </Link>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <TokenForm 
-          formData={formData}
-          setFormData={setFormData}
-          isUploading={isUploading}
-          setIsUploading={setIsUploading}
-        />
+        <div className="space-y-2">
+          <label className="text-primary block">name</label>
+          <Input type="text" placeholder="Enter coin name" />
+        </div>
 
-        <Button 
-          type="submit" 
-          className="w-full"
-          disabled={isLaunching || isUploading}
-        >
-          {isLaunching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              launching...
-            </>
-          ) : (
-            <>
-              <Rocket className="mr-2 h-4 w-4" />
-              launch coin
-            </>
-          )}
+        <div className="space-y-2">
+          <label className="text-primary block">ticker</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <span className="text-muted-foreground">$</span>
+            </div>
+            <Input className="pl-7" type="text" placeholder="Enter ticker symbol" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-primary block">description</label>
+          <Textarea placeholder="Enter coin description" />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-primary block">image or video</label>
+          <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
+            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">drag and drop an image or video</p>
+            <Button variant="outline" size="sm">
+              select file
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <Button variant="link" className="text-primary p-0">
+            show more options ↓
+          </Button>
+        </div>
+
+        <Button type="submit" className="w-full">
+          create coin
         </Button>
 
         <p className="text-sm text-muted-foreground text-center">
-          When your coin completes its bonding curve, you receive 0.5 SOL
+          when your coin completes its bonding curve you receive 0.5 SOL
         </p>
       </form>
     </div>
