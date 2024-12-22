@@ -1,11 +1,12 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, TransactionError } from "@solana/web3.js";
 import { Jupiter } from "@jup-ag/core";
 import JSBI from "jsbi";
 
-interface SwapResult {
+interface JupiterSwapResult {
   txid: string;
-  inputAmount: number;
-  outputAmount: number;
+  inputAmount: bigint;
+  outputAmount: bigint;
+  error?: TransactionError;
 }
 
 export class JupiterService {
@@ -33,7 +34,7 @@ export class JupiterService {
     outputMint: string,
     amount: number,
     slippageBps: number = 100 // 1% default slippage
-  ): Promise<SwapResult> {
+  ): Promise<{ txid: string; inputAmount: number; outputAmount: number }> {
     if (!this.instance) {
       throw new Error("Jupiter not initialized");
     }
