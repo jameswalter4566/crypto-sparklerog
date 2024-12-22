@@ -25,24 +25,24 @@ export function NewCoinCard({
   return (
     <a href={`/coin/${id}`} target="_blank" rel="noopener noreferrer" className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full">
-        <CardHeader>
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72 mx-auto">
+        <CardHeader className="p-3 sm:p-4">
+          <div className="flex flex-col items-center gap-2 sm:gap-4">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48">
               <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
-              <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
+              <AvatarFallback className="text-xl">{symbolFallback}</AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <CopyAddressButton solanaAddr={mintAddress} />
               <VoiceChatCounter coinId={id} />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-4">
           <div className="flex flex-col items-center gap-1">
-            <CardTitle className="text-base sm:text-lg">
-              <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
+            <CardTitle className="text-sm sm:text-base">
+              <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">{name}</span>
             </CardTitle>
-            <span className="text-sm text-gray-400">{symbol}</span>
+            <span className="text-xs sm:text-sm text-gray-400">{symbol}</span>
           </div>
         </CardContent>
       </Card>

@@ -17,6 +17,7 @@ export type Database = {
           coingecko_id: string | null
           decimals: number | null
           description: string | null
+          historic_data: Json | null
           id: string
           image_url: string | null
           liquidity: number | null
@@ -37,6 +38,7 @@ export type Database = {
           coingecko_id?: string | null
           decimals?: number | null
           description?: string | null
+          historic_data?: Json | null
           id: string
           image_url?: string | null
           liquidity?: number | null
@@ -57,6 +59,7 @@ export type Database = {
           coingecko_id?: string | null
           decimals?: number | null
           description?: string | null
+          historic_data?: Json | null
           id?: string
           image_url?: string | null
           liquidity?: number | null

@@ -12,8 +12,10 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto py-4 max-w-[2000px] space-y-6">
-      <TokenSearchForm onSearch={handleSearch} isLoading={false} />
+    <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-4 sm:space-y-6">
+      <div className="px-2 sm:px-4">
+        <TokenSearchForm onSearch={handleSearch} isLoading={false} />
+      </div>
       <CoinGrid />
     </div>
   );
