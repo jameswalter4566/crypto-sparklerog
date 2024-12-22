@@ -12,7 +12,21 @@ export const SwapInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [priceQuote, setPriceQuote] = useState<number | null>(null);
 
+  const isValidSolanaAddress = (address: string) => {
+    try {
+      new PublicKey(address);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const fetchPriceQuote = async (inputAmount: string) => {
+    if (!isValidSolanaAddress(tokenAddress)) {
+      toast.error('Please enter a valid Solana token address');
+      return;
+    }
+
     try {
       const response = await fetch(`https://api.jup.ag/price/v2?ids=${tokenAddress}&vsToken=So11111111111111111111111111111111111111112`);
       if (!response.ok) throw new Error('Failed to fetch price quote');
@@ -33,6 +47,11 @@ export const SwapInterface = () => {
       return;
     }
 
+    if (!isValidSolanaAddress(tokenAddress)) {
+      toast.error('Please enter a valid Solana token address');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // @ts-ignore - we'll properly type this later
@@ -46,7 +65,12 @@ export const SwapInterface = () => {
 
       // Get quote from Jupiter
       const quoteResponse = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=${Number(amount) * LAMPORTS_PER_SOL}&slippageBps=50`);
-      if (!quoteResponse.ok) throw new Error('Failed to get quote');
+      
+      if (!quoteResponse.ok) {
+        const errorData = await quoteResponse.json();
+        throw new Error(errorData.message || 'Failed to get quote');
+      }
+      
       const quoteData = await quoteResponse.json();
 
       // Get swap transaction
@@ -62,7 +86,11 @@ export const SwapInterface = () => {
         body: JSON.stringify(swapRequestBody),
       });
 
-      if (!swapResponse.ok) throw new Error('Failed to get swap transaction');
+      if (!swapResponse.ok) {
+        const errorData = await swapResponse.json();
+        throw new Error(errorData.message || 'Failed to get swap transaction');
+      }
+      
       const { swapTransaction } = await swapResponse.json();
 
       // Deserialize and sign the transaction
