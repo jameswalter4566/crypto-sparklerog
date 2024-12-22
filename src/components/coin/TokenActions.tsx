@@ -15,13 +15,6 @@ export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAdd
     rugScore: 90
   });
 
-  // Mock data for demonstration - in a real app, this would come from your backend
-  const mockCoinData = {
-    devHoldings: "22.31% of supply ($6,780 USD)",
-    launchHistory: "3 previous launches, all sold within 24h",
-    socialMedia: "No verified profiles"
-  };
-
   const handleSaveToLibrary = () => {
     toast({
       description: "Token saved to library",
@@ -55,7 +48,11 @@ export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAdd
 
       <AskAgentButton 
         onAnalysisComplete={handleAnalysisComplete}
-        coinData={mockCoinData}
+        coinData={{
+          devHoldings: "22.31% of supply ($6,780 USD)",
+          launchHistory: "3 previous launches, all sold within 24h",
+          socialMedia: "No verified profiles"
+        }}
       />
     </div>
   );

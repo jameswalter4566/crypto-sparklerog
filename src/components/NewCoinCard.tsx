@@ -29,25 +29,22 @@ export function NewCoinCard({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Update price every 2 seconds with a small random fluctuation
     const interval = setInterval(() => {
-      const fluctuation = price * (Math.random() * 0.002 - 0.001); // ±0.1% fluctuation
+      const fluctuation = price * (Math.random() * 0.002 - 0.001);
       setCurrentPrice(price + fluctuation);
     }, 2000);
 
     return () => clearInterval(interval);
   }, [price]);
 
-  // Format price to SOL style
   const formatPrice = (p: number) => {
     return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
   };
 
-  // Safely get the first two characters of the symbol for the fallback
   const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
 
   const handleCopyAddress = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent the Link component from navigating
+    e.preventDefault();
     if (mintAddress) {
       navigator.clipboard.writeText(mintAddress);
       toast({

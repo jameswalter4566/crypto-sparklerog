@@ -2,7 +2,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TokenActions } from "./TokenActions";
-import { CopyAddressButton } from "./CopyAddressButton";
 
 interface TokenHeaderProps {
   name: string;
@@ -63,14 +62,6 @@ export const TokenHeader = ({
           <p className="text-2xl font-bold">
             ${price?.toFixed(4) ?? "Price not available"}
           </p>
-          {solanaAddr && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-muted-foreground font-mono">
-                {solanaAddr}
-              </span>
-              <CopyAddressButton solanaAddr={solanaAddr} />
-            </div>
-          )}
         </div>
       </div>
       {description && (
