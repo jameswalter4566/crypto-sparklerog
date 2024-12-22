@@ -15,11 +15,12 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  createCreateMetadataAccountV3Instruction,
+  createMetadataAccountV3, 
   DataV2 
 } from '@metaplex-foundation/mpl-token-metadata';
 import { MINT_CONFIG } from './types';
 
+// Hardcode the token metadata program ID since it's not exported anymore
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 
 export class TokenInstructionsService {
@@ -41,7 +42,7 @@ export class TokenInstructionsService {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const metadataInstruction = createCreateMetadataAccountV3Instruction(
+    const metadataInstruction = createMetadataAccountV3(
       {
         metadata: metadataPDA,
         mint: mintKeypair.publicKey,
@@ -62,7 +63,7 @@ export class TokenInstructionsService {
         isMutable: true,
         collectionDetails: tokenMetadata.collectionDetails || null,
       }
-    );
+    ).instruction;
 
     return [
       SystemProgram.createAccount({
@@ -91,7 +92,7 @@ export class TokenInstructionsService {
         mintAuthority,
         BigInt(MINT_CONFIG.numberTokens) * BigInt(10 ** MINT_CONFIG.numDecimals),
       ),
-      metadataInstruction
+      metadataInstruction,
     ];
   }
 }
