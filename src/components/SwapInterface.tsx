@@ -3,14 +3,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ArrowDownUp } from 'lucide-react';
-import { JupiterService } from '@/services/jupiter/jupiterService';
 import { toast } from 'sonner';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 export const SwapInterface = () => {
   const [amount, setAmount] = useState('');
   const [tokenAddress, setTokenAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [priceQuote, setPriceQuote] = useState<number | null>(null);
+
+  const fetchPriceQuote = async (inputAmount: string) => {
+    try {
+      const response = await fetch(`https://api.jup.ag/price/v2?ids=${tokenAddress}&vsToken=So11111111111111111111111111111111111111112`);
+      if (!response.ok) throw new Error('Failed to fetch price quote');
+      const data = await response.json();
+      const price = data.data[tokenAddress]?.price;
+      if (price) {
+        setPriceQuote(Number(price) * Number(inputAmount));
+      }
+    } catch (error) {
+      console.error('Price quote error:', error);
+      toast.error('Failed to fetch price quote');
+    }
+  };
 
   const handleSwap = async () => {
     if (!amount || !tokenAddress) {
@@ -27,19 +42,42 @@ export const SwapInterface = () => {
       }
 
       const response = await solana.connect();
-      await JupiterService.initialize(response.publicKey);
-      
-      const result = await JupiterService.swapTokens(
-        "So11111111111111111111111111111111111111112", // SOL
-        tokenAddress,
-        Number(amount) * LAMPORTS_PER_SOL
-      );
+      const userPublicKey = response.publicKey;
 
+      // Get quote from Jupiter
+      const quoteResponse = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=${Number(amount) * LAMPORTS_PER_SOL}&slippageBps=50`);
+      if (!quoteResponse.ok) throw new Error('Failed to get quote');
+      const quoteData = await quoteResponse.json();
+
+      // Get swap transaction
+      const swapRequestBody = {
+        quoteResponse: quoteData,
+        userPublicKey: userPublicKey.toString(),
+        wrapUnwrapSOL: true,
+      };
+
+      const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(swapRequestBody),
+      });
+
+      if (!swapResponse.ok) throw new Error('Failed to get swap transaction');
+      const { swapTransaction } = await swapResponse.json();
+
+      // Deserialize and sign the transaction
+      const transaction = Buffer.from(swapTransaction, 'base64');
+      const signedTransaction = await solana.signTransaction(transaction);
+      
+      // Send the transaction
+      const connection = solana.connection;
+      const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+      
       toast.success("Swap successful!", {
-        description: `Transaction ID: ${result.txid}`,
+        description: `Transaction ID: ${txid}`,
         action: {
           label: "View",
-          onClick: () => window.open(`https://explorer.solana.com/tx/${result.txid}`, '_blank'),
+          onClick: () => window.open(`https://explorer.solana.com/tx/${txid}`, '_blank'),
         },
       });
     } catch (error) {
@@ -61,7 +99,12 @@ export const SwapInterface = () => {
             type="number"
             placeholder="0.0"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (e.target.value && tokenAddress) {
+                fetchPriceQuote(e.target.value);
+              }
+            }}
             className="w-full bg-black/30"
           />
         </div>
@@ -76,10 +119,21 @@ export const SwapInterface = () => {
             type="text"
             placeholder="Enter token address"
             value={tokenAddress}
-            onChange={(e) => setTokenAddress(e.target.value)}
+            onChange={(e) => {
+              setTokenAddress(e.target.value);
+              if (amount && e.target.value) {
+                fetchPriceQuote(amount);
+              }
+            }}
             className="w-full bg-black/30"
           />
         </div>
+
+        {priceQuote && (
+          <div className="text-sm text-gray-400">
+            Estimated output: {priceQuote.toFixed(6)} tokens
+          </div>
+        )}
 
         <Button 
           onClick={handleSwap} 
