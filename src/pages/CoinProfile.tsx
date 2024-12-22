@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CandlestickChart, Users, Shuffle, Zap } from "lucide-react";
+import { CandlestickChart, Users, Shuffle } from "lucide-react";
 import { TokenHeader } from "@/components/coin/TokenHeader";
 import { TokenStats } from "@/components/coin/TokenStats";
 import { TokenSupply } from "@/components/coin/TokenSupply";
@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { mockCoins } from "@/data/mockCoins";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CoinProfile = () => {
   const { id } = useParams();
@@ -73,27 +72,10 @@ const CoinProfile = () => {
         nonCirculating={0}
       />
 
-      <div className="mt-6 mb-6">
-        <Tabs defaultValue="buy" className="w-full max-w-md mx-auto">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="buy" className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              Buy
-            </TabsTrigger>
-            <TabsTrigger value="sell">Sell</TabsTrigger>
-          </TabsList>
-          <TabsContent value="buy">
-            <SwapInterface />
-          </TabsContent>
-          <TabsContent value="sell">
-            <div className="text-center p-4 text-gray-500">
-              Sell functionality coming soon
-            </div>
-          </TabsContent>
-        </Tabs>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
+        <PriceChart data={priceData} />
+        <SwapInterface />
       </div>
-
-      <PriceChart data={priceData} />
 
       <div className="flex gap-4 mt-6 justify-center">
         <DropdownMenu>
