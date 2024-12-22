@@ -13,6 +13,7 @@ export function VoiceChatCounter({ coinId }: VoiceChatCounterProps) {
     <Badge variant="secondary" className="gap-1.5 px-3 py-1">
       <Users className="h-4 w-4" />
       {userCount}
+      <span className="ml-1 text-sm">Active in Voice Chat</span>
     </Badge>
   );
 }
