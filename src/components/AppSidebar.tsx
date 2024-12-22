@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Coins, Trophy, Wallet, Search, Rocket } from "lucide-react";
+import { Coins, Trophy, Search, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -32,18 +32,13 @@ const menuItems = [
     icon: Trophy,
     path: "/leaderboard",
   },
-  {
-    title: "Holdings",
-    icon: Wallet,
-    path: "/holdings",
-  },
 ];
 
 export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="h-20"></div> {/* Reduced spacing for logo */}
+        <div className="h-20"></div>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
