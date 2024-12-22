@@ -15,6 +15,7 @@ interface TokenDetailsProps {
     marketCap: number;
     volume24h: number;
     liquidity: number;
+    solanaAddr?: string;
     supply: {
       total: number;
       circulating: number;
@@ -35,6 +36,7 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
         description={coinData.description}
         tokenStandard={coinData.tokenStandard}
         decimals={coinData.decimals}
+        solanaAddr={coinData.solanaAddr}
       />
 
       <TokenStats
