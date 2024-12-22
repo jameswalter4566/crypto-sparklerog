@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ArrowDownUp } from 'lucide-react';
-import { RaydiumService } from '@/services/raydium/raydiumService';
+import { JupiterService } from '@/services/jupiter/jupiterService';
+import { toast } from 'sonner';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 export const SwapInterface = () => {
   const [amount, setAmount] = useState('');
@@ -12,6 +14,7 @@ export const SwapInterface = () => {
 
   const handleSwap = async () => {
     if (!amount || !tokenAddress) {
+      toast.error("Please enter amount and token address");
       return;
     }
 
@@ -23,17 +26,29 @@ export const SwapInterface = () => {
         throw new Error("Please install Phantom wallet");
       }
 
-      const connection = solana.connection;
-      const wallet = solana;
+      const response = await solana.connect();
+      await JupiterService.initialize(response.publicKey);
       
-      await RaydiumService.swapSolForToken(
-        connection,
-        wallet,
+      const result = await JupiterService.swapTokens(
+        "So11111111111111111111111111111111111111112", // SOL
         tokenAddress,
-        parseFloat(amount)
+        Number(amount) * LAMPORTS_PER_SOL
       );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast.success("Swap successful!", {
+        description: `Transaction ID: ${result.txid}`,
+        action: {
+          label: "View",
+          onClick: () => window.open(`https://explorer.solana.com/tx/${result.txid}`, '_blank'),
+        },
+      });
     } catch (error) {
       console.error('Swap error:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to swap tokens");
     } finally {
       setIsLoading(false);
     }
