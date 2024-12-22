@@ -15,7 +15,7 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  createMetadataAccountV3,
+  createCreateMetadataAccountV3,
   DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
 
@@ -41,16 +41,22 @@ export class TokenInstructionsService {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const metadataInstruction = createMetadataAccountV3({
-      metadata: metadataPDA,
-      mint: mintKeypair.publicKey,
-      mintAuthority: mintAuthority.publicKey,
-      payer: payer.publicKey,
-      updateAuthority: payer.publicKey,
-      data: tokenMetadata,
-      isMutable: true,
-      collectionDetails: null
-    });
+    const metadataInstruction = createCreateMetadataAccountV3(
+      {
+        metadata: metadataPDA,
+        mint: mintKeypair.publicKey,
+        mintAuthority: mintAuthority.publicKey,
+        payer: payer.publicKey,
+        updateAuthority: payer.publicKey,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          data: tokenMetadata,
+          isMutable: true,
+          collectionDetails: null
+        }
+      }
+    );
 
     // Fixed values for decimals and token supply
     const DECIMALS = 9;

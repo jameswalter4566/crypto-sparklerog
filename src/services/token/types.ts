@@ -5,15 +5,6 @@ export interface TokenConfig {
   symbol: string;
   description: string;
   image: string;
-  numDecimals: number;
-  numberTokens: number;
-}
-
-export interface TokenMetadata {
-  name: string;
-  symbol: string;
-  description: string;
-  image: string;
 }
 
 export interface OnChainMetadata {
@@ -21,18 +12,7 @@ export interface OnChainMetadata {
   symbol: string;
   uri: string;
   sellerFeeBasisPoints: number;
-  creators: null | {
-    address: PublicKey;
-    verified: boolean;
-    share: number;
-  }[];
-  collection: null | {
-    verified: boolean;
-    key: PublicKey;
-  };
-  uses: null | {
-    useMethod: number;
-    remaining: number;
-    total: number;
-  };
+  creators: { address: PublicKey; verified: boolean; share: number }[] | null;
+  collection: { verified: boolean; key: PublicKey } | null;
+  uses: { useMethod: number; remaining: number; total: number } | null;
 }
