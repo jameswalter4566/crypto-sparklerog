@@ -11,6 +11,7 @@ interface TokenHeaderProps {
   description?: string | null;
   tokenStandard?: string | null;
   decimals?: number;
+  solanaAddr?: string;
 }
 
 export const TokenHeader = ({ 
@@ -20,7 +21,8 @@ export const TokenHeader = ({
   price,
   description,
   tokenStandard,
-  decimals 
+  decimals,
+  solanaAddr
 }: TokenHeaderProps) => {
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -35,7 +37,7 @@ export const TokenHeader = ({
               {name || "Unknown Token"} ({symbol || "???"})
             </h1>
             
-            <TokenActions symbol={symbol} />
+            <TokenActions symbol={symbol} solanaAddr={solanaAddr} />
 
             {tokenStandard && (
               <Badge variant="outline" className="h-6">

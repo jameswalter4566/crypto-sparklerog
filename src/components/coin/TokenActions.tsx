@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { AskAgentButton } from "./AskAgentButton";
 import { useState } from "react";
 
-export const TokenActions = ({ symbol }: { symbol: string }) => {
+export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAddr?: string }) => {
   const { toast } = useToast();
   const [rugAnalysis, setRugAnalysis] = useState({
     devAnalysis: "22.31% of supply ($6,780 USD)",
@@ -23,18 +23,18 @@ export const TokenActions = ({ symbol }: { symbol: string }) => {
     socialMedia: "No verified profiles"
   };
 
-  const handleCopyToken = () => {
-    navigator.clipboard.writeText(symbol);
-    toast({
-      description: "Token symbol copied to clipboard",
-    });
-  };
-
-  const handleCopyPair = () => {
-    navigator.clipboard.writeText(`${symbol}/USD`);
-    toast({
-      description: "Trading pair copied to clipboard",
-    });
+  const handleCopyAddress = () => {
+    if (solanaAddr) {
+      navigator.clipboard.writeText(solanaAddr);
+      toast({
+        description: "Token mint address copied to clipboard",
+      });
+    } else {
+      toast({
+        description: "Token mint address not available",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSaveToLibrary = () => {
@@ -69,31 +69,13 @@ export const TokenActions = ({ symbol }: { symbol: string }) => {
               variant="ghost"
               size="icon"
               className="h-8 w-8 hover:bg-primary/10"
-              onClick={handleCopyToken}
+              onClick={handleCopyAddress}
             >
               <Copy className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Copy token</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 hover:bg-primary/10"
-              onClick={handleCopyPair}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Copy pair</p>
+            <p>Copy mint address</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
