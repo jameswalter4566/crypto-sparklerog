@@ -6,7 +6,6 @@ import { TokenInputs } from './swap/TokenInputs';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
 import { Transaction, VersionedTransaction, Connection } from '@solana/web3.js';
-import bs58 from 'bs58';
 import { Loader2 } from 'lucide-react';
 
 // Use environment variable for RPC endpoint
@@ -83,13 +82,12 @@ export const SwapInterface = () => {
     setIsLoading(true);
     try {
       // Check for Phantom wallet
-      const { solana } = window;
-      if (!solana?.isPhantom) {
+      if (!window.solana?.isPhantom) {
         throw new Error('Please install the Phantom wallet extension');
       }
 
       // Connect to wallet
-      const response = await solana.connect();
+      const response = await window.solana.connect();
       const userPublicKey = response.publicKey;
 
       // Get swap transaction
@@ -108,7 +106,7 @@ export const SwapInterface = () => {
       }
 
       // Sign the transaction
-      const signedTransaction = await solana.signTransaction(transaction);
+      const signedTransaction = await window.solana.signTransaction(transaction);
       
       // Serialize and send the transaction
       const serializedTransaction = signedTransaction instanceof VersionedTransaction 
