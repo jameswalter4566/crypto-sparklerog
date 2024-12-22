@@ -12,37 +12,58 @@ export type Database = {
       coins: {
         Row: {
           change_24h: number | null
+          circulating_supply: number | null
+          coin_id: string | null
+          coingecko_id: string | null
+          description: string | null
           id: string
           image_url: string | null
           liquidity: number | null
           market_cap: number | null
           name: string
+          non_circulating_supply: number | null
           price: number | null
+          solana_addr: string | null
           symbol: string
+          total_supply: number | null
           updated_at: string | null
           volume_24h: number | null
         }
         Insert: {
           change_24h?: number | null
+          circulating_supply?: number | null
+          coin_id?: string | null
+          coingecko_id?: string | null
+          description?: string | null
           id: string
           image_url?: string | null
           liquidity?: number | null
           market_cap?: number | null
           name: string
+          non_circulating_supply?: number | null
           price?: number | null
+          solana_addr?: string | null
           symbol: string
+          total_supply?: number | null
           updated_at?: string | null
           volume_24h?: number | null
         }
         Update: {
           change_24h?: number | null
+          circulating_supply?: number | null
+          coin_id?: string | null
+          coingecko_id?: string | null
+          description?: string | null
           id?: string
           image_url?: string | null
           liquidity?: number | null
           market_cap?: number | null
           name?: string
+          non_circulating_supply?: number | null
           price?: number | null
+          solana_addr?: string | null
           symbol?: string
+          total_supply?: number | null
           updated_at?: string | null
           volume_24h?: number | null
         }

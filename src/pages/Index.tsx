@@ -1,10 +1,13 @@
 import { CoinGrid } from "@/components/CoinGrid";
-import { mockCoins } from "@/data/mockCoins";
+import { SwapInterface } from "@/components/SwapInterface";
 
 const Index = () => {
   return (
-    <div className="p-6">
-      <CoinGrid coins={mockCoins} isLoading={false} />
+    <div className="container mx-auto p-4">
+      <div className="mb-8">
+        <SwapInterface />
+      </div>
+      <CoinGrid />
     </div>
   );
 };
