@@ -9,6 +9,8 @@ interface JupiterSwapResult {
   error?: TransactionError;
 }
 
+type SwapResult = JupiterSwapResult | { error?: TransactionError };
+
 export class JupiterService {
   private static instance: Jupiter | null = null;
   private static connection: Connection;
@@ -58,18 +60,21 @@ export class JupiterService {
     
     const swapResult = await execute();
 
-    if ('error' in swapResult) {
+    // Check if the result contains an error
+    if ('error' in swapResult && swapResult.error) {
       throw new Error(swapResult.error.toString());
     }
 
-    // Now we know swapResult has the expected properties
-    const result = swapResult as JupiterSwapResult;
+    // Type guard to ensure we have a successful swap result
+    if (!('txid' in swapResult) || !('inputAmount' in swapResult) || !('outputAmount' in swapResult)) {
+      throw new Error('Invalid swap result format');
+    }
 
-    // Convert bigint to number for the return value
+    // Now TypeScript knows this is a successful result
     return {
-      txid: result.txid,
-      inputAmount: Number(result.inputAmount),
-      outputAmount: Number(result.outputAmount),
+      txid: swapResult.txid,
+      inputAmount: Number(swapResult.inputAmount),
+      outputAmount: Number(swapResult.outputAmount),
     };
   }
 }
