@@ -35,10 +35,6 @@ export const SwapInterface = () => {
         Number(amount) * LAMPORTS_PER_SOL
       );
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
       toast.success("Swap successful!", {
         description: `Transaction ID: ${result.txid}`,
         action: {

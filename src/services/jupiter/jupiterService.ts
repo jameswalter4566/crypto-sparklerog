@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { Jupiter } from "@jup-ag/core";
+import JSBI from "jsbi";
 
 export class JupiterService {
   private static instance: Jupiter | null = null;
@@ -34,7 +35,7 @@ export class JupiterService {
     const routes = await this.instance.computeRoutes({
       inputMint: new PublicKey(inputMint),
       outputMint: new PublicKey(outputMint),
-      amount,
+      amount: JSBI.BigInt(amount),
       slippage,
     });
 
@@ -43,7 +44,9 @@ export class JupiterService {
     }
 
     const bestRoute = routes.routesInfos[0];
-    const { execute } = await this.instance.exchange({ route: bestRoute });
+    const { execute } = await this.instance.exchange({
+      routeInfo: bestRoute,
+    });
     
     return execute();
   }
