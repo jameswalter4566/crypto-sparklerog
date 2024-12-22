@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { ProfileSetup } from "./wallet/ProfileSetup";
 import { ProfileAvatar } from "./wallet/ProfileAvatar";
 import { Settings } from "./wallet/Settings";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -12,6 +13,19 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
+
+  const fetchBalance = async (address: string) => {
+    try {
+      const connection = new Connection("https://api.mainnet-beta.solana.com");
+      const publicKey = new PublicKey(address);
+      const balance = await connection.getBalance(publicKey);
+      setBalance(balance / LAMPORTS_PER_SOL);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setBalance(null);
+    }
+  };
 
   const loadProfile = async (address: string) => {
     try {
@@ -31,7 +45,6 @@ export const WalletConnect = () => {
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
 
-        // Save profile data in local storage
         localStorage.setItem(
           "userProfile",
           JSON.stringify({ displayName: data.display_name, avatarUrl: data.avatar_url })
@@ -59,11 +72,11 @@ export const WalletConnect = () => {
       const address = response.publicKey.toString();
       setWalletAddress(address);
       setConnected(true);
+      fetchBalance(address);
 
       toast.success("Wallet connected!");
       await loadProfile(address);
 
-      // Store connection in localStorage
       localStorage.setItem("phantomConnected", "true");
       localStorage.setItem("walletAddress", address);
     } catch (error) {
@@ -84,8 +97,8 @@ export const WalletConnect = () => {
         setShowProfileSetup(false);
         setDisplayName(null);
         setAvatarUrl(null);
+        setBalance(null);
 
-        // Clear localStorage on manual disconnect
         localStorage.removeItem("phantomConnected");
         localStorage.removeItem("walletAddress");
         localStorage.removeItem("userProfile");
@@ -103,7 +116,6 @@ export const WalletConnect = () => {
     setAvatarUrl(newAvatarUrl);
     setShowProfileSetup(false);
 
-    // Update local storage with new profile data
     localStorage.setItem(
       "userProfile",
       JSON.stringify({ displayName: newDisplayName, avatarUrl: newAvatarUrl })
@@ -119,14 +131,14 @@ export const WalletConnect = () => {
       const savedWalletAddress = localStorage.getItem("walletAddress");
       const savedProfile = localStorage.getItem("userProfile");
 
-      if (wasConnected && solana?.isPhantom) {
+      if (wasConnected && solana?.isPhantom && savedWalletAddress) {
         try {
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
           setWalletAddress(address);
           setConnected(true);
+          fetchBalance(address);
 
-          // Load profile if available in local storage
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
             setDisplayName(parsedProfile.displayName || null);
@@ -146,12 +158,26 @@ export const WalletConnect = () => {
     };
 
     initializeWallet();
-  }, []);
+
+    // Set up balance refresh interval
+    const balanceInterval = setInterval(() => {
+      if (walletAddress) {
+        fetchBalance(walletAddress);
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(balanceInterval);
+  }, [walletAddress]);
 
   return (
     <>
       {connected ? (
         <div className="fixed top-4 right-4 flex items-center gap-4">
+          {balance !== null && (
+            <div className="text-primary font-medium">
+              {balance.toFixed(2)} SOL
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <ProfileAvatar displayName={displayName} avatarUrl={avatarUrl} size="sm" />
             <span className="text-white">{displayName || "Unknown User"}</span>
