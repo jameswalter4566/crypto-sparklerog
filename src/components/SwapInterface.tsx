@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { TokenInputs } from './swap/TokenInputs';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
-import { Transaction } from '@solana/web3.js';
+import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export const SwapInterface = () => {
@@ -68,15 +68,22 @@ export const SwapInterface = () => {
 
       const { swapTransaction } = await executeSwap(tokenAddress, amount, userPublicKey.toString());
       
-      // Convert the base64 transaction to a Transaction object
-      const transaction = Transaction.from(Buffer.from(swapTransaction, 'base64'));
+      // Convert the base64 transaction to a Buffer
+      const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
-      // Sign the transaction using Phantom wallet
+      // Create a Transaction object
+      let transaction;
+      try {
+        transaction = VersionedTransaction.deserialize(transactionBuffer);
+      } catch {
+        transaction = Transaction.from(transactionBuffer);
+      }
+      
+      // Sign and send the transaction
       const signedTransaction = await solana.signTransaction(transaction);
-      
-      // Send the signed transaction
       const connection = solana.connection;
-      const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+      const serializedTransaction = signedTransaction.serialize();
+      const txid = await connection.sendRawTransaction(serializedTransaction);
       
       toast.success("Swap successful!", {
         description: `Transaction ID: ${txid}`,
