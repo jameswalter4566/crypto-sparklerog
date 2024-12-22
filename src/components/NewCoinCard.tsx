@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
-import { CoinPrice } from "@/components/coin/CoinPrice";
-import { PriceChange } from "@/components/coin/PriceChange";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 
 interface NewCoinCardProps {
@@ -19,8 +17,6 @@ export function NewCoinCard({
   id, 
   name, 
   symbol, 
-  price, 
-  change24h, 
   imageUrl,
   mintAddress 
 }: NewCoinCardProps) {
@@ -35,20 +31,18 @@ export function NewCoinCard({
               <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
               <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
             </Avatar>
-            <CardTitle className="text-base sm:text-lg flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
-                <CopyAddressButton solanaAddr={mintAddress} />
-                <VoiceChatCounter coinId={id} />
-              </div>
-              <span className="text-sm text-gray-400">{symbol}</span>
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CopyAddressButton solanaAddr={mintAddress} />
+              <VoiceChatCounter coinId={id} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <CoinPrice initialPrice={price} />
-            <PriceChange change24h={change24h} />
+          <div className="flex flex-col items-center gap-1">
+            <CardTitle className="text-base sm:text-lg">
+              <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
+            </CardTitle>
+            <span className="text-sm text-gray-400">{symbol}</span>
           </div>
         </CardContent>
       </Card>
