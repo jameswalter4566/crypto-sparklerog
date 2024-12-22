@@ -2,7 +2,7 @@ import {
   Connection, 
   PublicKey, 
   TransactionInstruction, 
-  Keypair, 
+  Keypair,
   SystemProgram 
 } from "@solana/web3.js";
 import { 
@@ -14,9 +14,12 @@ import {
   createAssociatedTokenAccountInstruction, 
   createMintToInstruction 
 } from "@solana/spl-token";
-import { createMetadataAccountV3, DataV2 } from "@metaplex-foundation/mpl-token-metadata";
+import { 
+  createMetadataAccountV3,
+  DataV2
+} from '@metaplex-foundation/mpl-token-metadata';
 
-const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
 export class TokenInstructionsService {
   private connection: Connection;
@@ -37,19 +40,19 @@ export class TokenInstructionsService {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const metadataInstruction = createMetadataAccountV3(
-      {
-        metadata: metadataPDA,
-        mint: mintKeypair.publicKey,
-        mintAuthority: mintAuthority.publicKey,
-        payer: payer.publicKey,
-        updateAuthority: payer.publicKey,
-      },
-      {
+    const metadataInstruction = createMetadataAccountV3({
+      metadata: metadataPDA,
+      mint: mintKeypair.publicKey,
+      mintAuthority: mintAuthority.publicKey,
+      payer: payer.publicKey,
+      updateAuthority: payer.publicKey,
+    }, {
+      createMetadataAccountArgsV3: {
         data: tokenMetadata,
         isMutable: true,
+        collectionDetails: null,
       }
-    );
+    });
 
     return [
       SystemProgram.createAccount({
@@ -61,7 +64,7 @@ export class TokenInstructionsService {
       }),
       createInitializeMintInstruction(
         mintKeypair.publicKey,
-        tokenMetadata.decimals,
+        tokenMetadata.decimals || 9,
         mintAuthority.publicKey,
         freezeAuthority,
         TOKEN_PROGRAM_ID
@@ -76,7 +79,7 @@ export class TokenInstructionsService {
         mintKeypair.publicKey,
         tokenATA,
         mintAuthority.publicKey,
-        BigInt(tokenMetadata.supply) * BigInt(10 ** tokenMetadata.decimals)
+        BigInt(tokenMetadata.supply || 1_000_000) * BigInt(10 ** (tokenMetadata.decimals || 9))
       ),
       metadataInstruction,
     ];
