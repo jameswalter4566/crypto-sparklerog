@@ -22,79 +22,105 @@ export class TokenLaunchService {
     this.tokenInstructionsService = new TokenInstructionsService(this.connection);
   }
 
-  initializeMetaplex(userWallet: Keypair) {
+  initializeMetaplex(userWallet: Keypair): void {
     this.metaplexService.initializeWallet(userWallet);
   }
 
   async launchToken(config: TokenConfig, wallet: Keypair): Promise<string> {
-    const tokenMetadata = {
-      name: config.name,
-      symbol: config.symbol,
-      description: config.description,
-      image: config.image
-    };
+    try {
+      console.log("Starting token launch process...");
+      
+      // Upload metadata
+      const metadataUri = await this.metaplexService.uploadMetadata({
+        name: config.name,
+        symbol: config.symbol,
+        description: config.description,
+        image: config.image
+      });
+      
+      console.log("Metadata uploaded, URI:", metadataUri);
 
-    const metadataUri = await this.metaplexService.uploadMetadata(tokenMetadata);
-    
-    const onChainMetadata = {
-      name: config.name,
-      symbol: config.symbol,
-      uri: metadataUri,
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null
-    };
+      // Create on-chain metadata
+      const onChainMetadata = {
+        name: config.name,
+        symbol: config.symbol,
+        uri: metadataUri,
+        sellerFeeBasisPoints: 0,
+        creators: null,
+        collection: null,
+        uses: null
+      };
 
-    const mintKeypair = Keypair.generate();
-    console.log("New Mint Address: ", mintKeypair.publicKey.toString());
+      // Generate mint keypair
+      const mintKeypair = Keypair.generate();
+      console.log("Mint address:", mintKeypair.publicKey.toString());
 
-    const metadataPDA = await this.metaplexService.getMetadataPDA(mintKeypair.publicKey.toString());
+      // Get metadata PDA
+      const metadataPDA = await this.metaplexService.getMetadataPDA(mintKeypair.publicKey.toString());
+      console.log("Metadata PDA:", metadataPDA.toString());
 
-    const instructions = await this.tokenInstructionsService.createTokenInstructions(
-      wallet,
-      mintKeypair,
-      wallet.publicKey,
-      wallet.publicKey,
-      wallet.publicKey,
-      metadataPDA,
-      onChainMetadata
-    );
+      // Create token instructions
+      const instructions = await this.tokenInstructionsService.createTokenInstructions(
+        wallet,
+        mintKeypair,
+        wallet.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        metadataPDA,
+        onChainMetadata
+      );
 
-    const latestBlockhash = await this.connection.getLatestBlockhash();
-    const messageV0 = new TransactionMessage({
-      payerKey: wallet.publicKey,
-      recentBlockhash: latestBlockhash.blockhash,
-      instructions
-    }).compileToV0Message();
+      // Get latest blockhash
+      const latestBlockhash = await this.connection.getLatestBlockhash();
+      
+      // Create and sign transaction
+      const messageV0 = new TransactionMessage({
+        payerKey: wallet.publicKey,
+        recentBlockhash: latestBlockhash.blockhash,
+        instructions
+      }).compileToV0Message();
 
-    const transaction = new VersionedTransaction(messageV0);
-    transaction.sign([wallet, mintKeypair]);
+      const transaction = new VersionedTransaction(messageV0);
+      transaction.sign([wallet, mintKeypair]);
 
-    const transactionId = await this.connection.sendTransaction(transaction);
-    
-    await this.connection.confirmTransaction({
-      signature: transactionId,
-      ...latestBlockhash
-    });
+      // Send and confirm transaction
+      const transactionId = await this.connection.sendTransaction(transaction);
+      console.log("Transaction sent:", transactionId);
+      
+      await this.connection.confirmTransaction({
+        signature: transactionId,
+        ...latestBlockhash
+      });
 
-    return transactionId;
+      console.log("Transaction confirmed!");
+      return transactionId;
+    } catch (error) {
+      console.error("Error in launchToken:", error);
+      throw error;
+    }
   }
 
   async requestAirdrop(wallet: PublicKey): Promise<string> {
-    const airdropSignature = await this.connection.requestAirdrop(
-      wallet,
-      LAMPORTS_PER_SOL
-    );
-    
-    const { lastValidBlockHeight, blockhash } = await this.connection.getLatestBlockhash('finalized');
-    await this.connection.confirmTransaction({
-      signature: airdropSignature,
-      lastValidBlockHeight,
-      blockhash
-    });
-    
-    return airdropSignature;
+    try {
+      console.log("Requesting airdrop for:", wallet.toString());
+      const airdropSignature = await this.connection.requestAirdrop(
+        wallet,
+        LAMPORTS_PER_SOL
+      );
+      
+      const { lastValidBlockHeight, blockhash } = await this.connection.getLatestBlockhash('finalized');
+      await this.connection.confirmTransaction({
+        signature: airdropSignature,
+        lastValidBlockHeight,
+        blockhash
+      });
+      
+      console.log("Airdrop successful:", airdropSignature);
+      return airdropSignature;
+    } catch (error) {
+      console.error("Error in requestAirdrop:", error);
+      throw error;
+    }
   }
 }
 
