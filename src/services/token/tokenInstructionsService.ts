@@ -15,7 +15,8 @@ import {
 } from '@solana/spl-token';
 import { 
   PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-  createMetadataV3
+  createCreateMetadataAccountV3Instruction,
+  DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
 import { Connection } from '@solana/web3.js';
 import { MINT_CONFIG } from './types';
@@ -30,7 +31,7 @@ export class TokenInstructionsService {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
     metadataPDA: PublicKey,
-    tokenMetadata: any
+    tokenMetadata: DataV2
   ): Promise<TransactionInstruction[]> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
@@ -62,14 +63,21 @@ export class TokenInstructionsService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createMetadataV3(
-        metadataPDA,
-        mintKeypair.publicKey,
-        payer.publicKey,
-        payer.publicKey,
-        payer.publicKey,
-        tokenMetadata,
-        TOKEN_METADATA_PROGRAM_ID
+      createCreateMetadataAccountV3Instruction(
+        {
+          metadata: metadataPDA,
+          mint: mintKeypair.publicKey,
+          mintAuthority: payer.publicKey,
+          payer: payer.publicKey,
+          updateAuthority: payer.publicKey,
+        },
+        {
+          createMetadataAccountArgsV3: {
+            data: tokenMetadata,
+            isMutable: true,
+            collectionDetails: null
+          }
+        }
       )
     ];
   }

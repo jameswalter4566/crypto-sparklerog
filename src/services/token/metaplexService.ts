@@ -1,4 +1,4 @@
-import { Keypair, Connection } from "@solana/web3.js";
+import { Keypair, Connection, PublicKey } from "@solana/web3.js";
 import { 
   Metaplex, 
   UploadMetadataInput,
@@ -23,6 +23,8 @@ export class MetaplexService {
   }
 
   async getMetadataPDA(mintPublicKey: string) {
-    return await this.metaplex.nfts().pdas().metadata({ mint: mintPublicKey });
+    return await this.metaplex.nfts().pdas().metadata({ 
+      mint: new PublicKey(mintPublicKey) 
+    });
   }
 }
