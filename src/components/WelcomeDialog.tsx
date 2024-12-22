@@ -9,15 +9,17 @@ import { Button } from "@/components/ui/button";
 
 export const WelcomeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // Add a small delay to prevent flash on initial load
     const timeout = setTimeout(() => {
       const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
+      setIsLoaded(true);
       if (!hasSeenWelcome) {
         setIsOpen(true);
       }
-    }, 100);
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, []);
@@ -27,11 +29,15 @@ export const WelcomeDialog = () => {
     setIsOpen(false);
   };
 
+  if (!isLoaded) {
+    return null;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md rounded-lg border-2 border-primary/50 animate-laser-border">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md rounded-lg border-2 border-primary/50">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center animate-text-glow">
+          <DialogTitle className="text-2xl font-bold text-center">
             How it works
           </DialogTitle>
         </DialogHeader>
@@ -49,7 +55,7 @@ export const WelcomeDialog = () => {
         <div className="flex justify-center mt-4">
           <Button
             onClick={handleClose}
-            className="w-32 animate-glow-pulse"
+            className="w-32"
           >
             Let's go!
           </Button>
