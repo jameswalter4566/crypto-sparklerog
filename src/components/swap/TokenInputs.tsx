@@ -32,7 +32,7 @@ export const TokenInputs = ({
             variant="outline"
             onClick={() => onAmountChange(value.toString())}
             disabled={disabled}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20 active:bg-primary/30 text-primary rounded-xl transition-colors"
+            className="bg-primary/10 border-primary/20 hover:bg-primary/20 active:bg-primary/30 text-white rounded-xl transition-colors"
           >
             <DollarSign className="h-4 w-4 mr-1" />
             {value}
