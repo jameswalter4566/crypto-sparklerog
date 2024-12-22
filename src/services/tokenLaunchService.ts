@@ -18,10 +18,9 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  PROGRAM_ID as METADATA_PROGRAM_ID,
-  createCreateMetadataAccountV3Instruction,
-  CreateMetadataAccountV3InstructionAccounts,
-  CreateMetadataAccountV3InstructionArgs
+  createMetadataAccountV3, 
+  CreateMetadataAccountArgsV3,
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID
 } from '@metaplex-foundation/mpl-token-metadata';
 import { 
   Metaplex,
@@ -69,7 +68,7 @@ export class TokenLaunchService {
     destinationWallet: PublicKey,
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
-    onChainMetadata: CreateMetadataAccountV3InstructionArgs
+    onChainMetadata: CreateMetadataAccountArgsV3
   ): Promise<VersionedTransaction> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const metadataPDA = await this.metaplex.nfts().pdas().metadata({ mint: mintKeypair.publicKey });
@@ -102,16 +101,16 @@ export class TokenLaunchService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createCreateMetadataAccountV3Instruction(
+      createMetadataAccountV3(
         {
           metadata: metadataPDA,
           mint: mintKeypair.publicKey,
-          mintAuthority: payer,
+          mintAuthority: payer.publicKey,
           payer: payer.publicKey,
           updateAuthority: payer.publicKey,
-        } as CreateMetadataAccountV3InstructionAccounts,
+        },
         {
-          createMetadataAccountV3: onChainMetadata
+          createMetadataAccountArgsV3: onChainMetadata
         }
       )
     ];
@@ -138,18 +137,14 @@ export class TokenLaunchService {
 
     const metadataUri = await this.uploadMetadata(tokenMetadata);
     
-    const onChainMetadata: CreateMetadataAccountV3InstructionArgs = {
-      data: {
-        name: config.name,
-        symbol: config.symbol,
-        uri: metadataUri,
-        sellerFeeBasisPoints: 0,
-        creators: null,
-        collection: null,
-        uses: null
-      },
-      isMutable: true,
-      collectionDetails: null
+    const onChainMetadata: CreateMetadataAccountArgsV3 = {
+      name: config.name,
+      symbol: config.symbol,
+      uri: metadataUri,
+      sellerFeeBasisPoints: 0,
+      creators: null,
+      collection: null,
+      uses: null
     };
 
     const mintKeypair = Keypair.generate();
