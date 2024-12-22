@@ -137,8 +137,8 @@ export const SwapInterface = () => {
   };
 
   return (
-    <Card className="p-6 max-w-md mx-auto bg-black/50 backdrop-blur-sm border-gray-800">
-      <h2 className="text-xl font-bold mb-4">Swap Tokens</h2>
+    <Card className="p-8 max-w-xl w-full mx-auto bg-black/50 backdrop-blur-sm border-gray-800">
+      <h2 className="text-2xl font-bold mb-6">Buy</h2>
       
       <TokenInputs
         amount={amount}
@@ -153,15 +153,15 @@ export const SwapInterface = () => {
       <Button 
         onClick={handleSwap} 
         disabled={isLoading || !amount || !tokenAddress || isQuoteLoading}
-        className="w-full mt-4"
+        className="w-full mt-6"
       >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Swapping...
+            Processing...
           </>
         ) : (
-          'Swap'
+          'Buy Now'
         )}
       </Button>
     </Card>
