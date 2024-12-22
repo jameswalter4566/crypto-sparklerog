@@ -10,6 +10,7 @@ export interface CoinData {
   liquidity?: number;
   market_cap?: number;
   volume_24h?: number;
+  mintAddress?: string;
 }
 
 export const mockCoins: CoinData[] = [
@@ -22,7 +23,8 @@ export const mockCoins: CoinData[] = [
     supply: 1000000000, // 1B
     liquidity: 40000, // $40K
     market_cap: 123230, // $123.23K
-    imageUrl: "/placeholder.svg"
+    imageUrl: "/placeholder.svg",
+    mintAddress: "6fjQ5GRCrQVzPbmNMTiEMcMQsccWngp1xhGmXvNspump"
   },
   {
     id: "xrp",

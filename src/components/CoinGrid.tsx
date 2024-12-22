@@ -36,6 +36,7 @@ export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
             price={coin.price}
             change24h={coin.change_24h}
             imageUrl={coin.imageUrl}
+            mintAddress={coin.mintAddress}
           />
         ))}
       </div>
