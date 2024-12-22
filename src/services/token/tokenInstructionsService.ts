@@ -14,9 +14,11 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
+  CreateMetadataAccountArgsV3,
+  CreateMetadataAccountV3InstructionAccounts,
+  CreateMetadataAccountV3InstructionArgs,
   PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-  createCreateMetadataAccountV3Instruction,
-  DataV2
+  createCreateMetadataAccountV3Instruction as createMetadataV3
 } from '@metaplex-foundation/mpl-token-metadata';
 import { Connection } from '@solana/web3.js';
 import { MINT_CONFIG } from './types';
@@ -31,10 +33,26 @@ export class TokenInstructionsService {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
     metadataPDA: PublicKey,
-    tokenMetadata: DataV2
+    tokenMetadata: CreateMetadataAccountArgsV3["data"]
   ): Promise<TransactionInstruction[]> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
+
+    const accounts: CreateMetadataAccountV3InstructionAccounts = {
+      metadata: metadataPDA,
+      mint: mintKeypair.publicKey,
+      mintAuthority: payer.publicKey,
+      payer: payer.publicKey,
+      updateAuthority: payer.publicKey,
+    };
+
+    const args: CreateMetadataAccountV3InstructionArgs = {
+      createMetadataAccountArgsV3: {
+        data: tokenMetadata,
+        isMutable: true,
+        collectionDetails: null
+      }
+    };
 
     return [
       SystemProgram.createAccount({
@@ -63,21 +81,9 @@ export class TokenInstructionsService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createCreateMetadataAccountV3Instruction(
-        {
-          metadata: metadataPDA,
-          mint: mintKeypair.publicKey,
-          mintAuthority: payer.publicKey,
-          payer: payer.publicKey,
-          updateAuthority: payer.publicKey,
-        },
-        {
-          createMetadataAccountArgsV3: {
-            data: tokenMetadata,
-            isMutable: true,
-            collectionDetails: null
-          }
-        }
+      createMetadataV3(
+        accounts,
+        args
       )
     ];
   }
