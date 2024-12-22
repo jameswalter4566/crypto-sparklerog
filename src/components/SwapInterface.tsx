@@ -71,19 +71,30 @@ export const SwapInterface = () => {
       // Convert the base64 transaction to a Buffer
       const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
-      // Create a Transaction object
+      // Try to deserialize as a VersionedTransaction first
       let transaction;
       try {
         transaction = VersionedTransaction.deserialize(transactionBuffer);
       } catch {
+        // If that fails, try as a legacy Transaction
         transaction = Transaction.from(transactionBuffer);
       }
-      
-      // Sign and send the transaction
+
+      // Sign the transaction
       const signedTransaction = await solana.signTransaction(transaction);
-      const connection = solana.connection;
-      const serializedTransaction = signedTransaction.serialize();
-      const txid = await connection.sendRawTransaction(serializedTransaction);
+      
+      // Get the proper connection from Phantom
+      const { connection } = solana;
+      
+      // Serialize and send the transaction
+      const serializedTransaction = signedTransaction instanceof VersionedTransaction 
+        ? signedTransaction.serialize()
+        : signedTransaction.serialize();
+        
+      const txid = await connection.sendRawTransaction(
+        serializedTransaction,
+        { skipPreflight: false, maxRetries: 3 }
+      );
       
       toast.success("Swap successful!", {
         description: `Transaction ID: ${txid}`,
