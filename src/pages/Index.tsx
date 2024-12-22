@@ -1,8 +1,19 @@
 import { CoinGrid } from "@/components/CoinGrid";
+import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  const handleSearch = (mintAddress: string) => {
+    if (mintAddress) {
+      navigate(`/coin/${mintAddress}`);
+    }
+  };
+
   return (
-    <div className="container mx-auto py-4 max-w-[2000px]">
+    <div className="container mx-auto py-4 max-w-[2000px] space-y-6">
+      <TokenSearchForm onSearch={handleSearch} isLoading={false} />
       <CoinGrid />
     </div>
   );
