@@ -16,10 +16,9 @@ import {
 } from "@solana/spl-token";
 import { 
   createMetadataAccountV3,
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
   DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
-
-const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
 export class TokenInstructionsService {
   private connection: Connection;
@@ -40,18 +39,19 @@ export class TokenInstructionsService {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
+    // Fixed values for decimals and token supply
+    const DECIMALS = 9;
+    const TOKEN_SUPPLY = 1_000_000;
+
     const metadataInstruction = createMetadataAccountV3({
       metadata: metadataPDA,
       mint: mintKeypair.publicKey,
       mintAuthority: mintAuthority.publicKey,
       payer: payer.publicKey,
       updateAuthority: payer.publicKey,
-    }, {
-      createMetadataAccountArgsV3: {
-        data: tokenMetadata,
-        isMutable: true,
-        collectionDetails: null,
-      }
+      data: tokenMetadata,
+      isMutable: true,
+      collectionDetails: null
     });
 
     return [
@@ -64,7 +64,7 @@ export class TokenInstructionsService {
       }),
       createInitializeMintInstruction(
         mintKeypair.publicKey,
-        tokenMetadata.decimals || 9,
+        DECIMALS,
         mintAuthority.publicKey,
         freezeAuthority,
         TOKEN_PROGRAM_ID
@@ -79,7 +79,7 @@ export class TokenInstructionsService {
         mintKeypair.publicKey,
         tokenATA,
         mintAuthority.publicKey,
-        BigInt(tokenMetadata.supply || 1_000_000) * BigInt(10 ** (tokenMetadata.decimals || 9))
+        BigInt(TOKEN_SUPPLY) * BigInt(10 ** DECIMALS)
       ),
       metadataInstruction,
     ];
