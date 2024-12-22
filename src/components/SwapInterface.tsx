@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -13,12 +13,27 @@ const connection = new Connection(
   'https://rpc.helius.xyz/?api-key=726140d8-6b0d-4719-8702-682d81e94a37'
 );
 
-export const SwapInterface = () => {
+interface SwapInterfaceProps {
+  defaultTokenAddress?: string;
+}
+
+export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
   const [amount, setAmount] = useState('');
   const [tokenAddress, setTokenAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [priceQuote, setPriceQuote] = useState<number | null>(null);
+
+  // Set the token address when defaultTokenAddress changes
+  useEffect(() => {
+    if (defaultTokenAddress && isValidSolanaAddress(defaultTokenAddress)) {
+      setTokenAddress(defaultTokenAddress);
+      // If there's already an amount entered, fetch the price quote
+      if (amount && validateAmount(amount)) {
+        handleAmountChange(amount);
+      }
+    }
+  }, [defaultTokenAddress]);
 
   const validateAmount = (value: string): boolean => {
     const numValue = Number(value);

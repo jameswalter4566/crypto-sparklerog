@@ -30,7 +30,6 @@ const CoinProfile = () => {
     );
   }
 
-  // Generate mock price data for the chart
   const priceData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
     price: coin.price * (1 + Math.sin(i / 5) * 0.1),
@@ -58,6 +57,7 @@ const CoinProfile = () => {
         description={null}
         tokenStandard={null}
         decimals={null}
+        solanaAddr={coin.mintAddress}
       />
       
       <TokenStats
@@ -74,7 +74,7 @@ const CoinProfile = () => {
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
         <PriceChart data={priceData} />
-        <SwapInterface />
+        <SwapInterface defaultTokenAddress={coin.mintAddress} />
       </div>
 
       <div className="flex gap-4 mt-6 justify-center">
