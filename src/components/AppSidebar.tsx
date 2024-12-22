@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Coins, Trophy, Search, Rocket } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -32,6 +32,12 @@ const menuItems = [
     icon: Trophy,
     path: "/leaderboard",
   },
+  {
+    title: "Agent Company Collection",
+    icon: Building,
+    path: "https://agentcompany.xyz/",
+    external: true,
+  },
 ];
 
 export function AppSidebar() {
@@ -46,10 +52,22 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link to={item.path} className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    {item.external ? (
+                      <a 
+                        href={item.path} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    ) : (
+                      <Link to={item.path} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
