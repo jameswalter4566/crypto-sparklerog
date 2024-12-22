@@ -3,7 +3,7 @@ import {
   Keypair, 
   PublicKey, 
   TransactionInstruction
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import { 
   MINT_SIZE, 
   TOKEN_PROGRAM_ID, 
@@ -14,8 +14,10 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  TOKEN_METADATA_PROGRAM_ID,
-  createCreateMetadataAccountV3Instruction,
+  MPL_TOKEN_METADATA_PROGRAM_ID,
+  CreateMetadataAccountV3InstructionAccounts,
+  CreateMetadataAccountV3InstructionArgs,
+  createMetadataAccountV3,
   DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
 import { Connection } from '@solana/web3.js';
@@ -36,21 +38,23 @@ export class TokenInstructionsService {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const metadataInstruction = createCreateMetadataAccountV3Instruction(
-      {
-        metadata: metadataPDA,
-        mint: mintKeypair.publicKey,
-        mintAuthority: payer.publicKey,
-        payer: payer.publicKey,
-        updateAuthority: payer.publicKey
-      },
-      {
-        createMetadataAccountArgsV3: {
-          data: tokenMetadata,
-          isMutable: true,
-          collectionDetails: null
-        }
-      }
+    const accounts: CreateMetadataAccountV3InstructionAccounts = {
+      metadata: metadataPDA,
+      mint: mintKeypair.publicKey,
+      mintAuthority: payer,
+      payer: payer,
+      updateAuthority: payer,
+    };
+
+    const args: CreateMetadataAccountV3InstructionArgs = {
+      data: tokenMetadata,
+      isMutable: true,
+      collectionDetails: null
+    };
+
+    const metadataInstruction = createMetadataAccountV3(
+      accounts,
+      args
     );
 
     return [
