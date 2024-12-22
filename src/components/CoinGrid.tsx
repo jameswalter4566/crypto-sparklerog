@@ -20,7 +20,7 @@ export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
   return (
     <div className="space-y-4 px-2 sm:px-4">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-        <h2 className="text-lg sm:text-xl font-bold">Trending Coins</h2>
+        <h2 className="text-lg sm:text-xl font-bold animate-text-glow">Trending Coins</h2>
         <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4" />
           Filter
