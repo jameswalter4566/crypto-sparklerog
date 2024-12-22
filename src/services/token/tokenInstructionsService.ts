@@ -14,11 +14,11 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  CreateMetadataAccountArgsV3,
-  CreateMetadataAccountV3InstructionAccounts,
-  CreateMetadataAccountV3InstructionArgs,
+  createMetadataAccountV3,
   PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-  createCreateMetadataAccountV3Instruction as createMetadataV3
+  MetadataAccount,
+  MetadataAccountData,
+  MetadataArgs
 } from '@metaplex-foundation/mpl-token-metadata';
 import { Connection } from '@solana/web3.js';
 import { MINT_CONFIG } from './types';
@@ -33,26 +33,29 @@ export class TokenInstructionsService {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
     metadataPDA: PublicKey,
-    tokenMetadata: CreateMetadataAccountArgsV3["data"]
+    tokenMetadata: MetadataArgs
   ): Promise<TransactionInstruction[]> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const accounts: CreateMetadataAccountV3InstructionAccounts = {
+    const metadataInstruction = createMetadataAccountV3({
       metadata: metadataPDA,
       mint: mintKeypair.publicKey,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
+      mintAuthority: payer,
+      payer: payer,
       updateAuthority: payer.publicKey,
-    };
-
-    const args: CreateMetadataAccountV3InstructionArgs = {
-      createMetadataAccountArgsV3: {
-        data: tokenMetadata,
-        isMutable: true,
-        collectionDetails: null
-      }
-    };
+      data: {
+        name: tokenMetadata.name,
+        symbol: tokenMetadata.symbol,
+        uri: tokenMetadata.uri,
+        sellerFeeBasisPoints: 0,
+        creators: null,
+        collection: null,
+        uses: null
+      },
+      isMutable: true,
+      collectionDetails: null
+    });
 
     return [
       SystemProgram.createAccount({
@@ -81,10 +84,7 @@ export class TokenInstructionsService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createMetadataV3(
-        accounts,
-        args
-      )
+      metadataInstruction
     ];
   }
 }
