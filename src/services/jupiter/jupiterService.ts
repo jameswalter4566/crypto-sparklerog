@@ -9,7 +9,11 @@ interface JupiterSwapResult {
   error?: TransactionError;
 }
 
-type SwapResult = JupiterSwapResult | { error?: TransactionError };
+interface SwapSuccess {
+  txid: string;
+  inputAmount: number;
+  outputAmount: number;
+}
 
 export class JupiterService {
   private static instance: Jupiter | null = null;
@@ -36,7 +40,7 @@ export class JupiterService {
     outputMint: string,
     amount: number,
     slippageBps: number = 100 // 1% default slippage
-  ): Promise<{ txid: string; inputAmount: number; outputAmount: number }> {
+  ): Promise<SwapSuccess> {
     if (!this.instance) {
       throw new Error("Jupiter not initialized");
     }
@@ -60,21 +64,31 @@ export class JupiterService {
     
     const swapResult = await execute();
 
-    // Check if the result contains an error
+    // Handle error case
     if ('error' in swapResult && swapResult.error) {
       throw new Error(swapResult.error.toString());
     }
 
-    // Type guard to ensure we have a successful swap result
-    if (!('txid' in swapResult) || !('inputAmount' in swapResult) || !('outputAmount' in swapResult)) {
+    // Type guard for successful swap
+    if (!this.isSuccessfulSwap(swapResult)) {
       throw new Error('Invalid swap result format');
     }
 
-    // Now TypeScript knows this is a successful result
+    // Return formatted success result
     return {
       txid: swapResult.txid,
       inputAmount: Number(swapResult.inputAmount),
       outputAmount: Number(swapResult.outputAmount),
     };
+  }
+
+  private static isSuccessfulSwap(result: any): result is JupiterSwapResult {
+    return (
+      typeof result === 'object' &&
+      result !== null &&
+      'txid' in result &&
+      'inputAmount' in result &&
+      'outputAmount' in result
+    );
   }
 }
