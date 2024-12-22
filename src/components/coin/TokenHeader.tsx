@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TokenActions } from "./TokenActions";
+import { CopyAddressButton } from "./CopyAddressButton";
 
 interface TokenHeaderProps {
   name: string;
@@ -36,6 +37,7 @@ export const TokenHeader = ({
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               {name || "Unknown Token"} ({symbol || "???"})
             </h1>
+            <CopyAddressButton solanaAddr={solanaAddr} />
             
             <TokenActions symbol={symbol} solanaAddr={solanaAddr} />
 

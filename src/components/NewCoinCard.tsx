@@ -2,9 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 
 interface NewCoinCardProps {
   id: string;
@@ -26,7 +24,6 @@ export function NewCoinCard({
   mintAddress 
 }: NewCoinCardProps) {
   const [currentPrice, setCurrentPrice] = useState(price);
-  const { toast } = useToast();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,21 +40,6 @@ export function NewCoinCard({
 
   const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
 
-  const handleCopyAddress = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (mintAddress) {
-      navigator.clipboard.writeText(mintAddress);
-      toast({
-        description: "Mint address copied to clipboard",
-      });
-    } else {
-      toast({
-        description: "Mint address not available",
-        variant: "destructive"
-      });
-    }
-  };
-
   return (
     <Link to={`/coin/${id}`}>
       <Card className="hover:bg-gray-900 transition-colors">
@@ -68,37 +50,27 @@ export function NewCoinCard({
               <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-lg flex flex-col items-center gap-1">
-              <span>{name}</span>
+              <div className="flex items-center gap-2">
+                <span>{name}</span>
+                <CopyAddressButton solanaAddr={mintAddress} />
+              </div>
               <span className="text-sm text-gray-400">{symbol}</span>
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xl font-bold transition-all duration-300">
-                {formatPrice(currentPrice)}
-              </span>
-              <span
-                className={`${
-                  change24h >= 0 ? "text-secondary" : "text-red-500"
-                } font-semibold`}
-              >
-                {change24h >= 0 ? "+" : ""}
-                {change24h.toFixed(2)}%
-              </span>
-            </div>
-            {mintAddress && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full gap-2 mt-2"
-                onClick={handleCopyAddress}
-              >
-                <Copy className="h-4 w-4" />
-                Copy Mint Address
-              </Button>
-            )}
+          <div className="flex justify-between items-center">
+            <span className="text-xl font-bold transition-all duration-300">
+              {formatPrice(currentPrice)}
+            </span>
+            <span
+              className={`${
+                change24h >= 0 ? "text-secondary" : "text-red-500"
+              } font-semibold`}
+            >
+              {change24h >= 0 ? "+" : ""}
+              {change24h.toFixed(2)}%
+            </span>
           </div>
         </CardContent>
       </Card>
