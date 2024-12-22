@@ -62,11 +62,14 @@ export class JupiterService {
       throw new Error(swapResult.error.toString());
     }
 
-    // Handle successful swap result
+    // Now we know swapResult has the expected properties
+    const result = swapResult as JupiterSwapResult;
+
+    // Convert bigint to number for the return value
     return {
-      txid: swapResult.txid,
-      inputAmount: Number(swapResult.inputAmount),
-      outputAmount: Number(swapResult.outputAmount),
+      txid: result.txid,
+      inputAmount: Number(result.inputAmount),
+      outputAmount: Number(result.outputAmount),
     };
   }
 }
