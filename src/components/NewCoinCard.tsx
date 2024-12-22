@@ -31,18 +31,14 @@ export function NewCoinCard({
       <Card className="hover:bg-gray-900 transition-colors h-full">
         <CardHeader>
           <div className="flex flex-col items-center gap-4">
-            <div className="relative w-full">
-              <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72 mx-auto">
-                <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
-                <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
-              </Avatar>
-              <div className="absolute top-2 right-2">
-                <VoiceChatCounter coinId={id} />
-              </div>
-            </div>
+            <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72 mx-auto">
+              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
+              <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
+            </Avatar>
             <CardTitle className="text-base sm:text-lg flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
+                <VoiceChatCounter coinId={id} />
                 <CopyAddressButton solanaAddr={mintAddress} />
               </div>
               <span className="text-sm text-gray-400">{symbol}</span>
