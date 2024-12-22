@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { CoinPrice } from "@/components/coin/CoinPrice";
 import { PriceChange } from "@/components/coin/PriceChange";
+import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 
 interface NewCoinCardProps {
   id: string;
@@ -30,10 +31,15 @@ export function NewCoinCard({
       <Card className="hover:bg-gray-900 transition-colors h-full">
         <CardHeader>
           <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72">
-              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
-              <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
-            </Avatar>
+            <div className="relative w-full">
+              <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72 mx-auto">
+                <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
+                <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
+              </Avatar>
+              <div className="absolute top-2 right-2">
+                <VoiceChatCounter coinId={id} />
+              </div>
+            </div>
             <CardTitle className="text-base sm:text-lg flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
