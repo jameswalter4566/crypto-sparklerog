@@ -18,14 +18,15 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  DataV2, 
-  createCreateMetadataAccountV3Instruction 
+  CreateMetadataAccountArgsV3,
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+  createMetadataAccountV3
 } from '@metaplex-foundation/mpl-token-metadata';
 import { 
-  bundlrStorage, 
-  keypairIdentity, 
-  Metaplex, 
-  UploadMetadataInput 
+  Metaplex,
+  UploadMetadataInput,
+  walletAdapterIdentity,
+  BundlrStorageDriver
 } from '@metaplex-foundation/js';
 
 export interface TokenConfig {
@@ -47,8 +48,8 @@ export class TokenLaunchService {
 
   initializeMetaplex(userWallet: Keypair) {
     this.metaplex = Metaplex.make(this.connection)
-      .use(keypairIdentity(userWallet))
-      .use(bundlrStorage({
+      .use(walletAdapterIdentity(userWallet))
+      .use(new BundlrStorageDriver({
         address: 'https://devnet.bundlr.network',
         providerUrl: this.connection.rpcEndpoint,
         timeout: 60000,
@@ -67,7 +68,7 @@ export class TokenLaunchService {
     destinationWallet: PublicKey,
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
-    onChainMetadata: DataV2
+    onChainMetadata: CreateMetadataAccountArgsV3
   ): Promise<VersionedTransaction> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const metadataPDA = await this.metaplex.nfts().pdas().metadata({ mint: mintKeypair.publicKey });
@@ -100,19 +101,18 @@ export class TokenLaunchService {
         mintAuthority,
         MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
       ),
-      createCreateMetadataAccountV3Instruction({
-        metadata: metadataPDA,
-        mint: mintKeypair.publicKey,
-        mintAuthority: mintAuthority,
-        payer: payer.publicKey,
-        updateAuthority: mintAuthority,
-      }, {
-        createMetadataAccountArgsV3: {
-          data: onChainMetadata,
-          isMutable: true,
-          collectionDetails: null
+      createMetadataAccountV3(
+        {
+          metadata: metadataPDA,
+          mint: mintKeypair.publicKey,
+          mintAuthority: mintAuthority,
+          payer: payer.publicKey,
+          updateAuthority: mintAuthority,
+        },
+        {
+          createMetadataAccountArgsV3: onChainMetadata
         }
-      })
+      )
     ];
 
     const latestBlockhash = await this.connection.getLatestBlockhash();
@@ -128,7 +128,6 @@ export class TokenLaunchService {
   }
 
   async launchToken(config: TokenConfig, wallet: Keypair): Promise<string> {
-    // Upload metadata
     const tokenMetadata: UploadMetadataInput = {
       name: config.name,
       symbol: config.symbol,
@@ -138,7 +137,7 @@ export class TokenLaunchService {
 
     const metadataUri = await this.uploadMetadata(tokenMetadata);
     
-    const onChainMetadata: DataV2 = {
+    const onChainMetadata: CreateMetadataAccountArgsV3 = {
       name: config.name,
       symbol: config.symbol,
       uri: metadataUri,
@@ -148,7 +147,6 @@ export class TokenLaunchService {
       uses: null
     };
 
-    // Create mint transaction
     const mintKeypair = Keypair.generate();
     console.log("New Mint Address: ", mintKeypair.publicKey.toString());
 
@@ -161,7 +159,6 @@ export class TokenLaunchService {
       onChainMetadata
     );
 
-    // Execute transaction
     const { lastValidBlockHeight, blockhash } = await this.connection.getLatestBlockhash('finalized');
     const transactionId = await this.connection.sendTransaction(transaction);
     
