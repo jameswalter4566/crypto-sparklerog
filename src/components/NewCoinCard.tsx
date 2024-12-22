@@ -38,8 +38,8 @@ export function NewCoinCard({
             <CardTitle className="text-base sm:text-lg flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
-                <VoiceChatCounter coinId={id} />
                 <CopyAddressButton solanaAddr={mintAddress} />
+                <VoiceChatCounter coinId={id} />
               </div>
               <span className="text-sm text-gray-400">{symbol}</span>
             </CardTitle>

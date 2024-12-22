@@ -10,8 +10,8 @@ export function VoiceChatCounter({ coinId }: VoiceChatCounterProps) {
   const userCount = useVoiceChatUsers(coinId);
 
   return (
-    <Badge variant="secondary" className="gap-1">
-      <Users className="h-3 w-3" />
+    <Badge variant="secondary" className="gap-1.5 px-3 py-1">
+      <Users className="h-4 w-4" />
       {userCount}
     </Badge>
   );
