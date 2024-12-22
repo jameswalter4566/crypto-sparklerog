@@ -23,15 +23,20 @@ const App = () => (
         <SidebarProvider>
           <div className="min-h-screen flex w-full bg-black text-white">
             <AppSidebar />
-            <main className="flex-1">
-              <div className="fixed top-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-sm z-20 flex items-center px-4">
+            <main className="flex-1 overflow-x-hidden">
+              <div className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-black/50 backdrop-blur-sm z-20 flex items-center px-4">
                 <img 
                   src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
                   alt="Logo" 
-                  className="h-28 ml-16"
+                  className="h-20 ml-4 md:ml-16 hidden md:block"
+                />
+                <img 
+                  src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
+                  alt="Logo" 
+                  className="h-14 ml-4 md:hidden"
                 />
               </div>
-              <div className="h-20"></div>
+              <div className="h-16 md:h-20"></div>
               <div className="z-30 relative">
                 <WalletConnect />
               </div>

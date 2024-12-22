@@ -42,16 +42,16 @@ export function NewCoinCard({
 
   return (
     <Link to={`/coin/${id}`}>
-      <Card className="hover:bg-gray-900 transition-colors">
+      <Card className="hover:bg-gray-900 transition-colors h-full">
         <CardHeader>
           <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-72 w-72">
-              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} />
+            <Avatar className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-72 lg:w-72">
+              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
               <AvatarFallback className="text-2xl">{symbolFallback}</AvatarFallback>
             </Avatar>
-            <CardTitle className="text-lg flex flex-col items-center gap-1">
+            <CardTitle className="text-base sm:text-lg flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
-                <span>{name}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{name}</span>
                 <CopyAddressButton solanaAddr={mintAddress} />
               </div>
               <span className="text-sm text-gray-400">{symbol}</span>
@@ -59,8 +59,8 @@ export function NewCoinCard({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-bold transition-all duration-300">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span className="text-lg sm:text-xl font-bold transition-all duration-300 text-center sm:text-left">
               {formatPrice(currentPrice)}
             </span>
             <span
