@@ -22,7 +22,7 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
         placeholder="Search by mint address..."
         value={mintAddress}
         onChange={(e) => setMintAddress(e.target.value)}
-        className="flex-1 rounded-full bg-card border-primary/20 focus-visible:ring-primary"
+        className="flex-1 rounded-full bg-card border-primary/20 focus-visible:ring-primary hover:animate-glow-pulse transition-all duration-300"
       />
       <Button type="submit" disabled={isLoading} className="rounded-full">
         <Search className="h-4 w-4 mr-2" />
