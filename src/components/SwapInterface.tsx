@@ -8,9 +8,9 @@ import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
 import { Transaction, VersionedTransaction, Connection } from '@solana/web3.js';
 import { Loader2 } from 'lucide-react';
 
-// Use environment variable for RPC endpoint
+// Use environment variable for RPC endpoint with API key
 const connection = new Connection(
-  import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'
+  `https://rpc.helius.xyz/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`
 );
 
 export const SwapInterface = () => {
