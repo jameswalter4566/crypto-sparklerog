@@ -26,7 +26,7 @@ export class JupiterService {
     inputMint: string,
     outputMint: string,
     amount: number,
-    slippage: number = 1
+    slippageBps: number = 100 // 1% default slippage
   ) {
     if (!this.instance) {
       throw new Error("Jupiter not initialized");
@@ -36,7 +36,8 @@ export class JupiterService {
       inputMint: new PublicKey(inputMint),
       outputMint: new PublicKey(outputMint),
       amount: JSBI.BigInt(amount),
-      slippage,
+      slippageBps,
+      onlyDirectRoutes: false,
     });
 
     if (!routes.routesInfos || routes.routesInfos.length === 0) {
@@ -48,6 +49,17 @@ export class JupiterService {
       routeInfo: bestRoute,
     });
     
-    return execute();
+    const swapResult = await execute();
+
+    // Check if the swap was successful
+    if ('error' in swapResult) {
+      throw new Error(swapResult.error.toString());
+    }
+
+    return {
+      txid: swapResult.txid,
+      inputAmount: swapResult.inputAmount,
+      outputAmount: swapResult.outputAmount,
+    };
   }
 }
