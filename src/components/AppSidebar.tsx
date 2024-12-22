@@ -57,7 +57,7 @@ export function AppSidebar() {
                         href={item.path} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm"
+                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -65,7 +65,7 @@ export function AppSidebar() {
                     ) : (
                       <Link 
                         to={item.path} 
-                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm"
+                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
