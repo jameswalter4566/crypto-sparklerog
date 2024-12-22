@@ -1,22 +1,16 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { Metaplex, walletAdapterIdentity, bundlrStorage } from "@metaplex-foundation/js";
+import { Metaplex, keypairIdentity } from "@metaplex-foundation/js";
 import { TokenConfig } from "./types";
 
 export class MetaplexService {
   private metaplex: Metaplex;
 
   constructor(connection: Connection) {
-    this.metaplex = Metaplex.make(connection).use(
-      bundlrStorage({
-        address: "https://devnet.bundlr.network",
-        providerUrl: "https://api.devnet.solana.com",
-        timeout: 60000,
-      })
-    );
+    this.metaplex = Metaplex.make(connection);
   }
 
   initializeWallet(userWallet: Keypair): void {
-    this.metaplex = this.metaplex.use(walletAdapterIdentity(userWallet));
+    this.metaplex = this.metaplex.use(keypairIdentity(userWallet));
   }
 
   async uploadMetadata(tokenConfig: TokenConfig): Promise<string> {

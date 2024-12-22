@@ -15,14 +15,10 @@ import {
   createMintToInstruction 
 } from "@solana/spl-token";
 import { 
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
   createCreateMetadataAccountV3Instruction,
-  CreateMetadataAccountV3InstructionAccounts,
-  CreateMetadataAccountV3InstructionArgs,
   DataV2
 } from '@metaplex-foundation/mpl-token-metadata';
-
-// Define the Token Metadata Program ID
-const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
 export class TokenInstructionsService {
   private connection: Connection;
@@ -47,7 +43,6 @@ export class TokenInstructionsService {
     const DECIMALS = 9;
     const TOKEN_SUPPLY = 1_000_000;
 
-    // Create metadata instruction using the correct method
     const metadataInstruction = createCreateMetadataAccountV3Instruction(
       {
         metadata: metadataPDA,
@@ -55,14 +50,12 @@ export class TokenInstructionsService {
         mintAuthority: mintAuthority.publicKey,
         payer: payer.publicKey,
         updateAuthority: payer.publicKey,
-      } as CreateMetadataAccountV3InstructionAccounts,
+      },
       {
-        createMetadataAccountArgsV3: {
-          data: tokenMetadata,
-          isMutable: true,
-          collectionDetails: null,
-        },
-      } as CreateMetadataAccountV3InstructionArgs
+        data: tokenMetadata,
+        isMutable: true,
+        collectionDetails: null,
+      }
     );
 
     return [
