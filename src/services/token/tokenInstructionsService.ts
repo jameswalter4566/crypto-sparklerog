@@ -2,8 +2,8 @@ import {
   SystemProgram, 
   Keypair, 
   PublicKey, 
-  TransactionInstruction,
-  Connection
+  TransactionInstruction, 
+  Connection 
 } from '@solana/web3.js';
 import { 
   MINT_SIZE, 
@@ -15,13 +15,19 @@ import {
   createMintToInstruction 
 } from '@solana/spl-token';
 import { 
-  createMetadataAccountV3,
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+  createCreateMetadataAccountV3Instruction,
+  DataV2 
 } from '@metaplex-foundation/mpl-token-metadata';
 import { MINT_CONFIG } from './types';
 
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+
 export class TokenInstructionsService {
-  constructor(private connection: Connection) {}
+  private connection: Connection;
+
+  constructor(connection: Connection) {
+    this.connection = connection;
+  }
 
   async createTokenInstructions(
     payer: Keypair,
@@ -30,29 +36,33 @@ export class TokenInstructionsService {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey,
     metadataPDA: PublicKey,
-    tokenMetadata: any
+    tokenMetadata: DataV2
   ): Promise<TransactionInstruction[]> {
     const requiredBalance = await getMinimumBalanceForRentExemptMint(this.connection);
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
 
-    const createMetadataInstruction = createMetadataAccountV3({
-      metadata: metadataPDA,
-      mint: mintKeypair.publicKey,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
-      updateAuthority: payer.publicKey,
-      data: {
-        name: tokenMetadata.name,
-        symbol: tokenMetadata.symbol,
-        uri: tokenMetadata.uri,
-        sellerFeeBasisPoints: 0,
-        creators: null,
-        collection: null,
-        uses: null
+    const metadataInstruction = createCreateMetadataAccountV3Instruction(
+      {
+        metadata: metadataPDA,
+        mint: mintKeypair.publicKey,
+        mintAuthority: payer.publicKey,
+        payer: payer.publicKey,
+        updateAuthority: payer.publicKey,
       },
-      isMutable: true,
-      collectionDetails: null
-    });
+      {
+        data: {
+          name: tokenMetadata.name,
+          symbol: tokenMetadata.symbol,
+          uri: tokenMetadata.uri,
+          sellerFeeBasisPoints: 0,
+          creators: tokenMetadata.creators || null,
+          collection: tokenMetadata.collection || null,
+          uses: tokenMetadata.uses || null,
+        },
+        isMutable: true,
+        collectionDetails: tokenMetadata.collectionDetails || null,
+      }
+    );
 
     return [
       SystemProgram.createAccount({
@@ -79,9 +89,9 @@ export class TokenInstructionsService {
         mintKeypair.publicKey,
         tokenATA,
         mintAuthority,
-        MINT_CONFIG.numberTokens * Math.pow(10, MINT_CONFIG.numDecimals),
+        BigInt(MINT_CONFIG.numberTokens) * BigInt(10 ** MINT_CONFIG.numDecimals),
       ),
-      createMetadataInstruction
+      metadataInstruction
     ];
   }
 }
