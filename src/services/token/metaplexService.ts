@@ -4,7 +4,7 @@ import {
   walletAdapterIdentity,
   bundlrStorage as createBundlrStorage
 } from '@metaplex-foundation/js';
-import { TokenMetadata } from './types';
+import { TokenConfig } from './types';
 
 export class MetaplexService {
   private metaplex: Metaplex;
@@ -23,13 +23,13 @@ export class MetaplexService {
     this.metaplex = this.metaplex.use(walletAdapterIdentity(userWallet));
   }
 
-  async uploadMetadata(tokenMetadata: TokenMetadata): Promise<string> {
+  async uploadMetadata(tokenConfig: TokenConfig): Promise<string> {
     try {
       const { uri } = await this.metaplex.nfts().uploadMetadata({
-        name: tokenMetadata.name,
-        symbol: tokenMetadata.symbol,
-        description: tokenMetadata.description,
-        image: tokenMetadata.image
+        name: tokenConfig.name,
+        symbol: tokenConfig.symbol,
+        description: tokenConfig.description,
+        image: tokenConfig.image
       });
       console.log("Metadata uploaded successfully:", uri);
       return uri;

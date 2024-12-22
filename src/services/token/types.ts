@@ -5,6 +5,8 @@ export interface TokenConfig {
   symbol: string;
   description: string;
   image: string;
+  numDecimals: number;
+  numberTokens: number;
 }
 
 export interface OnChainMetadata {
