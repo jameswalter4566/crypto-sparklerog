@@ -1,12 +1,10 @@
-import { PublicKey } from '@solana/web3.js';
-
 export interface TokenConfig {
   name: string;
   symbol: string;
   description: string;
   image: string;
-  numDecimals: number;
-  numberTokens: number;
+  numDecimals: number;   // Added for decimal places
+  numberTokens: number;  // Added for total supply
 }
 
 export interface OnChainMetadata {
