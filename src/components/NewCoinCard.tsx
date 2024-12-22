@@ -23,7 +23,7 @@ export function NewCoinCard({
   const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
 
   return (
-    <a href={`/coin/${id}`} target="_blank" rel="noopener noreferrer" className="block">
+    <a href={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border">
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
