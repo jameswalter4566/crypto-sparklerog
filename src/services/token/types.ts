@@ -16,11 +16,6 @@ export interface TokenMetadata {
   image: string;
 }
 
-export const MINT_CONFIG = {
-  numDecimals: 6,
-  numberTokens: 1337
-};
-
 export interface OnChainMetadata {
   name: string;
   symbol: string;
