@@ -9,7 +9,7 @@ interface NewCoinCardProps {
   name: string;
   symbol: string;
   price: number;
-  change24h: number;
+  change24h: number | null;
   imageUrl?: string;
   mintAddress?: string;
 }
