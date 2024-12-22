@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
-import { ArrowDownUp, Loader2 } from 'lucide-react';
+import { ArrowDownUp, Loader2, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TokenInputsProps {
   amount: string;
@@ -10,6 +11,8 @@ interface TokenInputsProps {
   isLoading?: boolean;
   disabled?: boolean;
 }
+
+const QUICK_BUY_AMOUNTS = [0.25, 0.5, 1, 2, 5, 10];
 
 export const TokenInputs = ({
   amount,
@@ -22,8 +25,23 @@ export const TokenInputs = ({
 }: TokenInputsProps) => {
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        {QUICK_BUY_AMOUNTS.map((value) => (
+          <Button
+            key={value}
+            variant="outline"
+            onClick={() => onAmountChange(value.toString())}
+            disabled={disabled}
+            className="bg-black/30 border-gray-700 hover:bg-black/50"
+          >
+            <DollarSign className="h-4 w-4 mr-1" />
+            {value}
+          </Button>
+        ))}
+      </div>
+
       <div>
-        <label className="block text-sm font-medium mb-1">Amount (SOL)</label>
+        <label className="block text-sm font-medium mb-1">Amount to buy in SOL</label>
         <Input
           type="number"
           placeholder="0.0"
