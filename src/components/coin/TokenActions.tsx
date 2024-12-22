@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { BookmarkPlus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { AskAgentButton } from "./AskAgentButton";
 import { useState } from "react";
 import { CopyAddressButton } from "./CopyAddressButton";
@@ -39,7 +39,7 @@ export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAdd
 
   return (
     <div className="flex items-center gap-2">
-      <CopyAddressButton solanaAddr={solanaAddr} />
+      {solanaAddr && <CopyAddressButton solanaAddr={solanaAddr} />}
 
       <Button
         variant="outline"
