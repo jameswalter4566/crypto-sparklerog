@@ -51,16 +51,15 @@ export class JupiterService {
     
     const swapResult = await execute();
 
-    // Check if the swap was successful and handle the result type correctly
     if ('error' in swapResult) {
       throw new Error(swapResult.error.toString());
     }
 
-    // At this point TypeScript knows swapResult must be the success type
+    // Handle successful swap result
     return {
-      txid: swapResult.signature, // Using signature instead of txid
-      inputAmount: swapResult.inputAmount.toString(),
-      outputAmount: swapResult.outputAmount.toString(),
+      txid: swapResult.txid,
+      inputAmount: swapResult.inputAmount,
+      outputAmount: swapResult.outputAmount,
     };
   }
 }

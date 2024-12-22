@@ -24,8 +24,12 @@ export default defineConfig(({ mode }) => ({
     esbuildOptions: {
       target: 'es2020',
     },
+    include: ['@jup-ag/core']
   },
   build: {
     target: 'es2020',
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    }
   },
 }));
