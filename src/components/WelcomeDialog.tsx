@@ -11,10 +11,15 @@ export const WelcomeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
-    if (!hasSeenWelcome) {
-      setIsOpen(true);
-    }
+    // Add a small delay to prevent flash on initial render
+    const timer = setTimeout(() => {
+      const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
+      if (!hasSeenWelcome) {
+        setIsOpen(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
@@ -23,7 +28,7 @@ export const WelcomeDialog = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md rounded-xl bg-card border-2 border-primary/50 animate-laser-border">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center animate-text-glow">
