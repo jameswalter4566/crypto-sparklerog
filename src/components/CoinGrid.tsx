@@ -3,14 +3,15 @@ import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { useState } from "react";
+import { mockCoins } from "@/data/mockCoins";
 
 interface CoinGridProps {
-  coins: CoinData[];
+  coins?: CoinData[];
   isLoading?: boolean;
 }
 
 export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
-  const [coins] = useState(initialCoins);
+  const [coins] = useState(initialCoins || mockCoins);
 
   if (isLoading) {
     return <div>Loading...</div>;
