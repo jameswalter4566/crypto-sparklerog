@@ -23,7 +23,12 @@ export default defineConfig(({ mode }) => ({
     esbuildOptions: {
       target: 'es2020',
     },
-    include: ['@jup-ag/core', '@jup-ag/common', '@solana/web3.js', 'buffer']
+    include: [
+      '@jup-ag/core',
+      '@solana/web3.js',
+      'buffer',
+      '@jup-ag/common'
+    ]
   },
   build: {
     target: 'es2020',
