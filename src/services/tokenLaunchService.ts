@@ -45,12 +45,7 @@ export class TokenLaunchService {
   async launchToken(config: TokenConfig, wallet: Keypair): Promise<string> {
     try {
       console.log("--- STEP 1: Uploading Metadata ---");
-      const metadataUri = await this.metaplexService.uploadMetadata({
-        name: config.name,
-        symbol: config.symbol,
-        description: config.description,
-        image: config.image,
-      });
+      const metadataUri = await this.metaplexService.uploadMetadata(config);
       console.log("Metadata uploaded successfully:", metadataUri);
 
       const onChainMetadata = {
@@ -58,9 +53,11 @@ export class TokenLaunchService {
         symbol: config.symbol,
         uri: metadataUri,
         sellerFeeBasisPoints: 0,
-        creators: null,
-        collection: null,
-        uses: null,
+        creators: null, // Optional: Add creators if needed
+        collection: null, // Optional: Add collection if applicable
+        uses: null, // Optional: Define usage restrictions if applicable
+        decimals: config.numDecimals, // Include decimals for the token
+        supply: config.numberTokens, // Include total supply
       };
 
       console.log("--- STEP 2: Creating Mint and Metadata PDA ---");
@@ -78,7 +75,9 @@ export class TokenLaunchService {
         wallet,
         wallet.publicKey,
         metadataPDA,
-        onChainMetadata
+        {
+          ...onChainMetadata,
+        }
       );
 
       console.log("--- STEP 4: Compiling and Sending Transaction ---");
@@ -92,6 +91,7 @@ export class TokenLaunchService {
       const transaction = new VersionedTransaction(messageV0);
       transaction.sign([wallet, mintKeypair]);
 
+      console.log("Sending transaction...");
       const transactionId = await this.connection.sendTransaction(transaction);
       console.log("Transaction sent:", transactionId);
 
