@@ -21,15 +21,25 @@ const config: ClientConfig = {
 
 const client = AgoraRTC.createClient(config) as unknown as IAgoraRTCClient;
 
+const VOICE_CHAT_STATE_KEY = 'voiceChatState';
+
 export const VoiceChat = ({ coinId }: VoiceChatProps) => {
-  const [isJoined, setIsJoined] = useState(false);
+  const [isJoined, setIsJoined] = useState(() => {
+    const savedState = localStorage.getItem(VOICE_CHAT_STATE_KEY);
+    if (savedState) {
+      const { joined, channelId } = JSON.parse(savedState);
+      return joined && channelId === coinId;
+    }
+    return false;
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [walletConnected, setWalletConnected] = useState(false);
   const [userProfile, setUserProfile] = useState<{
     wallet_address: string;
     display_name: string | null;
     avatar_url: string | null;
   } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [walletConnected, setWalletConnected] = useState(false);
 
   const checkWalletAndProfile = useCallback(async () => {
     try {
@@ -42,7 +52,6 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
         console.log("Wallet connected:", address);
         setWalletConnected(true);
         
-        // Fetch user's profile from Supabase
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('wallet_address, display_name, avatar_url')
@@ -71,6 +80,18 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   }, []);
 
   useEffect(() => {
+    // Save voice chat state to localStorage whenever it changes
+    if (isJoined) {
+      localStorage.setItem(VOICE_CHAT_STATE_KEY, JSON.stringify({
+        joined: true,
+        channelId: coinId
+      }));
+    } else {
+      localStorage.removeItem(VOICE_CHAT_STATE_KEY);
+    }
+  }, [isJoined, coinId]);
+
+  useEffect(() => {
     // Initial check on mount
     checkWalletAndProfile();
 
@@ -81,7 +102,6 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
       return;
     }
 
-    // Define event handlers so we can remove them later
     const onConnect = () => {
       console.log("Wallet connected event");
       checkWalletAndProfile();
@@ -90,19 +110,28 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
       console.log("Wallet disconnected event");
       setWalletConnected(false);
       setUserProfile(null);
-      if (isJoined) {
-        setIsJoined(false);
-      }
+      handleLeaveVoiceChat();
     };
 
     solana.on('connect', onConnect);
     solana.on('disconnect', onDisconnect);
+
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isJoined) {
+        console.log("Page became visible, checking connection status");
+        checkWalletAndProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (solana) {
         solana.removeListener('connect', onConnect);
         solana.removeListener('disconnect', onDisconnect);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [checkWalletAndProfile, isJoined]);
 
@@ -120,6 +149,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
 
   const handleLeaveVoiceChat = () => {
     setIsJoined(false);
+    localStorage.removeItem(VOICE_CHAT_STATE_KEY);
   };
 
   return (
