@@ -17,9 +17,17 @@ export const WalletConnect = () => {
 
   const fetchBalance = async (address: string) => {
     try {
-      const connection = new Connection("https://api.mainnet-beta.solana.com");
+      // @ts-ignore
+      const { solana } = window;
+      if (!solana?.isPhantom) return;
+
+      const connection = new Connection(
+        "https://api.mainnet-beta.solana.com",
+        "confirmed"
+      );
       const publicKey = new PublicKey(address);
       const balance = await connection.getBalance(publicKey);
+      console.log("Fetched balance:", balance / LAMPORTS_PER_SOL); // Debug log
       setBalance(balance / LAMPORTS_PER_SOL);
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -72,7 +80,10 @@ export const WalletConnect = () => {
       const address = response.publicKey.toString();
       setWalletAddress(address);
       setConnected(true);
-      fetchBalance(address);
+      
+      // Fetch balance immediately after connection
+      await fetchBalance(address);
+      console.log("Connected with address:", address); // Debug log
 
       toast.success("Wallet connected!");
       await loadProfile(address);
@@ -137,7 +148,8 @@ export const WalletConnect = () => {
           const address = response.publicKey.toString();
           setWalletAddress(address);
           setConnected(true);
-          fetchBalance(address);
+          await fetchBalance(address);
+          console.log("Reconnected with address:", address); // Debug log
 
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
@@ -174,7 +186,7 @@ export const WalletConnect = () => {
       {connected ? (
         <div className="fixed top-4 right-4 flex items-center gap-4">
           {balance !== null && (
-            <div className="text-primary font-medium">
+            <div className="text-purple-500 font-medium text-lg">
               {balance.toFixed(2)} SOL
             </div>
           )}
