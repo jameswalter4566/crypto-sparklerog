@@ -1,22 +1,18 @@
-import { Connection, PublicKey, Keypair } from "@solana/web3.js";
-import { 
-  Metaplex,
-  walletAdapterIdentity,
-  bundlrStorage as createBundlrStorage
-} from '@metaplex-foundation/js';
-import { TokenConfig } from './types';
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Metaplex, walletAdapterIdentity, bundlrStorage } from "@metaplex-foundation/js";
+import { TokenConfig } from "./types";
 
 export class MetaplexService {
   private metaplex: Metaplex;
 
   constructor(connection: Connection) {
-    const bundlrStorage = createBundlrStorage({
-      address: 'https://devnet.bundlr.network',
-      providerUrl: 'https://api.devnet.solana.com',
-      timeout: 60000,
-    });
-
-    this.metaplex = Metaplex.make(connection).use(bundlrStorage);
+    this.metaplex = Metaplex.make(connection).use(
+      bundlrStorage({
+        address: "https://devnet.bundlr.network",
+        providerUrl: "https://api.devnet.solana.com",
+        timeout: 60000,
+      })
+    );
   }
 
   initializeWallet(userWallet: Keypair): void {
@@ -29,9 +25,12 @@ export class MetaplexService {
         name: tokenConfig.name,
         symbol: tokenConfig.symbol,
         description: tokenConfig.description,
-        image: tokenConfig.image
+        image: tokenConfig.image,
+        properties: {
+          numDecimals: tokenConfig.numDecimals,
+          numberTokens: tokenConfig.numberTokens,
+        },
       });
-      console.log("Metadata uploaded successfully:", uri);
       return uri;
     } catch (error) {
       console.error("Error uploading metadata:", error);
