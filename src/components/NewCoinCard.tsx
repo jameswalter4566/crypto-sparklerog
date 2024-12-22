@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
+import { CoinPrice } from "@/components/coin/CoinPrice";
+import { PriceChange } from "@/components/coin/PriceChange";
 
 interface NewCoinCardProps {
   id: string;
@@ -23,21 +23,6 @@ export function NewCoinCard({
   imageUrl,
   mintAddress 
 }: NewCoinCardProps) {
-  const [currentPrice, setCurrentPrice] = useState(price);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const fluctuation = price * (Math.random() * 0.002 - 0.001);
-      setCurrentPrice(price + fluctuation);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [price]);
-
-  const formatPrice = (p: number) => {
-    return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
-  };
-
   const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
 
   return (
@@ -60,20 +45,11 @@ export function NewCoinCard({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span className="text-lg sm:text-xl font-bold transition-all duration-300 text-center sm:text-left">
-              {formatPrice(currentPrice)}
-            </span>
-            <span
-              className={`${
-                change24h >= 0 ? "text-secondary" : "text-red-500"
-              } font-semibold`}
-            >
-              {change24h >= 0 ? "+" : ""}
-              {change24h.toFixed(2)}%
-            </span>
+            <CoinPrice initialPrice={price} />
+            <PriceChange change24h={change24h} />
           </div>
         </CardContent>
       </Card>
     </a>
   );
-};
+}
