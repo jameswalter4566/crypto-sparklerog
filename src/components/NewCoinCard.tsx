@@ -24,7 +24,7 @@ export function NewCoinCard({
 
   return (
     <a href={`/coin/${id}`} target="_blank" rel="noopener noreferrer" className="block">
-      <Card className="hover:bg-gray-900 transition-colors h-full">
+      <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border">
         <CardHeader className="p-3 sm:p-4">
           <div className="flex flex-col items-center gap-2 sm:gap-4">
             <Avatar className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48">
