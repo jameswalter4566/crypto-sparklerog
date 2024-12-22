@@ -2,36 +2,19 @@ import { NewCoinCard } from "./NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { mockCoins } from "@/data/mockCoins";
 
 interface CoinGridProps {
   coins?: CoinData[];
   isLoading?: boolean;
 }
 
-const fetchCoins = async () => {
-  const { data, error } = await supabase
-    .from('coins')
-    .select('*')
-    .order('created_at', { ascending: false });
-    
-  if (error) throw error;
-  return data;
-};
+export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
+  const [coins] = useState(initialCoins || mockCoins);
 
-export function CoinGrid({ coins: initialCoins, isLoading: propIsLoading }: CoinGridProps) {
-  const { data: coins, isLoading } = useQuery({
-    queryKey: ['coins'],
-    queryFn: fetchCoins,
-  });
-
-  if (isLoading || propIsLoading) {
+  if (isLoading) {
     return <div>Loading...</div>;
-  }
-
-  if (!coins || coins.length === 0) {
-    return <div>No coins found</div>;
   }
 
   return (
@@ -50,9 +33,9 @@ export function CoinGrid({ coins: initialCoins, isLoading: propIsLoading }: Coin
             id={coin.id}
             name={coin.name}
             symbol={coin.symbol}
-            price={coin.price || 0}
-            change24h={coin.change_24h || 0}
-            imageUrl={coin.image_url}
+            price={coin.price}
+            change24h={coin.change_24h}
+            imageUrl={coin.imageUrl}
           />
         ))}
       </div>
