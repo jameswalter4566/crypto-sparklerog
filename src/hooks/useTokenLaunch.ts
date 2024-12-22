@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TokenConfig, tokenLaunchService } from '@/services/tokenLaunchService';
+import { tokenLaunchService } from '@/services/tokenLaunchService';
+import { TokenConfig } from '@/services/token/types';
 import { Keypair } from '@solana/web3.js';
 import { toast } from 'sonner';
 
