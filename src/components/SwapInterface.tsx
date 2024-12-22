@@ -7,19 +7,34 @@ import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap } from '@/services/jupiter/swapService';
 import { Transaction, VersionedTransaction, Connection } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { Loader2 } from 'lucide-react';
 
-// Use a more reliable RPC endpoint
-const connection = new Connection('https://api.mainnet-beta.solana.com');
+// Use environment variable for RPC endpoint
+const connection = new Connection(
+  import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'
+);
 
 export const SwapInterface = () => {
   const [amount, setAmount] = useState('');
   const [tokenAddress, setTokenAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [priceQuote, setPriceQuote] = useState<number | null>(null);
+
+  const validateAmount = (value: string): boolean => {
+    const numValue = Number(value);
+    return !isNaN(numValue) && numValue > 0 && numValue <= 100000; // Add reasonable upper limit
+  };
 
   const handleAmountChange = async (value: string) => {
     setAmount(value);
+    if (!validateAmount(value)) {
+      setPriceQuote(null);
+      return;
+    }
+
     if (value && tokenAddress && isValidSolanaAddress(tokenAddress)) {
+      setIsQuoteLoading(true);
       try {
         const price = await fetchPriceQuote(tokenAddress, value);
         if (price) {
@@ -27,14 +42,17 @@ export const SwapInterface = () => {
         }
       } catch (error) {
         console.error('Price quote error:', error);
-        toast.error('Failed to fetch price quote');
+        toast.error('Failed to fetch price quote. Please try again.');
+      } finally {
+        setIsQuoteLoading(false);
       }
     }
   };
 
   const handleTokenAddressChange = async (value: string) => {
     setTokenAddress(value);
-    if (amount && value && isValidSolanaAddress(value)) {
+    if (amount && validateAmount(amount) && value && isValidSolanaAddress(value)) {
+      setIsQuoteLoading(true);
       try {
         const price = await fetchPriceQuote(value, amount);
         if (price) {
@@ -42,17 +60,21 @@ export const SwapInterface = () => {
         }
       } catch (error) {
         console.error('Price quote error:', error);
-        toast.error('Failed to fetch price quote');
+        toast.error('Failed to fetch price quote. Please try again.');
+      } finally {
+        setIsQuoteLoading(false);
       }
     }
   };
 
   const handleSwap = async () => {
-    if (!amount || !tokenAddress) {
-      toast.error("Please enter amount and token address");
+    // Validate amount
+    if (!validateAmount(amount)) {
+      toast.error('Please enter a valid amount between 0 and 100,000 SOL');
       return;
     }
 
+    // Validate token address
     if (!isValidSolanaAddress(tokenAddress)) {
       toast.error('Please enter a valid Solana token address');
       return;
@@ -60,15 +82,17 @@ export const SwapInterface = () => {
 
     setIsLoading(true);
     try {
-      // @ts-ignore - we'll properly type this later
+      // Check for Phantom wallet
       const { solana } = window;
       if (!solana?.isPhantom) {
-        throw new Error("Please install Phantom wallet");
+        throw new Error('Please install the Phantom wallet extension');
       }
 
+      // Connect to wallet
       const response = await solana.connect();
       const userPublicKey = response.publicKey;
 
+      // Get swap transaction
       const { swapTransaction } = await executeSwap(tokenAddress, amount, userPublicKey.toString());
       
       // Convert the base64 transaction to a Buffer
@@ -105,7 +129,10 @@ export const SwapInterface = () => {
       });
     } catch (error) {
       console.error('Swap error:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to swap tokens");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to swap tokens. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -121,14 +148,23 @@ export const SwapInterface = () => {
         onAmountChange={handleAmountChange}
         onTokenAddressChange={handleTokenAddressChange}
         priceQuote={priceQuote}
+        isLoading={isQuoteLoading}
+        disabled={isLoading}
       />
 
       <Button 
         onClick={handleSwap} 
-        disabled={isLoading || !amount || !tokenAddress}
+        disabled={isLoading || !amount || !tokenAddress || isQuoteLoading}
         className="w-full mt-4"
       >
-        {isLoading ? "Swapping..." : "Swap"}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Swapping...
+          </>
+        ) : (
+          'Swap'
+        )}
       </Button>
     </Card>
   );
