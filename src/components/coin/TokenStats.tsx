@@ -8,11 +8,23 @@ interface TokenStatsProps {
 
 export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps) => {
   const formatValue = (value: number | null): string => {
-    if (typeof value !== "number" || isNaN(value)) {
+    if (value === null || isNaN(value)) {
       return "N/A";
     }
+
+    // Format large numbers with appropriate suffixes
+    if (value >= 1e9) {
+      return `$${(value / 1e9).toFixed(2)}B`;
+    } else if (value >= 1e6) {
+      return `$${(value / 1e6).toFixed(2)}M`;
+    } else if (value >= 1e3) {
+      return `$${(value / 1e3).toFixed(2)}K`;
+    }
+    
     return `$${value.toLocaleString()}`;
   };
+
+  console.log('Market Cap value:', marketCap); // Debug log
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
