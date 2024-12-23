@@ -1,5 +1,13 @@
-// Import necessary modules
-import fetch from 'node-fetch'; // Ensure fetch is imported or available in your environment
+// Remove node-fetch import as fetch is globally available in Deno
+// Import necessary types
+interface TerminalData {
+  name: string;
+  symbol: string;
+  price: number;
+  total_supply: number;
+  coingecko_coin_id: string;
+  [key: string]: any;
+}
 
 // HELPER FUNCTION: Fetch terminal data from CoinGecko Terminal API
 const fetchTerminalData = async (solana_addr: string) => {
@@ -62,10 +70,10 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
     return {
       market_cap: market_cap?.usd || null,
       homepage: homepage?.[0] || null,
-      blockchain_site: blockchain_site?.filter((url) => url) || null,
-      official_forum_url: official_forum_url?.filter((url) => url) || null,
-      chat_url: chat_url?.filter((url) => url) || null,
-      announcement_url: announcement_url?.filter((url) => url) || null,
+      blockchain_site: blockchain_site?.filter((url: string) => url) || null,
+      official_forum_url: official_forum_url?.filter((url: string) => url) || null,
+      chat_url: chat_url?.filter((url: string) => url) || null,
+      announcement_url: announcement_url?.filter((url: string) => url) || null,
       twitter_screen_name: twitter_screen_name || null,
     };
   } catch (err) {
@@ -77,8 +85,8 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
 // HANDLER FUNCTION: Serve requests and combine data
 Deno.serve(async (req) => {
   try {
-    const url = new URL(req.url);
-    const solana_addr = url.searchParams.get("solana_addr");
+    // Parse the request body for POST requests
+    const { solana_addr } = await req.json();
 
     if (!solana_addr) {
       return new Response(
