@@ -10,12 +10,11 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
   
   try {
-    const response = await fetch(`https://pump.fun/coin/${tokenAddress}`, {
+    const response = await fetch(`https://pump.fun/api/coin/${tokenAddress}`, {
       method: 'GET',
       headers: {
-        'Accept': '*/*',
+        'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Cache-Control': 'no-cache'
       },
     });
 
@@ -25,13 +24,17 @@ async function fetchPumpFunData(tokenAddress: string) {
     }
 
     const data = await response.json();
-    console.log('Successfully fetched Pump.fun data:', data);
+    console.log('Raw Pump.fun response:', data);
     
+    if (!data || !data.name) {
+      throw new Error('Invalid data received from Pump.fun');
+    }
+
     // Transform Pump.fun data to match our schema
     return {
       id: tokenAddress,
-      name: data.name || "Unknown Token",
-      symbol: data.symbol || "???",
+      name: data.name,
+      symbol: data.symbol,
       price: data.price || null,
       market_cap: data.marketCap || null,
       volume_24h: data.volume24h || null,
@@ -54,7 +57,7 @@ async function fetchPumpFunData(tokenAddress: string) {
     };
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw error;
+    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
   }
 }
 
@@ -76,10 +79,7 @@ serve(async (req) => {
 
     // Fetch from Pump.fun
     const pumpData = await fetchPumpFunData(id);
-    
-    if (!pumpData) {
-      throw new Error('Failed to fetch token data from Pump.fun');
-    }
+    console.log('Processed Pump.fun data:', pumpData);
 
     // Update database with new data
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
