@@ -35,6 +35,15 @@ interface CoinGeckoResponse {
     total_volume?: {
       usd?: number;
     };
+    price_change_percentage_24h?: number;
+  };
+  links?: {
+    homepage?: string[];
+    blockchain_site?: string[];
+    official_forum_url?: string[];
+    chat_url?: string[];
+    announcement_url?: string[];
+    twitter_screen_name?: string;
   };
 }
 
@@ -56,15 +65,21 @@ serve(async (req) => {
     const response = await fetch(
       `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${solana_addr}`,
       {
-        headers: { accept: 'application/json' }
+        headers: { 
+          'accept': 'application/json',
+          'User-Agent': 'Solana Token Tracker/1.0'
+        }
       }
     );
 
     if (!response.ok) {
+      console.error('GeckoTerminal API error:', await response.text());
       throw new Error(`GeckoTerminal API error: ${response.status}`);
     }
 
     const data: CoinGeckoTerminalResponse = await response.json();
+    console.log('GeckoTerminal response:', JSON.stringify(data, null, 2));
+    
     const attributes = data?.data?.attributes;
 
     if (!attributes) {
@@ -72,7 +87,7 @@ serve(async (req) => {
     }
 
     // If we have a CoinGecko ID, fetch additional data from CoinGecko
-    let coinGeckoMarketCap = null;
+    let coinGeckoData = null;
     if (attributes.coingecko_coin_id) {
       try {
         console.log('Fetching CoinGecko data for ID:', attributes.coingecko_coin_id);
@@ -81,15 +96,15 @@ serve(async (req) => {
           {
             headers: {
               'accept': 'application/json',
-              'x-cg-demo-api-key': 'CG-FPFWTmsu6NTuzHvntsXiRxJJ'
+              'x-cg-demo-api-key': 'CG-FPFWTmsu6NTuzHvntsXiRxJJ',
+              'User-Agent': 'Solana Token Tracker/1.0'
             }
           }
         );
 
         if (geckoResponse.ok) {
-          const geckoData: CoinGeckoResponse = await geckoResponse.json();
-          coinGeckoMarketCap = geckoData.market_data?.market_cap?.usd || null;
-          console.log('CoinGecko market cap:', coinGeckoMarketCap);
+          coinGeckoData = await geckoResponse.json() as CoinGeckoResponse;
+          console.log('CoinGecko data:', JSON.stringify(coinGeckoData, null, 2));
         } else {
           console.error('Failed to fetch CoinGecko data:', await geckoResponse.text());
         }
@@ -99,10 +114,11 @@ serve(async (req) => {
     }
 
     // Calculate market cap if not directly provided
-    const marketCap = coinGeckoMarketCap || attributes.market_cap || 
-      (attributes.price && attributes.circulating_supply 
-        ? attributes.price * attributes.circulating_supply 
-        : null);
+    const marketCap = coinGeckoData?.market_data?.market_cap?.usd || 
+                     attributes.market_cap || 
+                     (attributes.price && attributes.circulating_supply 
+                       ? attributes.price * attributes.circulating_supply 
+                       : null);
 
     console.log('Final market cap value:', marketCap);
 
@@ -129,6 +145,12 @@ serve(async (req) => {
       decimals: attributes.decimals,
       image_url: attributes.image_url,
       solana_addr: solana_addr,
+      homepage: coinGeckoData?.links?.homepage?.[0] || null,
+      blockchain_site: coinGeckoData?.links?.blockchain_site || null,
+      official_forum_url: coinGeckoData?.links?.official_forum_url || null,
+      chat_url: coinGeckoData?.links?.chat_url || null,
+      announcement_url: coinGeckoData?.links?.announcement_url || null,
+      twitter_screen_name: coinGeckoData?.links?.twitter_screen_name || null,
       updated_at: new Date().toISOString()
     };
 
