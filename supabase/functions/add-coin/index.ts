@@ -1,133 +1,132 @@
-// Remove node-fetch import as fetch is globally available in Deno
-// Import necessary types
-interface TerminalData {
-  name: string;
-  symbol: string;
-  price: number;
-  total_supply: number;
-  coingecko_coin_id: string;
-  [key: string]: any;
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface CoinGeckoTerminalResponse {
+  data?: {
+    attributes?: {
+      name: string;
+      symbol: string;
+      price: number;
+      volume_24h: number;
+      liquidity: number;
+      total_supply: number;
+      circulating_supply: number;
+      non_circulating_supply: number;
+      coingecko_coin_id: string | null;
+      description: string | null;
+      token_standard: string | null;
+      decimals: number | null;
+      image_url: string | null;
+      market_cap: number | null;
+    }
+  }
 }
 
-// HELPER FUNCTION: Fetch terminal data from CoinGecko Terminal API
-const fetchTerminalData = async (solana_addr: string) => {
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
+    const { solana_addr } = await req.json();
+    
+    if (!solana_addr) {
+      throw new Error('Solana address is required');
+    }
+
+    console.log('Fetching data for Solana address:', solana_addr);
+
+    // Fetch data from GeckoTerminal API
     const response = await fetch(
       `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${solana_addr}`,
       {
-        method: "GET",
-        headers: { accept: "application/json" },
+        headers: { accept: 'application/json' }
       }
     );
 
     if (!response.ok) {
-      console.warn(`Failed to fetch CoinGecko Terminal API. Status: ${response.status}`);
-      return null;
+      throw new Error(`GeckoTerminal API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data?.data?.attributes || null;
-  } catch (err) {
-    console.error("Error fetching CoinGecko Terminal API:", err);
-    return null;
-  }
-};
+    const data: CoinGeckoTerminalResponse = await response.json();
+    const attributes = data?.data?.attributes;
 
-// HELPER FUNCTION: Fetch detailed main CoinGecko data
-const fetchMainCoinGeckoData = async (coingecko_id: string) => {
-  try {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coingecko_id}?localization=false`,
-      {
-        method: "GET",
-        headers: {
-          accept: "application/json",
-          "x-cg-demo-api-key": "CG-FPFWTmsu6NTuzHvntsXiRxJJ",
-        },
-      }
+    if (!attributes) {
+      throw new Error('No token data found');
+    }
+
+    // Calculate market cap if not directly provided
+    const marketCap = attributes.market_cap || 
+      (attributes.price && attributes.circulating_supply 
+        ? attributes.price * attributes.circulating_supply 
+        : null);
+
+    console.log('Calculated market cap:', marketCap);
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    if (!response.ok) {
-      console.warn(`Failed to fetch main CoinGecko API. Status: ${response.status}`);
-      return null;
-    }
-
-    const data = await response.json();
-
-    // Extract required fields
-    const {
-      market_data: { market_cap },
-      links: {
-        homepage,
-        blockchain_site,
-        official_forum_url,
-        chat_url,
-        announcement_url,
-        twitter_screen_name,
-      },
-    } = data;
-
-    return {
-      market_cap: market_cap?.usd || null,
-      homepage: homepage?.[0] || null,
-      blockchain_site: blockchain_site?.filter((url: string) => url) || null,
-      official_forum_url: official_forum_url?.filter((url: string) => url) || null,
-      chat_url: chat_url?.filter((url: string) => url) || null,
-      announcement_url: announcement_url?.filter((url: string) => url) || null,
-      twitter_screen_name: twitter_screen_name || null,
+    // Prepare coin data for database
+    const coinData = {
+      id: solana_addr,
+      name: attributes.name,
+      symbol: attributes.symbol,
+      price: attributes.price,
+      market_cap: marketCap,
+      volume_24h: attributes.volume_24h,
+      liquidity: attributes.liquidity,
+      total_supply: attributes.total_supply,
+      circulating_supply: attributes.circulating_supply,
+      non_circulating_supply: attributes.non_circulating_supply,
+      coingecko_id: attributes.coingecko_coin_id,
+      description: attributes.description,
+      decimals: attributes.decimals,
+      image_url: attributes.image_url,
+      solana_addr: solana_addr,
+      updated_at: new Date().toISOString()
     };
-  } catch (err) {
-    console.error("Error fetching main CoinGecko API:", err);
-    return null;
-  }
-};
 
-// HANDLER FUNCTION: Serve requests and combine data
-Deno.serve(async (req) => {
-  try {
-    // Parse the request body for POST requests
-    const { solana_addr } = await req.json();
+    // Insert or update coin data in database
+    const { error: upsertError } = await supabaseClient
+      .from('coins')
+      .upsert(coinData);
 
-    if (!solana_addr) {
-      return new Response(
-        JSON.stringify({ error: "Solana address is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    if (upsertError) {
+      console.error('Database error:', upsertError);
+      throw new Error('Failed to save coin data');
     }
-
-    // Fetch terminal data
-    const terminalData = await fetchTerminalData(solana_addr);
-    if (!terminalData) {
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch terminal data" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const coingecko_id = terminalData.coingecko_coin_id || null;
-
-    // Fetch additional data if coingecko_id exists
-    const mainData = coingecko_id ? await fetchMainCoinGeckoData(coingecko_id) : null;
-
-    // Combine all fetched data
-    const responseData = {
-      solana_addr,
-      terminalData,
-      mainData,
-    };
 
     return new Response(
-      JSON.stringify(responseData),
-      { headers: { "Content-Type": "application/json" } }
+      JSON.stringify(coinData),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
     );
+
   } catch (error) {
-    console.error("Error in add-coin function:", error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+      }),
+      { 
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
     );
   }
 });
-
-// Export functions for reuse
-export { fetchTerminalData, fetchMainCoinGeckoData };
