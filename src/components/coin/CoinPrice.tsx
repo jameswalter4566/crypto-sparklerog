@@ -15,7 +15,8 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
 
     const interval = setInterval(() => {
       const fluctuation = initialPrice * (Math.random() * 0.002 - 0.001);
-      setCurrentPrice(prev => prev !== null ? initialPrice + fluctuation : null);
+      const newPrice = initialPrice + fluctuation;
+      setCurrentPrice(typeof newPrice === 'number' && !isNaN(newPrice) ? newPrice : null);
     }, 2000);
 
     return () => clearInterval(interval);
@@ -25,7 +26,7 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
     if (p === null || typeof p !== 'number' || isNaN(p)) {
       return 'Price not available';
     }
-    return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
+    return `Price SOL ${p.toFixed(6)}`;
   };
 
   return (

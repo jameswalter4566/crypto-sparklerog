@@ -46,8 +46,16 @@ export function NewCoinCard({
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
             <Avatar className="h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32">
-              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
-              <AvatarFallback className="text-lg">{symbolFallback}</AvatarFallback>
+              <AvatarImage 
+                src={imageUrl || "/placeholder.svg"} 
+                alt={name} 
+                className="object-cover"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.src = "/placeholder.svg";
+                }}
+              />
+              <AvatarFallback>{symbolFallback}</AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-1">
               <CopyAddressButton solanaAddr={mintAddress} />
