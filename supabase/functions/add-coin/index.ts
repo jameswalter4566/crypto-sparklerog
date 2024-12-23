@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { calculateMarketCap } from "../_shared/market-cap.ts";
-import { fetchCoinGeckoData } from "../_shared/coingecko.ts";
-import { CoinGeckoTerminalResponse } from "../_shared/types.ts";
+import { fetchSolscanData } from "../_shared/solscan.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,32 +21,14 @@ serve(async (req) => {
 
     console.log('Fetching data for Solana address:', solana_addr);
 
-    // Fetch data from GeckoTerminal API
-    const response = await fetch(
-      `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${solana_addr}`,
-      {
-        headers: { 
-          'accept': 'application/json',
-          'User-Agent': 'Solana Token Tracker/1.0'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      console.error('GeckoTerminal API error:', await response.text());
-      throw new Error(`GeckoTerminal API error: ${response.status}`);
-    }
-
-    const data: CoinGeckoTerminalResponse = await response.json();
-    console.log('GeckoTerminal response:', JSON.stringify(data, null, 2));
+    // Fetch data from Solscan API
+    const solscanData = await fetchSolscanData(solana_addr);
     
-    const attributes = data?.data?.attributes;
-    if (!attributes) {
-      throw new Error('No token data found');
+    if (!solscanData?.success) {
+      throw new Error('Failed to fetch token data from Solscan');
     }
 
-    // Fetch CoinGecko Pro data
-    const coinGeckoData = await fetchCoinGeckoData(solana_addr);
+    const tokenData = solscanData.data;
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -56,38 +36,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const marketCap = calculateMarketCap(
-      coinGeckoData?.data?.market_data?.market_cap?.usd,
-      attributes.market_cap,
-      attributes.price,
-      attributes.circulating_supply
-    );
-
-    console.log('Final market cap value:', marketCap);
-
     // Prepare coin data for database
     const coinData = {
       id: solana_addr,
-      name: attributes.name,
-      symbol: attributes.symbol,
-      price: attributes.price,
-      market_cap: marketCap,
-      volume_24h: attributes.volume_24h,
-      liquidity: attributes.liquidity,
-      total_supply: attributes.total_supply,
-      circulating_supply: attributes.circulating_supply,
-      non_circulating_supply: attributes.non_circulating_supply,
-      coingecko_id: attributes.coingecko_coin_id,
-      description: attributes.description,
-      decimals: attributes.decimals,
-      image_url: attributes.image_url,
+      name: tokenData.name,
+      symbol: tokenData.symbol,
+      price: tokenData.price,
+      market_cap: tokenData.marketcap,
+      volume_24h: tokenData.volume24h,
+      change_24h: tokenData.priceChange24h,
+      total_supply: tokenData.supply,
+      decimals: tokenData.decimals,
+      image_url: tokenData.icon,
       solana_addr: solana_addr,
-      homepage: coinGeckoData?.data?.links?.homepage?.[0] || null,
-      blockchain_site: coinGeckoData?.data?.links?.blockchain_site || null,
-      official_forum_url: coinGeckoData?.data?.links?.official_forum_url || null,
-      chat_url: coinGeckoData?.data?.links?.chat_url || null,
-      announcement_url: coinGeckoData?.data?.links?.announcement_url || null,
-      twitter_screen_name: coinGeckoData?.data?.links?.twitter_screen_name || null,
+      twitter_screen_name: tokenData.twitter?.replace('https://twitter.com/', ''),
+      homepage: tokenData.website,
       updated_at: new Date().toISOString()
     };
 
