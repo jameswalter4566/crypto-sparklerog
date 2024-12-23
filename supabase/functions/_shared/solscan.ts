@@ -23,7 +23,7 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
     
     // Using the public endpoint with proper error handling
     const response = await fetch(
-      `https://public-api.solscan.io/token/meta?tokenAddress=${address}`,
+      `https://api.solscan.io/token/meta?tokenAddress=${address}`,
       {
         headers: {
           'accept': 'application/json'
@@ -57,11 +57,11 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       throw new Error('Invalid response format from Solscan');
     }
 
-    // For the public API, the response structure is slightly different
+    // Transform the response to match our expected format
     const tokenData = {
       success: true,
       data: {
-        tokenAddress: data.address || address,
+        tokenAddress: address,
         symbol: data.symbol || 'UNKNOWN',
         name: data.name || 'Unknown Token',
         icon: data.icon || '',

@@ -25,6 +25,7 @@ serve(async (req) => {
     let solscanData;
     try {
       solscanData = await fetchSolscanData(solana_addr);
+      console.log('Successfully fetched Solscan data:', solscanData);
     } catch (error) {
       console.error('Solscan API error:', error);
       throw new Error(`Failed to fetch token data: ${error.message}`);
