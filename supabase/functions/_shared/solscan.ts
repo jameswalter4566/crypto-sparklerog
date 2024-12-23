@@ -10,8 +10,16 @@ const corsHeaders = {
 async function fetchTokenMetadata(address: string) {
   try {
     console.log('Fetching token metadata for:', address);
-    const connection = new Connection('https://api.mainnet-beta.solana.com');
+    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     
+    // Validate address format
+    try {
+      new PublicKey(address);
+    } catch (e) {
+      console.error('Invalid address format:', e);
+      return null;
+    }
+
     // Get token metadata
     const mint = new PublicKey(address);
     const metadataPDA = PublicKey.findProgramAddressSync(
@@ -23,16 +31,20 @@ async function fetchTokenMetadata(address: string) {
       new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
     )[0];
 
+    console.log('Attempting to fetch metadata from PDA:', metadataPDA.toString());
     const metadataAccount = await connection.getAccountInfo(metadataPDA);
+    
     if (!metadataAccount) {
-      console.log('No metadata found for token');
+      console.log('No metadata account found for token');
       return null;
     }
 
+    console.log('Metadata account found, deserializing data');
     const metadata = Metadata.deserialize(metadataAccount.data)[0];
+    console.log('Deserialized metadata:', JSON.stringify(metadata.data, null, 2));
     return metadata;
   } catch (error) {
-    console.error('Error fetching token metadata:', error);
+    console.error('Error in fetchTokenMetadata:', error);
     return null;
   }
 }
@@ -86,11 +98,13 @@ export async function fetchSolscanData(address: string) {
   try {
     console.log('Starting token data fetch for address:', address);
     
-    // Try DexScreener first for market data
-    const dexScreenerData = await fetchDexScreener(address);
-    
-    // Fetch token metadata regardless of DexScreener result
+    // Try to fetch token metadata first
     const metadata = await fetchTokenMetadata(address);
+    console.log('Metadata fetch result:', metadata ? 'Success' : 'Failed');
+    
+    // Then try DexScreener for market data
+    const dexScreenerData = await fetchDexScreener(address);
+    console.log('DexScreener fetch result:', dexScreenerData ? 'Success' : 'Failed');
     
     if (dexScreenerData) {
       console.log('Successfully fetched data from DexScreener');
@@ -115,7 +129,7 @@ export async function fetchSolscanData(address: string) {
           symbol: metadata.data.symbol || 'UNKNOWN',
           name: metadata.data.name || 'Unknown Token',
           description: metadata.data.description || null,
-          decimals: 0,
+          decimals: metadata.data.sellerFeeBasisPoints || 0,
           price: 0,
           volume24h: 0,
           priceChange24h: 0,
