@@ -8,9 +8,9 @@ const corsHeaders = {
 
 async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
-  
+
   try {
-    const response = await fetch(`https://frontend-api.pump.fun/coins/${tokenAddress}`, {
+    const response = await fetch(`https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -24,36 +24,40 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error(`Pump.fun API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log('Raw Pump.fun response:', data);
+    const rawData = await response.json();
+    console.log('Raw API response:', rawData);
+
+    const tokenData = rawData.coins?.find((coin: any) => coin.mint === tokenAddress);
     
-    if (!data || !data.name) {
-      throw new Error('Invalid data received from Pump.fun');
+    if (!tokenData) {
+      throw new Error('Token not found in Pump.fun response');
     }
+
+    console.log('Found token data:', tokenData);
 
     return {
       id: tokenAddress,
-      name: data.name,
-      symbol: data.symbol || 'UNKNOWN',
-      price: data.price || null,
-      market_cap: data.marketCap || null,
-      volume_24h: data.volume24h || null,
-      total_supply: data.totalSupply || null,
-      image_url: data.image || null,
+      name: tokenData.name || 'Unknown Token',
+      symbol: tokenData.symbol || '???',
+      price: tokenData.price || tokenData.market_cap || null,
+      market_cap: tokenData.usd_market_cap || null,
+      volume_24h: tokenData.volume_24h || null,
+      total_supply: tokenData.total_supply || null,
+      image_url: tokenData.image_uri || null,
       solana_addr: tokenAddress,
-      description: data.description || null,
-      decimals: data.decimals || null,
+      description: tokenData.description || null,
+      decimals: tokenData.decimals || null,
       updated_at: new Date().toISOString(),
-      liquidity: data.liquidity || null,
-      change_24h: data.priceChange24h || null,
-      circulating_supply: data.circulatingSupply || null,
-      non_circulating_supply: data.nonCirculatingSupply || null,
-      historic_data: data.historicData || null,
-      homepage: data.homepage || null,
-      blockchain_site: data.blockchainSite || null,
-      chat_url: data.chatUrl || null,
-      announcement_url: data.announcementUrl || null,
-      twitter_screen_name: data.twitterScreenName || null,
+      liquidity: tokenData.virtual_sol_reserves || null,
+      change_24h: tokenData.price_change_24h || null,
+      circulating_supply: tokenData.circulating_supply || null,
+      non_circulating_supply: tokenData.non_circulating_supply || null,
+      historic_data: tokenData.historic_data || null,
+      homepage: tokenData.website || null,
+      blockchain_site: tokenData.metadata_uri ? [tokenData.metadata_uri] : null,
+      chat_url: tokenData.telegram ? [tokenData.telegram] : null,
+      announcement_url: null,
+      twitter_screen_name: tokenData.twitter || null,
     };
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
@@ -62,26 +66,23 @@ async function fetchPumpFunData(tokenAddress: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+    const tokenAddress = url.searchParams.get('id');
 
-    if (!id) {
+    if (!tokenAddress) {
       throw new Error('Token ID is required');
     }
 
-    console.log('Processing request for token:', id);
+    console.log('Processing request for token:', tokenAddress);
 
-    // Fetch from Pump.fun
-    const pumpData = await fetchPumpFunData(id);
+    const pumpData = await fetchPumpFunData(tokenAddress);
     console.log('Processed Pump.fun data:', pumpData);
 
-    // Update database with new data
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -91,7 +92,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Update database with new data
     const { error: updateError } = await supabase
       .from('coins')
       .upsert(pumpData);
