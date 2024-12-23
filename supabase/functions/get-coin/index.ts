@@ -10,7 +10,7 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
   
   try {
-    const response = await fetch(`https://pump.fun/api/coin/${tokenAddress}`, {
+    const response = await fetch(`https://frontend-api.pump.fun/coins/${tokenAddress}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
