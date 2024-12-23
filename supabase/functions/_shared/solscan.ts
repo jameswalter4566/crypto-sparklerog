@@ -23,8 +23,9 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Fetching Solscan data for address:', address);
     
+    // Using the free endpoint instead of the pro endpoint
     const response = await fetch(
-      `https://pro-api.solscan.io/v2.0/token/meta?token=${address}`,
+      `https://api.solscan.io/token/meta?token=${address}`,
       {
         headers: {
           'accept': 'application/json',
