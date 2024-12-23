@@ -25,27 +25,24 @@ async function fetchDexScreener(address: string) {
     }
 
     const data = await response.json();
-    if (!data.pairs || !data.pairs[0]) {
+    if (!data.pairs?.[0]) {
       console.warn('No pairs found in DexScreener response');
       return null;
     }
 
-    // Only get the first pair and extract minimal required data
     const pair = data.pairs[0];
-    const baseToken = pair.baseToken;
-
     return {
       success: true,
       data: {
         tokenAddress: address,
-        symbol: baseToken?.symbol || 'UNKNOWN',
-        name: baseToken?.name || 'Unknown Token',
-        decimals: baseToken?.decimals || 0,
-        price: parseFloat(pair.priceUsd || '0'),
-        volume24h: parseFloat(pair.volume?.h24 || '0'),
-        priceChange24h: parseFloat(pair.priceChange?.h24 || '0'),
-        marketcap: pair.liquidity?.usd ? parseFloat(pair.liquidity.usd) : null,
-        liquidity: parseFloat(pair.liquidity?.usd || '0')
+        symbol: pair.baseToken?.symbol || 'UNKNOWN',
+        name: pair.baseToken?.name || 'Unknown Token',
+        decimals: pair.baseToken?.decimals || 0,
+        price: Number(pair.priceUsd) || 0,
+        volume24h: Number(pair.volume?.h24) || 0,
+        priceChange24h: Number(pair.priceChange?.h24) || 0,
+        marketcap: pair.liquidity?.usd ? Number(pair.liquidity.usd) : null,
+        liquidity: Number(pair.liquidity?.usd) || 0
       }
     };
   } catch (error) {
@@ -54,18 +51,17 @@ async function fetchDexScreener(address: string) {
   }
 }
 
-async function fetchSolanaTokenData(address: string) {
+export async function fetchSolscanData(address: string) {
   try {
-    console.log('Fetching Solana token data for:', address);
-    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-    const mintPubkey = new PublicKey(address);
-    const accountInfo = await connection.getAccountInfo(mintPubkey);
+    console.log('Starting token data fetch for address:', address);
     
-    if (!accountInfo) {
-      throw new Error('Token account not found');
+    const dexScreenerData = await fetchDexScreener(address);
+    if (dexScreenerData) {
+      console.log('Successfully fetched data from DexScreener');
+      return dexScreenerData;
     }
 
-    // Return minimal required data
+    console.log('DexScreener fetch failed, using minimal data');
     return {
       success: true,
       data: {
@@ -80,47 +76,6 @@ async function fetchSolanaTokenData(address: string) {
         liquidity: 0
       }
     };
-  } catch (error) {
-    console.error('Error fetching Solana token data:', error);
-    return null;
-  }
-}
-
-export async function fetchSolscanData(address: string) {
-  try {
-    console.log('Starting token data fetch for address:', address);
-    
-    // Try DexScreener first for price and market data
-    const dexScreenerData = await fetchDexScreener(address);
-    if (dexScreenerData) {
-      console.log('Successfully fetched data from DexScreener');
-      
-      // Fetch logo URL from Jupiter API efficiently
-      try {
-        const jupiterResponse = await fetch('https://token.jup.ag/all');
-        if (jupiterResponse.ok) {
-          const jupiterData = await jupiterResponse.json();
-          const token = jupiterData.tokens.find((t: any) => t.address === address);
-          if (token?.logoURI) {
-            dexScreenerData.data.icon = token.logoURI;
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to fetch logo from Jupiter:', error);
-      }
-      
-      return dexScreenerData;
-    }
-
-    // Fallback to basic Solana data
-    console.log('DexScreener fetch failed, trying Solana RPC');
-    const solanaData = await fetchSolanaTokenData(address);
-    if (solanaData) {
-      console.log('Successfully fetched data from Solana RPC');
-      return solanaData;
-    }
-
-    throw new Error('Failed to fetch token data from both DexScreener and Solana RPC');
   } catch (error) {
     console.error('Error fetching token data:', error);
     throw error;
