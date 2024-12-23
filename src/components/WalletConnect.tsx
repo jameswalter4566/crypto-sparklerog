@@ -7,6 +7,9 @@ import { ProfileAvatar } from "./wallet/ProfileAvatar";
 import { Settings } from "./wallet/Settings";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
+// Use Helius RPC endpoint
+const HELIUS_RPC = 'https://rpc.helius.xyz/?api-key=726140d8-6b0d-4719-8702-682d81e94a37';
+
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
@@ -21,10 +24,7 @@ export const WalletConnect = () => {
       const { solana } = window;
       if (!solana?.isPhantom) return;
 
-      const connection = new Connection(
-        "https://api.mainnet-beta.solana.com",
-        "confirmed"
-      );
+      const connection = new Connection(HELIUS_RPC, "confirmed");
       const publicKey = new PublicKey(address);
       const balance = await connection.getBalance(publicKey);
       console.log("Fetched balance:", balance / LAMPORTS_PER_SOL); // Debug log
