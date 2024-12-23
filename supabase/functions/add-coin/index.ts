@@ -113,20 +113,60 @@ serve(async (req) => {
       }
     }
 
-    // Calculate market cap if not directly provided
-    const marketCap = coinGeckoData?.market_data?.market_cap?.usd || 
-                     attributes.market_cap || 
-                     (attributes.price && attributes.circulating_supply 
-                       ? attributes.price * attributes.circulating_supply 
-                       : null);
+    // Calculate market cap with improved precision and fallback handling
+    function calculateMarketCap(
+      coinGeckoMarketCap: number | null | undefined,
+      terminalMarketCap: number | null,
+      price: number | null,
+      circulatingSupply: number | null
+    ): number | null {
+      console.log('Calculating market cap with:', {
+        coinGeckoMarketCap,
+        terminalMarketCap,
+        price,
+        circulatingSupply
+      });
 
-    console.log('Final market cap value:', marketCap);
+      // Prefer CoinGecko data
+      if (typeof coinGeckoMarketCap === 'number' && !isNaN(coinGeckoMarketCap)) {
+        console.log('Using CoinGecko market cap:', coinGeckoMarketCap);
+        return coinGeckoMarketCap;
+      }
+
+      // Use GeckoTerminal data
+      if (typeof terminalMarketCap === 'number' && !isNaN(terminalMarketCap)) {
+        console.log('Using GeckoTerminal market cap:', terminalMarketCap);
+        return terminalMarketCap;
+      }
+
+      // Calculate from price and circulating supply
+      if (typeof price === 'number' && 
+          !isNaN(price) && 
+          typeof circulatingSupply === 'number' && 
+          !isNaN(circulatingSupply)) {
+        const calculated = +(price * circulatingSupply).toFixed(2);
+        console.log('Calculated market cap:', calculated);
+        return calculated;
+      }
+
+      console.log('No valid market cap could be calculated');
+      return null;
+    }
 
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const marketCap = calculateMarketCap(
+      coinGeckoData?.market_data?.market_cap?.usd,
+      attributes.market_cap,
+      attributes.price,
+      attributes.circulating_supply
+    );
+
+    console.log('Final market cap value:', marketCap);
 
     // Prepare coin data for database
     const coinData = {

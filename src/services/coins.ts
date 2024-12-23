@@ -28,22 +28,40 @@ export interface CoinData {
 export async function addCoin(solanaAddr: string): Promise<CoinData> {
   console.log('Adding coin with Solana address:', solanaAddr);
   
-  const response = await fetch('/functions/v1/add-coin', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ solana_addr: solanaAddr }),
-  });
+  const maxRetries = 3;
+  let attempt = 0;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to add coin');
+  while (attempt < maxRetries) {
+    try {
+      const response = await fetch('https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ solana_addr: solanaAddr }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add coin');
+      }
+
+      const data = await response.json();
+      console.log('Coin data received:', data);
+      return data;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error occurred');
+      attempt++;
+      console.error(`Attempt ${attempt} failed:`, error);
+      if (attempt < maxRetries) {
+        // Wait for a short time before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
   }
 
-  const data = await response.json();
-  console.log('Coin data received:', data);
-  return data;
+  throw lastError || new Error('Failed to add coin after multiple attempts');
 }
 
 export async function getCoin(id: string): Promise<CoinData | null> {
