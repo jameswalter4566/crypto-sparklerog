@@ -23,6 +23,7 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Fetching Solscan data for address:', address);
     
+    // Use the token/meta endpoint instead of transfer
     const response = await fetch(
       `https://pro-api.solscan.io/v2.0/token/meta?token=${address}`,
       {
@@ -33,16 +34,22 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       }
     );
 
-    if (!response.ok) {
-      console.error('Solscan API error:', response.status, await response.text());
+    // Log the raw response for debugging
+    console.log('Solscan response status:', response.status);
+    const rawText = await response.text();
+    console.log('Solscan raw response:', rawText);
+
+    // Try to parse the response as JSON
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error('Failed to parse Solscan response:', parseError);
       return null;
     }
 
-    const data = await response.json();
-    console.log('Solscan parsed data:', data);
-    
-    if (!data.success) {
-      console.error('Solscan API returned unsuccessful response:', data);
+    if (!response.ok || !data.success) {
+      console.error('Solscan API error:', response.status, data);
       return null;
     }
 

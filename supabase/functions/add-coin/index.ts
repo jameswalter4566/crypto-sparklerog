@@ -24,8 +24,9 @@ serve(async (req) => {
     // Fetch data from Solscan API
     const solscanData = await fetchSolscanData(solana_addr);
     
-    if (!solscanData) {
-      throw new Error('Failed to fetch token data from Solscan');
+    if (!solscanData || !solscanData.data) {
+      console.error('Failed to fetch or invalid Solscan data:', solscanData);
+      throw new Error('Failed to fetch valid token data from Solscan');
     }
 
     const tokenData = solscanData.data;
@@ -53,6 +54,8 @@ serve(async (req) => {
       homepage: tokenData.website,
       updated_at: new Date().toISOString()
     };
+
+    console.log('Prepared coin data:', coinData);
 
     // Insert or update coin data in database
     const { error: upsertError } = await supabaseClient
