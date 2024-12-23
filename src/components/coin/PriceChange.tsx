@@ -3,18 +3,24 @@ interface PriceChangeProps {
 }
 
 export function PriceChange({ change24h }: PriceChangeProps) {
-  if (typeof change24h !== "number" || isNaN(change24h)) {
-    return <span className="text-gray-400">N/A</span>;
-  }
+  // Validate the change24h value
+  const formatChange = (value: number | null): string => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return "N/A";
+    }
+    const sign = value >= 0 ? "+" : "";
+    return `${sign}${value.toFixed(2)}%`;
+  };
 
   return (
     <span
       className={`${
-        change24h >= 0 ? "text-secondary" : "text-red-500"
+        typeof change24h === "number" && change24h >= 0
+          ? "text-secondary"
+          : "text-red-500"
       } font-semibold`}
     >
-      {change24h >= 0 ? "+" : ""}
-      {change24h.toFixed(2)}%
+      {formatChange(change24h)}
     </span>
   );
 }
