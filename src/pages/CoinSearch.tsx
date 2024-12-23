@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { supabase } from "@/integrations/supabase/client"
-import { NewCoinCard } from "@/components/NewCoinCard"
+import { supabase } from "@/integrations/supabase/client";
+import { NewCoinCard } from "@/components/NewCoinCard";
 
 interface CoinMetadata {
   id: string;
@@ -13,7 +13,7 @@ interface CoinMetadata {
   total_supply: number | null;
   coingecko_coin_id: string | null;
   updated_at: string;
-  price: number;
+  price: number | null;
   change_24h: number | null;
 }
 
@@ -34,7 +34,6 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-
       if (coins.some((coin) => coin.id === mintAddress)) {
         toast({
           title: "Info",
@@ -43,54 +42,42 @@ const CoinSearch = () => {
         });
         return;
       }
-      
-      // Step 1: Query the 'coins' table to check if the record exists
+
       const { data: existingCoin, error: selectError } = await supabase
-        .from<CoinMetadata>("coins")
+        .from("coins")
         .select("*")
         .eq("id", mintAddress)
         .single();
 
-      if (selectError && selectError.code !== "PGRST116") { // PGRST116 typically means 'Row not found'
+      if (selectError && selectError.code !== "PGRST116") {
         console.error("Select Error:", selectError);
         throw new Error("Failed to check existing coin data.");
       }
 
-      let coinMetadata: CoinMetadata | null = existingCoin || null;
+      let coinMetadata = existingCoin as CoinMetadata | null;
 
       if (!coinMetadata) {
-        // Step 2: If record doesn't exist, call the Edge Function to add the coin
         const functionUrl = "https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin";
 
         const response = await fetch(functionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // "Authorization": `Bearer your-auth-token`,
           },
           body: JSON.stringify({ solana_addr: mintAddress }),
         });
 
-        const result = await response.json();
-        console.log(result)
-
         if (!response.ok) {
-          toast({
-            title: "Info",
-            description: "Error retrieving coin details.",
-            variant: "destructive",
-          });
-          throw new Error(result.error || "Failed to add coin via Edge Function.");
+          throw new Error("Failed to add coin via Edge Function.");
         }
 
+        const result = await response.json();
         coinMetadata = result as CoinMetadata;
       }
 
       if (coinMetadata) {
-        // Add the coin to the coins list
-        setCoins((prevCoins) => [...prevCoins, coinMetadata]);
+        setCoins((prevCoins) => [...prevCoins, coinMetadata as CoinMetadata]);
       }
-
     } catch (error) {
       console.error("Search error:", error);
       toast({
@@ -119,8 +106,9 @@ const CoinSearch = () => {
             name={coin.name}
             symbol={coin.symbol}
             imageUrl={coin.image_url}
-            // price={coin.price}
-            // change24h={coin.change_24h}
+            price={coin.price}
+            change24h={coin.change_24h}
+            mintAddress={coin.id}
           />
         ))}
       </div>
