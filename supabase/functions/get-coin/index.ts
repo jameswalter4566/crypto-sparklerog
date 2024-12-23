@@ -1,90 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { Database } from '../_shared/database.types.ts'
+import { fetchSolscanData } from '../_shared/solscan.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface CoinGeckoTerminalResponse {
-  data?: {
-    attributes?: {
-      name: string
-      symbol: string
-      price: number
-      volume_24h: number
-      liquidity: number
-      total_supply: number
-      circulating_supply: number
-      non_circulating_supply: number
-      coingecko_coin_id: string | null
-      description: string | null
-      token_standard: string | null
-      decimals: number | null
-      image_url: string | null
-    }
-  }
-}
-
-// HELPER FUNCTION: Fetch terminal data from CoinGecko Terminal API
-const fetchTerminalData = async (solana_addr: string): Promise<any> => {
-  try {
-    console.log('Fetching Terminal data for:', solana_addr)
-    const response = await fetch(
-      `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${solana_addr}`,
-      {
-        headers: { accept: 'application/json' },
-      }
-    )
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch Terminal data. Status: ${response.status}`)
-      return null
-    }
-
-    const data: CoinGeckoTerminalResponse = await response.json()
-    console.log('Terminal data received:', data)
-    return data?.data?.attributes || null
-  } catch (err) {
-    console.error('Error fetching Terminal data:', err)
-    return null
-  }
-}
-
-// HELPER FUNCTION: Fetch detailed CoinGecko data
-const fetchCoinGeckoData = async (coingecko_id: string): Promise<any> => {
-  if (!coingecko_id) return null
-  
-  try {
-    console.log('Fetching CoinGecko data for:', coingecko_id)
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coingecko_id}?localization=false&tickers=false&community_data=false&developer_data=false`,
-      {
-        headers: {
-          accept: 'application/json',
-          'x-cg-demo-api-key': 'CG-FPFWTmsu6NTuzHvntsXiRxJJ',
-        },
-      }
-    )
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch CoinGecko data. Status: ${response.status}`)
-      return null
-    }
-
-    const data = await response.json()
-    console.log('CoinGecko data received:', data)
-    
-    return {
-      market_cap: data.market_data?.market_cap?.usd || null,
-      total_volume: data.market_data?.total_volume?.usd || null,
-      price_change_24h: data.market_data?.price_change_percentage_24h || null,
-    }
-  } catch (err) {
-    console.error('Error fetching CoinGecko data:', err)
-    return null
-  }
 }
 
 serve(async (req) => {
@@ -118,63 +39,108 @@ serve(async (req) => {
       .from('coins')
       .select('*')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
-    if (dbError && dbError.code !== 'PGRST116') {
+    if (dbError) {
       console.error('Database error:', dbError)
-      throw new Error('Failed to fetch token data')
+      throw new Error('Failed to fetch token data from database')
     }
 
-    // Fetch fresh data from Terminal API
-    const terminalData = await fetchTerminalData(dbCoin?.solana_addr || id)
-    if (!terminalData) {
-      throw new Error('Failed to fetch token data from Terminal API')
+    // If no coin found in database, try to fetch from blockchain
+    if (!dbCoin) {
+      console.log('Coin not found in database, fetching from blockchain...')
+      const solanaData = await fetchSolscanData(id)
+      
+      if (!solanaData) {
+        throw new Error('Token not found')
+      }
+
+      // Insert the new coin data into database
+      const { error: insertError } = await supabase
+        .from('coins')
+        .insert({
+          id: id,
+          name: solanaData.data.name,
+          symbol: solanaData.data.symbol,
+          price: solanaData.data.price,
+          decimals: solanaData.data.decimals,
+          total_supply: parseFloat(solanaData.data.supply),
+          solana_addr: id,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (insertError) {
+        console.error('Error inserting new coin:', insertError)
+      }
+
+      return new Response(JSON.stringify({
+        terminalData: solanaData.data,
+        mainData: null
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    // Fetch additional data from CoinGecko if available
-    const coingeckoData = terminalData.coingecko_coin_id
-      ? await fetchCoinGeckoData(terminalData.coingecko_coin_id)
-      : null
+    // If coin exists in database, fetch fresh data
+    console.log('Fetching fresh data for existing coin:', id)
+    const freshData = await fetchSolscanData(dbCoin.solana_addr || id)
 
-    // Update database with new data
-    if (dbCoin) {
+    if (freshData) {
+      // Update database with new data
       const { error: updateError } = await supabase
         .from('coins')
         .update({
-          price: terminalData.price ? Number(terminalData.price) : null,
-          market_cap: coingeckoData?.market_cap ? Number(coingeckoData.market_cap) : null,
-          volume_24h: terminalData.volume_24h ? Number(terminalData.volume_24h) : null,
-          liquidity: terminalData.liquidity ? Number(terminalData.liquidity) : null,
+          price: freshData.data.price,
+          volume_24h: freshData.data.volume24h,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
 
       if (updateError) {
-        console.error('Error updating database:', updateError)
+        console.error('Error updating coin data:', updateError)
       }
+
+      return new Response(JSON.stringify({
+        terminalData: freshData.data,
+        mainData: {
+          market_cap: freshData.data.marketcap,
+          total_volume: freshData.data.volume24h,
+          price_change_24h: freshData.data.priceChange24h,
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    // Combine and return the data
-    const combinedData = {
+    // If we couldn't fetch fresh data, return the database data
+    return new Response(JSON.stringify({
       terminalData: {
-        ...terminalData,
-        price: terminalData.price ? Number(terminalData.price) : null,
-        volume_24h: terminalData.volume_24h ? Number(terminalData.volume_24h) : null,
-        liquidity: terminalData.liquidity ? Number(terminalData.liquidity) : null,
-        total_supply: terminalData.total_supply ? Number(terminalData.total_supply) : null,
-        circulating_supply: terminalData.circulating_supply ? Number(terminalData.circulating_supply) : null,
-        non_circulating_supply: terminalData.non_circulating_supply ? Number(terminalData.non_circulating_supply) : null,
+        name: dbCoin.name,
+        symbol: dbCoin.symbol,
+        price: dbCoin.price,
+        volume_24h: dbCoin.volume_24h,
+        liquidity: dbCoin.liquidity,
+        total_supply: dbCoin.total_supply,
+        circulating_supply: dbCoin.circulating_supply,
+        non_circulating_supply: dbCoin.non_circulating_supply,
+        decimals: dbCoin.decimals,
       },
-      mainData: coingeckoData,
-    }
-
-    return new Response(JSON.stringify(combinedData), {
+      mainData: {
+        market_cap: dbCoin.market_cap,
+        total_volume: dbCoin.volume_24h,
+        price_change_24h: dbCoin.change_24h,
+      }
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+
   } catch (error) {
     console.error('Error in get-coin function:', error)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unexpected error occurred' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        details: error instanceof Error ? error.stack : undefined
+      }),
       {
         status: error instanceof Error && error.message.includes('not found') ? 404 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
