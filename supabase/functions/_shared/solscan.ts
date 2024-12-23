@@ -17,11 +17,55 @@ interface SolscanTokenResponse {
   };
 }
 
-export async function fetchSolscanData(address: string): Promise<SolscanTokenResponse | null> {
+async function fetchSolscanDirectly(address: string): Promise<SolscanTokenResponse | null> {
   try {
-    console.log('Fetching Solscan data for address:', address);
+    console.log('Attempting direct Solscan fetch for:', address);
+    const response = await fetch(
+      `https://api.solscan.io/v2/token/meta?token=${address}`,
+      {
+        headers: {
+          'accept': 'application/json',
+          'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5ODkyMTAxNzksImVtYWlsIjoiZGV0aHNxdWFkYWlyc29mdDE0NkBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5ODkyMTB9.xw_B2uzgczFn2F-ZeW2u4tvvapS_iRvLIRKNz2DB7K0',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.warn('Solscan direct fetch failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log('Solscan direct fetch succeeded:', data);
     
-    // Using proxy endpoint to avoid Cloudflare blocks
+    return {
+      success: true,
+      data: {
+        tokenAddress: address,
+        symbol: data.data?.symbol || 'UNKNOWN',
+        name: data.data?.name || 'Unknown Token',
+        icon: data.data?.icon || '',
+        website: data.data?.website || '',
+        twitter: data.data?.twitter || '',
+        decimals: data.data?.decimals || 0,
+        holder: data.data?.holder || 0,
+        supply: data.data?.supply || 0,
+        price: data.data?.price || 0,
+        volume24h: data.data?.volume24h || 0,
+        priceChange24h: data.data?.priceChange24h || 0,
+        marketcap: data.data?.marketcap || 0
+      }
+    };
+  } catch (error) {
+    console.error('Error in direct Solscan fetch:', error);
+    return null;
+  }
+}
+
+async function fetchDexScreener(address: string): Promise<SolscanTokenResponse | null> {
+  try {
+    console.log('Attempting DexScreener fetch for:', address);
     const response = await fetch(
       `https://api.dexscreener.com/latest/dex/tokens/${address}`,
       {
@@ -32,34 +76,21 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       }
     );
 
-    console.log('DexScreener response status:', response.status);
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('DexScreener API error details:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorText
-      });
-      throw new Error(`DexScreener API error: ${response.status} - ${errorText}`);
+      console.warn('DexScreener fetch failed:', response.status);
+      return null;
     }
 
-    // Get the response text and try to parse it
-    const rawText = await response.text();
-    console.log('DexScreener raw response:', rawText);
-
-    let data;
-    try {
-      data = JSON.parse(rawText);
-      console.log('Parsed DexScreener data:', data);
-    } catch (parseError) {
-      console.error('Failed to parse DexScreener response:', parseError);
-      throw new Error('Invalid JSON response from DexScreener');
+    const data = await response.json();
+    console.log('DexScreener fetch succeeded:', data);
+    
+    const pair = data.pairs?.[0];
+    if (!pair) {
+      console.warn('No pairs found in DexScreener response');
+      return null;
     }
 
-    // Transform the DexScreener data into our expected token format
-    const pair = data.pairs?.[0] || {};
-    const tokenData = {
+    return {
       success: true,
       data: {
         tokenAddress: address,
@@ -68,7 +99,7 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
         icon: '', // DexScreener doesn't provide icons
         website: '',
         twitter: '',
-        decimals: 0, // Not provided by DexScreener
+        decimals: 0,
         holder: 0,
         supply: parseFloat(pair.baseToken?.liquidity?.base || '0'),
         price: parseFloat(pair.priceUsd || '0'),
@@ -77,10 +108,35 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
         marketcap: parseFloat(pair.liquidity?.usd || '0')
       }
     };
-
-    return tokenData;
   } catch (error) {
-    console.error('Error fetching DexScreener data:', error);
+    console.error('Error in DexScreener fetch:', error);
+    return null;
+  }
+}
+
+export async function fetchSolscanData(address: string): Promise<SolscanTokenResponse | null> {
+  try {
+    console.log('Starting token data fetch for address:', address);
+    
+    // Try Solscan first
+    const solscanData = await fetchSolscanDirectly(address);
+    if (solscanData) {
+      console.log('Successfully fetched data from Solscan');
+      return solscanData;
+    }
+
+    // If Solscan fails, try DexScreener
+    console.log('Solscan fetch failed, trying DexScreener');
+    const dexScreenerData = await fetchDexScreener(address);
+    if (dexScreenerData) {
+      console.log('Successfully fetched data from DexScreener');
+      return dexScreenerData;
+    }
+
+    // If both fail, throw an error
+    throw new Error('Failed to fetch token data from both Solscan and DexScreener');
+  } catch (error) {
+    console.error('Error fetching token data:', error);
     throw error;
   }
 }
