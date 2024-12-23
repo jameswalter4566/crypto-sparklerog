@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { Database } from "../_shared/database.types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,7 +26,34 @@ async function fetchPumpFunData(tokenAddress: string) {
 
     const data = await response.json();
     console.log('Successfully fetched Pump.fun data:', data);
-    return data;
+    
+    // Transform Pump.fun data to match our schema
+    const transformedData = {
+      id: tokenAddress,
+      name: data.name || "Unknown Token",
+      symbol: data.symbol || "???",
+      price: data.price || null,
+      market_cap: data.marketCap || null,
+      volume_24h: data.volume24h || null,
+      total_supply: data.totalSupply || null,
+      image_url: data.image || null,
+      solana_addr: tokenAddress,
+      description: data.description || null,
+      decimals: data.decimals || null,
+      updated_at: new Date().toISOString(),
+      liquidity: data.liquidity || null,
+      change_24h: data.priceChange24h || null,
+      circulating_supply: data.circulatingSupply || null,
+      non_circulating_supply: data.nonCirculatingSupply || null,
+      historic_data: data.historicData || null,
+      homepage: data.homepage || null,
+      blockchain_site: data.blockchainSite || null,
+      chat_url: data.chatUrl || null,
+      announcement_url: data.announcementUrl || null,
+      twitter_screen_name: data.twitterScreenName || null
+    };
+
+    return transformedData;
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
     throw error;
@@ -49,6 +75,14 @@ serve(async (req) => {
 
     console.log('Processing request for token:', id);
 
+    // Only fetch from Pump.fun
+    const pumpData = await fetchPumpFunData(id);
+    
+    if (!pumpData) {
+      throw new Error('Failed to fetch token data from Pump.fun');
+    }
+
+    // Update database with new data
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -56,74 +90,25 @@ serve(async (req) => {
       throw new Error('Missing Supabase configuration');
     }
 
-    const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get coin data from database
-    const { data: dbCoin, error: dbError } = await supabase
+    // Update database with new data
+    const { error: updateError } = await supabase
       .from('coins')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+      .upsert(pumpData);
 
-    if (dbError) {
-      console.error('Database error:', dbError);
-      throw new Error('Failed to fetch token data from database');
+    if (updateError) {
+      console.error('Error updating coin data:', updateError);
+      // Continue even if database update fails
     }
 
-    try {
-      // Always fetch fresh data from Pump.fun
-      const pumpData = await fetchPumpFunData(id);
-      
-      if (pumpData) {
-        // Transform Pump.fun data to match our schema
-        const transformedData = {
-          id: id,
-          name: pumpData.name || "Unknown Token",
-          symbol: pumpData.symbol || "???",
-          price: pumpData.price || null,
-          market_cap: pumpData.marketCap || null,
-          volume_24h: pumpData.volume24h || null,
-          total_supply: pumpData.totalSupply || null,
-          image_url: pumpData.image || null,
-          solana_addr: id,
-          description: pumpData.description || null,
-          decimals: pumpData.decimals || null,
-          updated_at: new Date().toISOString(),
-        };
-
-        // Update database with new data
-        const { error: updateError } = await supabase
-          .from('coins')
-          .upsert(transformedData);
-
-        if (updateError) {
-          console.error('Error updating coin data:', updateError);
-        }
-
-        return new Response(
-          JSON.stringify({
-            terminalData: transformedData,
-            mainData: transformedData
-          }), 
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching from Pump.fun:', error);
-      // If we have database data, return that as fallback
-      if (dbCoin) {
-        return new Response(
-          JSON.stringify({
-            terminalData: dbCoin,
-            mainData: dbCoin
-          }), 
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      throw error;
-    }
-
-    throw new Error('Failed to fetch token data');
+    return new Response(
+      JSON.stringify({
+        terminalData: pumpData,
+        mainData: pumpData
+      }), 
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in get-coin function:', error);
