@@ -11,7 +11,7 @@ interface CoinMetadata {
   description: string | null;
   image_url: string | null;
   total_supply: number | null;
-  coingecko_id: string | null; // Changed from coingecko_coin_id to match DB schema
+  coingecko_id: string | null;
   updated_at: string;
   price: number | null;
   change_24h: number | null;
@@ -41,7 +41,7 @@ const CoinSearch = () => {
     if (!mintAddress) {
       toast({
         title: "Error",
-        description: "Please enter a mint address",
+        description: "Please enter a mint address.",
         variant: "destructive",
       });
       return;
@@ -49,6 +49,7 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
+      // Check if the coin already exists in the list
       if (coins.some((coin) => coin.id === mintAddress)) {
         toast({
           title: "Info",
@@ -58,6 +59,7 @@ const CoinSearch = () => {
         return;
       }
 
+      // Fetch existing coin from the database
       const { data: existingCoin, error: selectError } = await supabase
         .from("coins")
         .select("*")
@@ -71,6 +73,7 @@ const CoinSearch = () => {
 
       let coinMetadata = existingCoin as CoinMetadata | null;
 
+      // If the coin does not exist, call the Edge Function to add it
       if (!coinMetadata) {
         const functionUrl = "https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin";
 
@@ -83,21 +86,28 @@ const CoinSearch = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to add coin via Edge Function.");
+          const errorMessage = await response.text();
+          throw new Error(`Edge Function Error: ${errorMessage}`);
         }
 
         const result = await response.json();
         coinMetadata = result as CoinMetadata;
       }
 
+      // Add the new coin to the state
       if (coinMetadata) {
         setCoins((prevCoins) => [...prevCoins, coinMetadata as CoinMetadata]);
+        toast({
+          title: "Success",
+          description: `${coinMetadata.name} added successfully.`,
+          variant: "default",
+        });
       }
     } catch (error) {
       console.error("Search error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch token information",
+        description: error instanceof Error ? error.message : "Failed to fetch token information.",
         variant: "destructive",
       });
     } finally {
@@ -110,7 +120,7 @@ const CoinSearch = () => {
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
         Search Token
       </h1>
-      
+
       <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -118,11 +128,11 @@ const CoinSearch = () => {
           <NewCoinCard
             key={coin.id}
             id={coin.id}
-            name={coin.name}
-            symbol={coin.symbol}
-            imageUrl={coin.image_url}
-            price={coin.price}
-            change24h={coin.change_24h}
+            name={coin.name || "Unknown Coin"}
+            symbol={coin.symbol || "N/A"}
+            imageUrl={coin.image_url || "/placeholder.svg"}
+            price={typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null}
+            change24h={typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null}
             mintAddress={coin.id}
           />
         ))}
