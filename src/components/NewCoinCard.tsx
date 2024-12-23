@@ -3,12 +3,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
+import { Coins } from "lucide-react";
 
 interface NewCoinCardProps {
   id: string;
   name: string;
   symbol: string;
-  price: number;
+  price: number | null;
   change24h: number | null;
   imageUrl?: string;
   mintAddress?: string;
@@ -21,7 +22,7 @@ export function NewCoinCard({
   imageUrl,
   mintAddress 
 }: NewCoinCardProps) {
-  const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
+  const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
 
   return (
     <Link to={`/coin/${id}`} className="block">
@@ -29,8 +30,14 @@ export function NewCoinCard({
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
             <Avatar className="h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32">
-              <AvatarImage src={imageUrl || "/placeholder.svg"} alt={name} className="object-cover" />
-              <AvatarFallback className="text-lg">{symbolFallback}</AvatarFallback>
+              <AvatarImage 
+                src={imageUrl || "/placeholder.svg"} 
+                alt={name} 
+                className="object-cover" 
+              />
+              <AvatarFallback>
+                {imageUrl ? symbolFallback : <Coins className="h-8 w-8" />}
+              </AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-1">
               <CopyAddressButton solanaAddr={mintAddress} />
@@ -41,7 +48,9 @@ export function NewCoinCard({
         <CardContent className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-1">
             <CardTitle className="text-xs sm:text-sm md:text-base">
-              <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px] block">{name}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px] block">
+                {name}
+              </span>
             </CardTitle>
             <span className="text-xs text-gray-400">{symbol}</span>
           </div>
