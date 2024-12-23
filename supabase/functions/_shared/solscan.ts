@@ -1,3 +1,6 @@
+import { Connection, PublicKey } from '@solana/web3.js';
+import { getMint } from '@solana/spl-token';
+
 interface SolscanTokenResponse {
   success: boolean;
   data: {
@@ -17,48 +20,61 @@ interface SolscanTokenResponse {
   };
 }
 
-async function fetchSolscanDirectly(address: string): Promise<SolscanTokenResponse | null> {
+async function fetchSolanaTokenData(address: string): Promise<SolscanTokenResponse | null> {
   try {
-    console.log('Attempting direct Solscan fetch for:', address);
-    const response = await fetch(
-      `https://api.solscan.io/v2/token/meta?token=${address}`,
-      {
-        headers: {
-          'accept': 'application/json',
-          'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5ODkyMTAxNzksImVtYWlsIjoiZGV0aHNxdWFkYWlyc29mdDE0NkBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5ODkyMTB9.xw_B2uzgczFn2F-ZeW2u4tvvapS_iRvLIRKNz2DB7K0',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    console.log('Fetching Solana token data for:', address);
+    
+    // Initialize connection to Solana mainnet
+    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+    
+    // Get mint info
+    const mintPubkey = new PublicKey(address);
+    const mintInfo = await getMint(connection, mintPubkey);
+    
+    // Get token metadata if available (optional)
+    let name = "Unknown Token";
+    let symbol = "???";
+    
+    try {
+      const response = await fetch(
+        `https://api.solscan.io/v2/token/meta?token=${address}`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5ODkyMTAxNzksImVtYWlsIjoiZGV0aHNxdWFkYWlyc29mdDE0NkBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5ODkyMTB9.xw_B2uzgczFn2F-ZeW2u4tvvapS_iRvLIRKNz2DB7K0'
+          }
         }
-      }
-    );
+      );
 
-    if (!response.ok) {
-      console.warn('Solscan direct fetch failed:', response.status);
-      return null;
+      if (response.ok) {
+        const metadata = await response.json();
+        name = metadata.data?.name || name;
+        symbol = metadata.data?.symbol || symbol;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch token metadata from Solscan:', error);
     }
 
-    const data = await response.json();
-    console.log('Solscan direct fetch succeeded:', data);
-    
     return {
       success: true,
       data: {
         tokenAddress: address,
-        symbol: data.data?.symbol || 'UNKNOWN',
-        name: data.data?.name || 'Unknown Token',
-        icon: data.data?.icon || '',
-        website: data.data?.website || '',
-        twitter: data.data?.twitter || '',
-        decimals: data.data?.decimals || 0,
-        holder: data.data?.holder || 0,
-        supply: data.data?.supply || 0,
-        price: data.data?.price || 0,
-        volume24h: data.data?.volume24h || 0,
-        priceChange24h: data.data?.priceChange24h || 0,
-        marketcap: data.data?.marketcap || 0
+        symbol: symbol,
+        name: name,
+        icon: '',
+        website: '',
+        twitter: '',
+        decimals: mintInfo.decimals,
+        holder: 0,
+        supply: Number(mintInfo.supply.toString()),
+        price: 0,
+        volume24h: 0,
+        priceChange24h: 0,
+        marketcap: 0
       }
     };
   } catch (error) {
-    console.error('Error in direct Solscan fetch:', error);
+    console.error('Error fetching Solana token data:', error);
     return null;
   }
 }
@@ -118,23 +134,22 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Starting token data fetch for address:', address);
     
-    // Try Solscan first
-    const solscanData = await fetchSolscanDirectly(address);
-    if (solscanData) {
-      console.log('Successfully fetched data from Solscan');
-      return solscanData;
+    // Try Solana RPC first
+    const solanaData = await fetchSolanaTokenData(address);
+    if (solanaData) {
+      console.log('Successfully fetched data from Solana RPC');
+      return solanaData;
     }
 
-    // If Solscan fails, try DexScreener
-    console.log('Solscan fetch failed, trying DexScreener');
+    // If Solana RPC fails, try DexScreener
+    console.log('Solana RPC fetch failed, trying DexScreener');
     const dexScreenerData = await fetchDexScreener(address);
     if (dexScreenerData) {
       console.log('Successfully fetched data from DexScreener');
       return dexScreenerData;
     }
 
-    // If both fail, throw an error
-    throw new Error('Failed to fetch token data from both Solscan and DexScreener');
+    throw new Error('Failed to fetch token data from both Solana RPC and DexScreener');
   } catch (error) {
     console.error('Error fetching token data:', error);
     throw error;
