@@ -1,12 +1,13 @@
 import fetch from 'node-fetch'; // Ensure fetch is imported or available in your environment
 
+// HELPER FUNCTION: Fetch terminal data from CoinGecko Terminal API
 const fetchTerminalData = async (solana_addr: string) => {
   try {
     const response = await fetch(
       `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${solana_addr}`,
       {
         method: "GET",
-        headers: { "accept": "application/json" },
+        headers: { accept: "application/json" },
       }
     );
 
@@ -23,6 +24,7 @@ const fetchTerminalData = async (solana_addr: string) => {
   }
 };
 
+// HELPER FUNCTION: Fetch detailed main CoinGecko data
 const fetchMainCoinGeckoData = async (coingecko_id: string) => {
   try {
     const response = await fetch(
@@ -30,7 +32,7 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
       {
         method: "GET",
         headers: {
-          "accept": "application/json",
+          accept: "application/json",
           "x-cg-demo-api-key": "CG-FPFWTmsu6NTuzHvntsXiRxJJ",
         },
       }
@@ -41,36 +43,58 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
       return null;
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Extract required fields
+    const {
+      market_data: { market_cap },
+    } = data;
+
+    return {
+      market_cap: market_cap?.usd || null,
+    };
   } catch (err) {
     console.error("Error fetching main CoinGecko API:", err);
     return null;
   }
 };
 
-const fetchMarketChartData = async (coingecko_id: string) => {
+// HANDLER FUNCTION: Serve requests to get coin data
+Deno.serve(async (req) => {
   try {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coingecko_id}/market_chart?vs_currency=usd&days=7&precision=full`,
-      {
-        method: "GET",
-        headers: {
-          "accept": "application/json",
-          "x-cg-demo-api-key": "CG-FPFWTmsu6NTuzHvntsXiRxJJ",
-        },
-      }
-    );
+    const url = new URL(req.url);
+    const solana_addr = url.searchParams.get("solana_addr");
 
-    if (!response.ok) {
-      console.warn(`Failed to fetch market_chart data. Status: ${response.status}`);
-      return null;
+    if (!solana_addr) {
+      return new Response(
+        JSON.stringify({ error: "Solana address is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    return await response.json();
-  } catch (err) {
-    console.error("Error fetching market_chart data:", err);
-    return null;
-  }
-};
+    // Fetch terminal data
+    const terminalData = await fetchTerminalData(solana_addr);
+    if (!terminalData) {
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch terminal data" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-export { fetchTerminalData, fetchMainCoinGeckoData, fetchMarketChartData };
+    const coingecko_id = terminalData.coingecko_coin_id || null;
+
+    // Fetch main CoinGecko data
+    const mainData = coingecko_id ? await fetchMainCoinGeckoData(coingecko_id) : null;
+
+    return new Response(
+      JSON.stringify({ solana_addr, terminalData, mainData }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error in get-coin function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+});
