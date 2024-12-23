@@ -34,7 +34,6 @@ const CoinSearch = () => {
 
     setIsLoading(true);
     try {
-
       if (coins.some((coin) => coin.id === mintAddress)) {
         toast({
           title: "Info",
@@ -44,35 +43,32 @@ const CoinSearch = () => {
         return;
       }
       
-      // Step 1: Query the 'coins' table to check if the record exists
       const { data: existingCoin, error: selectError } = await supabase
-        .from<CoinMetadata>("coins")
-        .select("*")
-        .eq("id", mintAddress)
+        .from('coins')
+        .select('*')
+        .eq('id', mintAddress)
         .single();
 
-      if (selectError && selectError.code !== "PGRST116") { // PGRST116 typically means 'Row not found'
+      if (selectError && selectError.code !== "PGRST116") {
         console.error("Select Error:", selectError);
         throw new Error("Failed to check existing coin data.");
       }
 
-      let coinMetadata: CoinMetadata | null = existingCoin || null;
+      let coinMetadata = existingCoin as CoinMetadata | null;
 
       if (!coinMetadata) {
-        // Step 2: If record doesn't exist, call the Edge Function to add the coin
         const functionUrl = "https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin";
 
         const response = await fetch(functionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // "Authorization": `Bearer your-auth-token`,
           },
           body: JSON.stringify({ solana_addr: mintAddress }),
         });
 
         const result = await response.json();
-        console.log(result)
+        console.log(result);
 
         if (!response.ok) {
           toast({
@@ -83,12 +79,11 @@ const CoinSearch = () => {
           throw new Error(result.error || "Failed to add coin via Edge Function.");
         }
 
-        coinMetadata = result as CoinMetadata;
+        coinMetadata = result.data as CoinMetadata;
       }
 
       if (coinMetadata) {
-        // Add the coin to the coins list
-        setCoins((prevCoins) => [...prevCoins, coinMetadata]);
+        setCoins((prevCoins) => [...prevCoins, coinMetadata!]);
       }
 
     } catch (error) {
@@ -118,9 +113,9 @@ const CoinSearch = () => {
             id={coin.id}
             name={coin.name}
             symbol={coin.symbol}
+            price={coin.price}
+            change24h={coin.change_24h}
             imageUrl={coin.image_url}
-            // price={coin.price}
-            // change24h={coin.change_24h}
           />
         ))}
       </div>
