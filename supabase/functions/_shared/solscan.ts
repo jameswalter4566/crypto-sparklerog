@@ -10,23 +10,27 @@ const corsHeaders = {
 async function fetchTokenMetadata(address: string) {
   try {
     console.log('Fetching token metadata for:', address);
-    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     
     // Validate address format
+    let publicKey: PublicKey;
     try {
-      new PublicKey(address);
+      publicKey = new PublicKey(address);
     } catch (e) {
       console.error('Invalid address format:', e);
       return null;
     }
 
+    const connection = new Connection('https://api.mainnet-beta.solana.com', {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: 60000
+    });
+
     // Get token metadata
-    const mint = new PublicKey(address);
     const metadataPDA = PublicKey.findProgramAddressSync(
       [
         Buffer.from('metadata'),
         new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s').toBuffer(),
-        mint.toBuffer(),
+        publicKey.toBuffer(),
       ],
       new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
     )[0];
@@ -85,7 +89,8 @@ async function fetchDexScreener(address: string) {
         volume24h: Number(pair.volume?.h24) || 0,
         priceChange24h: Number(pair.priceChange?.h24) || 0,
         marketcap: pair.liquidity?.usd ? Number(pair.liquidity.usd) : null,
-        liquidity: Number(pair.liquidity?.usd) || 0
+        liquidity: Number(pair.liquidity?.usd) || 0,
+        total_supply: null
       }
     };
   } catch (error) {
@@ -134,7 +139,8 @@ export async function fetchSolscanData(address: string) {
           volume24h: 0,
           priceChange24h: 0,
           marketcap: 0,
-          liquidity: 0
+          liquidity: 0,
+          total_supply: null
         }
       };
     }
@@ -151,7 +157,9 @@ export async function fetchSolscanData(address: string) {
         volume24h: 0,
         priceChange24h: 0,
         marketcap: 0,
-        liquidity: 0
+        liquidity: 0,
+        total_supply: null,
+        description: null
       }
     };
   } catch (error) {
