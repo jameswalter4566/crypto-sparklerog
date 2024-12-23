@@ -9,9 +9,8 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
@@ -24,7 +23,6 @@ serve(async (req) => {
 
     console.log('Processing request for token:', id)
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -37,7 +35,7 @@ serve(async (req) => {
     // Get coin data from database
     const { data: dbCoin, error: dbError } = await supabase
       .from('coins')
-      .select('*')
+      .select('id, name, symbol, price, market_cap, volume_24h, liquidity, total_supply, image_url, solana_addr')
       .eq('id', id)
       .maybeSingle()
 
@@ -46,7 +44,7 @@ serve(async (req) => {
       throw new Error('Failed to fetch token data from database')
     }
 
-    // If no coin found in database, try to fetch from blockchain
+    // If no coin found in database, fetch from blockchain
     if (!dbCoin) {
       console.log('Coin not found in database, fetching from blockchain...')
       const solanaData = await fetchSolscanData(id)
@@ -55,7 +53,7 @@ serve(async (req) => {
         throw new Error('Token not found')
       }
 
-      // Insert the new coin data into database
+      // Insert the new coin data
       const { error: insertError } = await supabase
         .from('coins')
         .insert({
@@ -65,7 +63,6 @@ serve(async (req) => {
           price: solanaData.data.price,
           market_cap: solanaData.data.marketcap,
           volume_24h: solanaData.data.volume24h,
-          decimals: solanaData.data.decimals,
           total_supply: parseFloat(solanaData.data.supply),
           image_url: solanaData.data.icon,
           solana_addr: id,
@@ -76,20 +73,21 @@ serve(async (req) => {
         console.error('Error inserting new coin:', insertError)
       }
 
-      return new Response(JSON.stringify({
-        terminalData: solanaData.data,
-        mainData: {
-          market_cap: solanaData.data.marketcap,
-          volume_24h: solanaData.data.volume24h,
-          price: solanaData.data.price,
-          image_url: solanaData.data.icon
-        }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({
+          terminalData: solanaData.data,
+          mainData: {
+            market_cap: solanaData.data.marketcap,
+            volume_24h: solanaData.data.volume24h,
+            price: solanaData.data.price,
+            image_url: solanaData.data.icon
+          }
+        }), 
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // If coin exists in database, fetch fresh data
+    // Fetch fresh data for existing coin
     console.log('Fetching fresh data for existing coin:', id)
     const freshData = await fetchSolscanData(dbCoin.solana_addr || id)
 
@@ -110,42 +108,40 @@ serve(async (req) => {
         console.error('Error updating coin data:', updateError)
       }
 
-      return new Response(JSON.stringify({
-        terminalData: freshData.data,
-        mainData: {
-          market_cap: freshData.data.marketcap,
-          volume_24h: freshData.data.volume24h,
-          price: freshData.data.price,
-          image_url: freshData.data.icon || dbCoin.image_url
-        }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({
+          terminalData: freshData.data,
+          mainData: {
+            market_cap: freshData.data.marketcap,
+            volume_24h: freshData.data.volume24h,
+            price: freshData.data.price,
+            image_url: freshData.data.icon || dbCoin.image_url
+          }
+        }), 
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // If we couldn't fetch fresh data, return the database data
-    return new Response(JSON.stringify({
-      terminalData: {
-        name: dbCoin.name,
-        symbol: dbCoin.symbol,
-        price: dbCoin.price,
-        volume_24h: dbCoin.volume_24h,
-        liquidity: dbCoin.liquidity,
-        total_supply: dbCoin.total_supply,
-        circulating_supply: dbCoin.circulating_supply,
-        non_circulating_supply: dbCoin.non_circulating_supply,
-        decimals: dbCoin.decimals,
-        icon: dbCoin.image_url
-      },
-      mainData: {
-        market_cap: dbCoin.market_cap,
-        volume_24h: dbCoin.volume_24h,
-        price: dbCoin.price,
-        image_url: dbCoin.image_url
-      }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    // Return database data if fresh data fetch fails
+    return new Response(
+      JSON.stringify({
+        terminalData: {
+          name: dbCoin.name,
+          symbol: dbCoin.symbol,
+          price: dbCoin.price,
+          volume_24h: dbCoin.volume_24h,
+          total_supply: dbCoin.total_supply,
+          icon: dbCoin.image_url
+        },
+        mainData: {
+          market_cap: dbCoin.market_cap,
+          volume_24h: dbCoin.volume_24h,
+          price: dbCoin.price,
+          image_url: dbCoin.image_url
+        }
+      }), 
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
     console.error('Error in get-coin function:', error)

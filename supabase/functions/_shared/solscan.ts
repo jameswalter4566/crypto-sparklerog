@@ -14,7 +14,7 @@ async function fetchDexScreener(address: string) {
       {
         headers: {
           'accept': 'application/json',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'user-agent': 'Mozilla/5.0'
         }
       }
     );
@@ -25,33 +25,24 @@ async function fetchDexScreener(address: string) {
     }
 
     const data = await response.json();
-    console.log('DexScreener data received:', data);
     
     if (!data.pairs || data.pairs.length === 0) {
       console.warn('No pairs found in DexScreener response');
       return null;
     }
 
+    // Only get the first pair to reduce data
     const pair = data.pairs[0];
     const baseToken = pair.baseToken;
-    
-    // Calculate market cap if possible
-    const marketCap = baseToken.liquidity?.usd 
-      ? parseFloat(baseToken.liquidity.usd) 
-      : null;
 
-    // Get logo URL from Jupiter API as fallback
+    // Get logo URL from Jupiter API
     let logoUrl = null;
     try {
-      const jupiterResponse = await fetch(
-        `https://token.jup.ag/all`
-      );
+      const jupiterResponse = await fetch('https://token.jup.ag/all');
       if (jupiterResponse.ok) {
         const jupiterData = await jupiterResponse.json();
         const token = jupiterData.tokens.find((t: any) => t.address === address);
-        if (token) {
-          logoUrl = token.logoURI;
-        }
+        logoUrl = token?.logoURI;
       }
     } catch (error) {
       console.warn('Failed to fetch logo from Jupiter:', error);
@@ -65,12 +56,11 @@ async function fetchDexScreener(address: string) {
         name: baseToken?.name || 'Unknown Token',
         icon: logoUrl,
         decimals: baseToken?.decimals || 0,
-        holder: 0,
         supply: parseFloat(baseToken?.liquidity?.base || '0'),
         price: parseFloat(pair.priceUsd || '0'),
         volume24h: parseFloat(pair.volume?.h24 || '0'),
         priceChange24h: parseFloat(pair.priceChange?.h24 || '0'),
-        marketcap: marketCap,
+        marketcap: baseToken.liquidity?.usd ? parseFloat(baseToken.liquidity.usd) : null,
         liquidity: parseFloat(pair.liquidity?.usd || '0')
       }
     };
@@ -83,11 +73,7 @@ async function fetchDexScreener(address: string) {
 async function fetchSolanaTokenData(address: string) {
   try {
     console.log('Fetching Solana token data for:', address);
-    
-    // Initialize connection to Solana mainnet
     const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-    
-    // Get mint info
     const mintPubkey = new PublicKey(address);
     const accountInfo = await connection.getAccountInfo(mintPubkey);
     
@@ -95,7 +81,7 @@ async function fetchSolanaTokenData(address: string) {
       throw new Error('Token account not found');
     }
 
-    // Try to get metadata from token list
+    // Fetch metadata from token list
     let tokenMetadata = null;
     try {
       const response = await fetch('https://token.jup.ag/all');
@@ -115,7 +101,6 @@ async function fetchSolanaTokenData(address: string) {
         name: tokenMetadata?.name || 'Unknown Token',
         icon: tokenMetadata?.logoURI || '',
         decimals: tokenMetadata?.decimals || 0,
-        holder: 0,
         supply: accountInfo.lamports.toString(),
         price: 0,
         volume24h: 0,
@@ -141,7 +126,7 @@ export async function fetchSolscanData(address: string) {
       return dexScreenerData;
     }
 
-    // If DexScreener fails, fallback to basic Solana data
+    // Fallback to basic Solana data
     console.log('DexScreener fetch failed, trying Solana RPC');
     const solanaData = await fetchSolanaTokenData(address);
     if (solanaData) {
