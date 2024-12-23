@@ -49,13 +49,13 @@ const CoinProfile = () => {
         ...(result.mainData || {}),
         id,
         // Ensure numeric values are properly typed
-        price: parseFloat(result.terminalData?.price) || null,
-        market_cap: parseFloat(result.mainData?.market_cap) || null,
-        volume_24h: parseFloat(result.terminalData?.volume_24h) || null,
-        liquidity: parseFloat(result.terminalData?.liquidity) || null,
-        total_supply: parseFloat(result.terminalData?.total_supply) || null,
-        circulating_supply: parseFloat(result.terminalData?.circulating_supply) || null,
-        non_circulating_supply: parseFloat(result.terminalData?.non_circulating_supply) || null,
+        price: result.terminalData?.price ? Number(result.terminalData.price) : null,
+        market_cap: result.mainData?.market_cap ? Number(result.mainData.market_cap) : null,
+        volume_24h: result.terminalData?.volume_24h ? Number(result.terminalData.volume_24h) : null,
+        liquidity: result.terminalData?.liquidity ? Number(result.terminalData.liquidity) : null,
+        total_supply: result.terminalData?.total_supply ? Number(result.terminalData.total_supply) : null,
+        circulating_supply: result.terminalData?.circulating_supply ? Number(result.terminalData.circulating_supply) : null,
+        non_circulating_supply: result.terminalData?.non_circulating_supply ? Number(result.terminalData.non_circulating_supply) : null,
       };
 
       setCoin(combinedData);
@@ -112,7 +112,7 @@ const CoinProfile = () => {
   // Process historic_data for PriceChart
   const priceData = coin.historic_data?.map(([timestamp, price]: [number, number]) => ({
     date: new Date(timestamp).toLocaleDateString(),
-    price: parseFloat(price) || 0,
+    price: Number(price) || 0,
   })) || [];
 
   return (

@@ -1,6 +1,6 @@
-// Import from Deno-compatible URL
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
-import { Database } from '../_shared/database.types'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { Database } from '../_shared/database.types.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -87,8 +87,7 @@ const fetchCoinGeckoData = async (coingecko_id: string): Promise<any> => {
   }
 }
 
-// Main handler function
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -104,9 +103,9 @@ Deno.serve(async (req) => {
 
     console.log('Processing request for token:', id)
 
-    // First try to get data from our database
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase configuration')
@@ -114,6 +113,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient<Database>(supabaseUrl, supabaseKey)
 
+    // Get coin data from database
     const { data: dbCoin, error: dbError } = await supabase
       .from('coins')
       .select('*')
@@ -136,29 +136,15 @@ Deno.serve(async (req) => {
       ? await fetchCoinGeckoData(terminalData.coingecko_coin_id)
       : null
 
-    // Combine all data sources
-    const combinedData = {
-      terminalData: {
-        ...terminalData,
-        price: parseFloat(terminalData.price?.toString() || '0') || null,
-        volume_24h: parseFloat(terminalData.volume_24h?.toString() || '0') || null,
-        liquidity: parseFloat(terminalData.liquidity?.toString() || '0') || null,
-        total_supply: parseFloat(terminalData.total_supply?.toString() || '0') || null,
-        circulating_supply: parseFloat(terminalData.circulating_supply?.toString() || '0') || null,
-        non_circulating_supply: parseFloat(terminalData.non_circulating_supply?.toString() || '0') || null,
-      },
-      mainData: coingeckoData,
-    }
-
-    // Update our database with the latest data
+    // Update database with new data
     if (dbCoin) {
       const { error: updateError } = await supabase
         .from('coins')
         .update({
-          price: combinedData.terminalData.price,
-          market_cap: coingeckoData?.market_cap || null,
-          volume_24h: combinedData.terminalData.volume_24h,
-          liquidity: combinedData.terminalData.liquidity,
+          price: terminalData.price ? Number(terminalData.price) : null,
+          market_cap: coingeckoData?.market_cap ? Number(coingeckoData.market_cap) : null,
+          volume_24h: terminalData.volume_24h ? Number(terminalData.volume_24h) : null,
+          liquidity: terminalData.liquidity ? Number(terminalData.liquidity) : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -166,6 +152,20 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error('Error updating database:', updateError)
       }
+    }
+
+    // Combine and return the data
+    const combinedData = {
+      terminalData: {
+        ...terminalData,
+        price: terminalData.price ? Number(terminalData.price) : null,
+        volume_24h: terminalData.volume_24h ? Number(terminalData.volume_24h) : null,
+        liquidity: terminalData.liquidity ? Number(terminalData.liquidity) : null,
+        total_supply: terminalData.total_supply ? Number(terminalData.total_supply) : null,
+        circulating_supply: terminalData.circulating_supply ? Number(terminalData.circulating_supply) : null,
+        non_circulating_supply: terminalData.non_circulating_supply ? Number(terminalData.non_circulating_supply) : null,
+      },
+      mainData: coingeckoData,
     }
 
     return new Response(JSON.stringify(combinedData), {
