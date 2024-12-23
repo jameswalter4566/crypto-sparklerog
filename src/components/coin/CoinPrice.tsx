@@ -8,7 +8,7 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
   const [currentPrice, setCurrentPrice] = useState<number | null>(initialPrice);
 
   useEffect(() => {
-    if (typeof initialPrice !== "number" || isNaN(initialPrice)) {
+    if (typeof initialPrice !== "number" || isNaN(initialPrice) || initialPrice === null) {
       setCurrentPrice(null);
       return;
     }
@@ -16,13 +16,13 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
     const interval = setInterval(() => {
       const fluctuation = initialPrice * (Math.random() * 0.002 - 0.001);
       const newPrice = initialPrice + fluctuation;
-      setCurrentPrice(!isNaN(newPrice) ? newPrice : null);
+      setCurrentPrice(typeof newPrice === "number" && !isNaN(newPrice) ? newPrice : null);
     }, 2000);
 
     return () => clearInterval(interval);
   }, [initialPrice]);
 
-  const formatPrice = (price: number | null) => {
+  const formatPrice = (price: number | null): string => {
     if (typeof price !== "number" || isNaN(price)) {
       return "Price not available";
     }
