@@ -25,17 +25,16 @@ async function fetchDexScreener(address: string) {
     }
 
     const data = await response.json();
-    
     if (!data.pairs || data.pairs.length === 0) {
       console.warn('No pairs found in DexScreener response');
       return null;
     }
 
-    // Only get the first pair to reduce data
+    // Only get the first pair
     const pair = data.pairs[0];
     const baseToken = pair.baseToken;
 
-    // Get logo URL from Jupiter API
+    // Get logo URL from Jupiter API efficiently
     let logoUrl = null;
     try {
       const jupiterResponse = await fetch('https://token.jup.ag/all');
@@ -56,11 +55,10 @@ async function fetchDexScreener(address: string) {
         name: baseToken?.name || 'Unknown Token',
         icon: logoUrl,
         decimals: baseToken?.decimals || 0,
-        supply: parseFloat(baseToken?.liquidity?.base || '0'),
         price: parseFloat(pair.priceUsd || '0'),
         volume24h: parseFloat(pair.volume?.h24 || '0'),
         priceChange24h: parseFloat(pair.priceChange?.h24 || '0'),
-        marketcap: baseToken.liquidity?.usd ? parseFloat(baseToken.liquidity.usd) : null,
+        marketcap: pair.liquidity?.usd ? parseFloat(pair.liquidity.usd) : null,
         liquidity: parseFloat(pair.liquidity?.usd || '0')
       }
     };
@@ -81,7 +79,7 @@ async function fetchSolanaTokenData(address: string) {
       throw new Error('Token account not found');
     }
 
-    // Fetch metadata from token list
+    // Fetch metadata from token list efficiently
     let tokenMetadata = null;
     try {
       const response = await fetch('https://token.jup.ag/all');
@@ -101,7 +99,6 @@ async function fetchSolanaTokenData(address: string) {
         name: tokenMetadata?.name || 'Unknown Token',
         icon: tokenMetadata?.logoURI || '',
         decimals: tokenMetadata?.decimals || 0,
-        supply: accountInfo.lamports.toString(),
         price: 0,
         volume24h: 0,
         priceChange24h: 0,

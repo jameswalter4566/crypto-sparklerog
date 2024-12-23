@@ -8,8 +8,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -21,61 +22,68 @@ serve(async (req) => {
 
     console.log('Processing request for Solana address:', solana_addr);
 
-    // Fetch data from Solscan API with improved error handling
-    let solscanData;
-    try {
-      solscanData = await fetchSolscanData(solana_addr);
-      console.log('Successfully fetched Solscan data:', solscanData);
-    } catch (error) {
-      console.error('Solscan API error:', error);
-      throw new Error(`Failed to fetch token data: ${error.message}`);
-    }
-
-    if (!solscanData || !solscanData.data) {
-      throw new Error('Invalid token data received from Solscan');
-    }
-
-    const tokenData = solscanData.data;
-    console.log('Successfully fetched token data:', tokenData);
-
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Prepare coin data for database
-    const coinData = {
-      id: solana_addr,
-      name: tokenData.name,
-      symbol: tokenData.symbol,
-      price: tokenData.price,
-      market_cap: tokenData.marketcap,
-      volume_24h: tokenData.volume24h,
-      change_24h: tokenData.priceChange24h,
-      total_supply: tokenData.supply,
-      decimals: tokenData.decimals,
-      image_url: tokenData.icon,
-      solana_addr: solana_addr,
-      twitter_screen_name: tokenData.twitter?.replace('https://twitter.com/', ''),
-      homepage: tokenData.website,
-      updated_at: new Date().toISOString()
-    };
-
-    console.log('Prepared coin data for database:', coinData);
-
-    // Insert or update coin data in database
-    const { error: upsertError } = await supabaseClient
+    // Check if coin already exists and get its data
+    const { data: existingCoin } = await supabaseClient
       .from('coins')
-      .upsert(coinData);
+      .select('id, updated_at')
+      .eq('id', solana_addr)
+      .maybeSingle();
 
-    if (upsertError) {
-      console.error('Database error:', upsertError);
-      throw new Error('Failed to save coin data');
+    // Only fetch new data if coin doesn't exist or data is older than 5 minutes
+    const shouldFetchNewData = !existingCoin || 
+      (new Date().getTime() - new Date(existingCoin.updated_at).getTime()) > 5 * 60 * 1000;
+
+    let tokenData;
+    if (shouldFetchNewData) {
+      console.log('Fetching fresh data from Solscan');
+      const solscanData = await fetchSolscanData(solana_addr);
+      
+      if (!solscanData || !solscanData.data) {
+        throw new Error('Invalid token data received from Solscan');
+      }
+
+      tokenData = {
+        id: solana_addr,
+        name: solscanData.data.name,
+        symbol: solscanData.data.symbol,
+        price: solscanData.data.price,
+        market_cap: solscanData.data.marketcap,
+        volume_24h: solscanData.data.volume24h,
+        change_24h: solscanData.data.priceChange24h,
+        image_url: solscanData.data.icon,
+        solana_addr: solana_addr,
+        updated_at: new Date().toISOString()
+      };
+
+      // Upsert the data
+      const { error: upsertError } = await supabaseClient
+        .from('coins')
+        .upsert(tokenData);
+
+      if (upsertError) {
+        console.error('Database error:', upsertError);
+        throw new Error('Failed to save coin data');
+      }
+    } else {
+      console.log('Using existing coin data');
+      const { data: coin, error } = await supabaseClient
+        .from('coins')
+        .select('*')
+        .eq('id', solana_addr)
+        .single();
+
+      if (error) throw error;
+      tokenData = coin;
     }
 
     return new Response(
-      JSON.stringify(coinData),
+      JSON.stringify(tokenData),
       { 
         headers: { 
           ...corsHeaders,
