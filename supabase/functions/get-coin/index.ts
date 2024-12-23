@@ -1,10 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import fetch from 'node-fetch'; // Ensure fetch is imported or available in your environment
 
 const fetchTerminalData = async (solana_addr: string) => {
   try {
@@ -47,30 +41,7 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
       return null;
     }
 
-    const data = await response.json();
-
-    // Extract required fields
-    const {
-      market_data: { market_cap },
-      links: {
-        homepage,
-        blockchain_site,
-        official_forum_url,
-        chat_url,
-        announcement_url,
-        twitter_screen_name,
-      },
-    } = data;
-
-    return {
-      market_cap: market_cap?.usd || null,
-      homepage: homepage?.[0] || null,
-      blockchain_site: blockchain_site?.filter((url: string) => url) || null,
-      official_forum_url: official_forum_url?.filter((url: string) => url) || null,
-      chat_url: chat_url?.filter((url: string) => url) || null,
-      announcement_url: announcement_url?.filter((url: string) => url) || null,
-      twitter_screen_name: twitter_screen_name || null,
-    };
+    return await response.json();
   } catch (err) {
     console.error("Error fetching main CoinGecko API:", err);
     return null;
@@ -102,132 +73,4 @@ const fetchMarketChartData = async (coingecko_id: string) => {
   }
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
-
-    if (!id) {
-      return new Response(
-        JSON.stringify({ error: "ID parameter is required" }),
-        { 
-          status: 400, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
-    }
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get coin data from database
-    const { data: coinData, error: fetchError } = await supabase
-      .from('coins')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      throw fetchError;
-    }
-
-    if (!coinData) {
-      return new Response(
-        JSON.stringify({ error: "Coin not found" }),
-        { 
-          status: 404, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
-    }
-
-    // Fetch fresh data from APIs
-    const [terminalData, mainData, chartData] = await Promise.all([
-      fetchTerminalData(id),
-      coinData.coingecko_id ? fetchMainCoinGeckoData(coinData.coingecko_id) : null,
-      coinData.coingecko_id ? fetchMarketChartData(coinData.coingecko_id) : null,
-    ]);
-
-    // Update database with fresh data
-    if (terminalData || mainData) {
-      const updateData = {
-        ...coinData,
-        ...(terminalData && {
-          price: terminalData.price_usd,
-          name: terminalData.name,
-          symbol: terminalData.symbol,
-          image_url: terminalData.image_url,
-        }),
-        ...(mainData && {
-          market_cap: mainData.market_cap,
-          homepage: mainData.homepage,
-          blockchain_site: mainData.blockchain_site,
-          official_forum_url: mainData.official_forum_url,
-          chat_url: mainData.chat_url,
-          announcement_url: mainData.announcement_url,
-          twitter_screen_name: mainData.twitter_screen_name,
-        }),
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: updateError } = await supabase
-        .from('coins')
-        .upsert(updateData);
-
-      if (updateError) {
-        console.error('Error updating coin data:', updateError);
-      }
-
-      return new Response(
-        JSON.stringify({
-          data: {
-            ...updateData,
-            historic_data: chartData?.prices || null,
-          },
-        }),
-        { 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
-    }
-
-    // Return existing data if no fresh data available
-    return new Response(
-      JSON.stringify({ data: coinData }),
-      { 
-        headers: { 
-          "Content-Type": "application/json",
-          ...corsHeaders 
-        } 
-      }
-    );
-
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          "Content-Type": "application/json",
-          ...corsHeaders 
-        } 
-      }
-    );
-  }
-});
+export { fetchTerminalData, fetchMainCoinGeckoData, fetchMarketChartData };

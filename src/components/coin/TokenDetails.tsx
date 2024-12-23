@@ -21,14 +21,11 @@ interface TokenDetailsProps {
       circulating: number;
       nonCirculating: number;
     };
-    updatedAt: string;
   };
   onClick: () => void;
-  onRefresh: () => void;
-  refreshing: boolean;
 }
 
-export const TokenDetails = ({ coinData, onClick, onRefresh, refreshing }: TokenDetailsProps) => {
+export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
   return (
     <div onClick={onClick} className="cursor-pointer hover:opacity-80 transition-opacity">
       <TokenHeader
@@ -40,9 +37,6 @@ export const TokenDetails = ({ coinData, onClick, onRefresh, refreshing }: Token
         tokenStandard={coinData.tokenStandard}
         decimals={coinData.decimals}
         solanaAddr={coinData.solanaAddr}
-        updatedAt={coinData.updatedAt}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
       />
 
       <TokenStats

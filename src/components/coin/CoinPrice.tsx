@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 
 interface CoinPriceProps {
-  initialPrice: number | null;
+  initialPrice: number;
 }
 
 export function CoinPrice({ initialPrice }: CoinPriceProps) {
-  const [currentPrice, setCurrentPrice] = useState<number | null>(initialPrice);
+  const [currentPrice, setCurrentPrice] = useState(initialPrice);
 
   useEffect(() => {
-    if (initialPrice === null || typeof initialPrice !== 'number' || isNaN(initialPrice)) {
-      setCurrentPrice(null);
-      return;
-    }
-
     const interval = setInterval(() => {
       const fluctuation = initialPrice * (Math.random() * 0.002 - 0.001);
       setCurrentPrice(initialPrice + fluctuation);
@@ -21,10 +16,7 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
     return () => clearInterval(interval);
   }, [initialPrice]);
 
-  const formatPrice = (p: number | null) => {
-    if (p === null || typeof p !== 'number' || isNaN(p)) {
-      return 'Price not available';
-    }
+  const formatPrice = (p: number) => {
     return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
   };
 
