@@ -8,13 +8,28 @@ interface CoinMetadata {
   id: string;
   name: string;
   symbol: string;
-  description: string;
-  image_url: string;
+  description: string | null;
+  image_url: string | null;
   total_supply: number | null;
-  coingecko_coin_id: string | null;
+  coingecko_id: string | null; // Changed from coingecko_coin_id to match DB schema
   updated_at: string;
   price: number | null;
   change_24h: number | null;
+  announcement_url?: string[] | null;
+  blockchain_site?: string[] | null;
+  chat_url?: string[] | null;
+  circulating_supply?: number | null;
+  coin_id?: string | null;
+  decimals?: number | null;
+  historic_data?: any | null;
+  homepage?: string | null;
+  liquidity?: number | null;
+  market_cap?: number | null;
+  non_circulating_supply?: number | null;
+  official_forum_url?: string[] | null;
+  solana_addr?: string | null;
+  twitter_screen_name?: string | null;
+  volume_24h?: number | null;
 }
 
 const CoinSearch = () => {
