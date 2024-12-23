@@ -15,12 +15,9 @@ async function fetchPumpFunData(tokenAddress: string) {
 
     const response = await fetch(url);
     console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API error response:', errorText);
-      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
+      throw new Error(`API responded with status ${response.status}`);
     }
 
     const responseText = await response.text();
@@ -78,7 +75,7 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw error;
+    throw new Error(`Failed to fetch data: ${error.message}`);
   }
 }
 
