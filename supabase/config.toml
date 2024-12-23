@@ -1,12 +1,15 @@
+# Project ID from the Supabase dashboard
 project_id = "fybgcaeoxptmmcwgslpl"
-
-[api]
-enabled = true
-url = "https://fybgcaeoxptmmcwgslpl.supabase.co"
 
 [functions]
 [functions.analyze-rug]
 verify_jwt = false
 
 [functions.transcribe-audio]
+verify_jwt = false
+
+[functions.get-coin]
+verify_jwt = false
+
+[functions.add-coin]
 verify_jwt = false
