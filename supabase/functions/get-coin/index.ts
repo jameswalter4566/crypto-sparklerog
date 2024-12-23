@@ -28,7 +28,7 @@ async function fetchPumpFunData(tokenAddress: string) {
     console.log('Successfully fetched Pump.fun data:', data);
     
     // Transform Pump.fun data to match our schema
-    const transformedData = {
+    return {
       id: tokenAddress,
       name: data.name || "Unknown Token",
       symbol: data.symbol || "???",
@@ -52,8 +52,6 @@ async function fetchPumpFunData(tokenAddress: string) {
       announcement_url: data.announcementUrl || null,
       twitter_screen_name: data.twitterScreenName || null
     };
-
-    return transformedData;
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
     throw error;
@@ -61,6 +59,7 @@ async function fetchPumpFunData(tokenAddress: string) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -75,7 +74,7 @@ serve(async (req) => {
 
     console.log('Processing request for token:', id);
 
-    // Only fetch from Pump.fun
+    // Fetch from Pump.fun
     const pumpData = await fetchPumpFunData(id);
     
     if (!pumpData) {
@@ -103,11 +102,13 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        terminalData: pumpData,
-        mainData: pumpData
-      }), 
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify(pumpData),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        } 
+      }
     );
 
   } catch (error) {
@@ -118,7 +119,7 @@ serve(async (req) => {
         details: error instanceof Error ? error.stack : undefined
       }),
       {
-        status: error instanceof Error && error.message.includes('not found') ? 404 : 500,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
