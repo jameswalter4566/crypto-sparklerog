@@ -13,11 +13,20 @@ async function fetchPumpFunData(tokenAddress: string) {
     const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
     console.log('Fetching from URL:', url);
 
-    const response = await fetch(url);
-    console.log('Response status:', response.status);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
     
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      throw new Error(`API responded with status ${response.status}`);
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
+      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
     const responseText = await response.text();
@@ -75,7 +84,7 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw new Error(`Failed to fetch data: ${error.message}`);
+    throw error;
   }
 }
 
