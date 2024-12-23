@@ -17,6 +17,8 @@ interface SolscanTokenResponse {
   };
 }
 
+const SOLSCAN_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzM3MjgwMjU4MTMsImVtYWlsIjoiamFtZXN3YWx0ZXJAZ29sZGVucGF0aHdheWZpbmFuY2lhbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzM3MjgwMjV9.hOZMSTOOw-CRMuvmzgxp65-9quToMhvG-me4S2e54Ew';
+
 export async function fetchSolscanData(address: string): Promise<SolscanTokenResponse | null> {
   try {
     console.log('Fetching Solscan data for address:', address);
@@ -26,22 +28,24 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       {
         headers: {
           'accept': 'application/json',
-          'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzM3MjgwMjU4MTMsImVtYWlsIjoiamFtZXN3YWx0ZXJAZ29sZGVucGF0aHdheWZpbmFuY2lhbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzM3MjgwMjV9.hOZMSTOOw-CRMuvmzgxp65-9quToMhvG-me4S2e54Ew'
+          'token': SOLSCAN_API_KEY
         }
       }
     );
 
-    // Log the raw response for debugging
-    console.log('Solscan response status:', response.status);
-    const rawData = await response.text();
-    console.log('Solscan raw response:', rawData);
-
     if (!response.ok) {
-      throw new Error(`Solscan API error: ${response.status}`);
+      console.error('Solscan API error:', response.status, await response.text());
+      return null;
     }
 
-    const data = JSON.parse(rawData);
+    const data = await response.json();
     console.log('Solscan parsed data:', data);
+    
+    if (!data.success) {
+      console.error('Solscan API returned unsuccessful response:', data);
+      return null;
+    }
+
     return data;
   } catch (error) {
     console.error('Error fetching Solscan data:', error);

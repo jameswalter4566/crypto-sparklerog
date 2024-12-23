@@ -24,7 +24,7 @@ serve(async (req) => {
     // Fetch data from Solscan API
     const solscanData = await fetchSolscanData(solana_addr);
     
-    if (!solscanData?.success) {
+    if (!solscanData) {
       throw new Error('Failed to fetch token data from Solscan');
     }
 

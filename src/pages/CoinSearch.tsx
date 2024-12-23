@@ -56,6 +56,7 @@ const CoinSearch = () => {
           description: "Coin is already in the list.",
           variant: "default",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -64,9 +65,9 @@ const CoinSearch = () => {
         .from("coins")
         .select("*")
         .eq("id", mintAddress)
-        .single();
+        .maybeSingle();
 
-      if (selectError && selectError.code !== "PGRST116") {
+      if (selectError) {
         console.error("Select Error:", selectError);
         throw new Error("Failed to check existing coin data.");
       }
@@ -86,8 +87,8 @@ const CoinSearch = () => {
         });
 
         if (!response.ok) {
-          const errorMessage = await response.text();
-          throw new Error(`Edge Function Error: ${errorMessage}`);
+          const errorData = await response.json();
+          throw new Error(`Edge Function Error: ${JSON.stringify(errorData)}`);
         }
 
         const result = await response.json();
