@@ -23,7 +23,7 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
     
     // Using the public endpoint with proper error handling
     const response = await fetch(
-      `https://api.solscan.io/token/meta?token=${address}`,
+      `https://public-api.solscan.io/token/meta?tokenAddress=${address}`,
       {
         headers: {
           'accept': 'application/json'
@@ -36,7 +36,7 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Solscan API HTTP error:', response.status, errorText);
-      return null;
+      throw new Error(`Solscan API error: ${response.status} - ${errorText}`);
     }
 
     // Get the response text and try to parse it
@@ -49,18 +49,37 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       console.log('Parsed Solscan data:', data);
     } catch (parseError) {
       console.error('Failed to parse Solscan response:', parseError);
-      return null;
+      throw new Error('Invalid JSON response from Solscan');
     }
 
     // Validate the response structure
-    if (!data || !data.data || !data.data.tokenAddress) {
-      console.error('Invalid Solscan response structure:', data);
-      return null;
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format from Solscan');
     }
 
-    return data;
+    // For the public API, the response structure is slightly different
+    const tokenData = {
+      success: true,
+      data: {
+        tokenAddress: data.address || address,
+        symbol: data.symbol || 'UNKNOWN',
+        name: data.name || 'Unknown Token',
+        icon: data.icon || '',
+        website: data.website || '',
+        twitter: data.twitter || '',
+        decimals: data.decimals || 0,
+        holder: data.holder || 0,
+        supply: data.supply || 0,
+        price: data.price || 0,
+        volume24h: data.volume24h || 0,
+        priceChange24h: data.priceChange24h || 0,
+        marketcap: data.marketcap || 0
+      }
+    };
+
+    return tokenData;
   } catch (error) {
     console.error('Error fetching Solscan data:', error);
-    return null;
+    throw error;
   }
 }

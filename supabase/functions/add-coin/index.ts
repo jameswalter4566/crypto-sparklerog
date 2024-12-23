@@ -22,11 +22,16 @@ serve(async (req) => {
     console.log('Processing request for Solana address:', solana_addr);
 
     // Fetch data from Solscan API with improved error handling
-    const solscanData = await fetchSolscanData(solana_addr);
-    
+    let solscanData;
+    try {
+      solscanData = await fetchSolscanData(solana_addr);
+    } catch (error) {
+      console.error('Solscan API error:', error);
+      throw new Error(`Failed to fetch token data: ${error.message}`);
+    }
+
     if (!solscanData || !solscanData.data) {
-      console.error('Failed to fetch valid token data from Solscan', { solscanData });
-      throw new Error('Failed to fetch valid token data from Solscan');
+      throw new Error('Invalid token data received from Solscan');
     }
 
     const tokenData = solscanData.data;
