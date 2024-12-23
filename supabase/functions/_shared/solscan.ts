@@ -21,12 +21,14 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Fetching Solscan data for address:', address);
     
-    // Using the public endpoint with proper error handling
+    // Using the public endpoint with proper headers
     const response = await fetch(
-      `https://api.solscan.io/token/meta?tokenAddress=${address}`,
+      `https://public-api.solscan.io/token/meta?tokenAddress=${address}`,
       {
         headers: {
-          'accept': 'application/json'
+          'accept': 'application/json',
+          'user-agent': 'Mozilla/5.0',
+          'token': Deno.env.get('SOLSCAN_API_KEY') || ''
         }
       }
     );
@@ -57,11 +59,11 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       throw new Error('Invalid response format from Solscan');
     }
 
-    // Transform the response to match our expected format
+    // For the public API, the response structure is slightly different
     const tokenData = {
       success: true,
       data: {
-        tokenAddress: address,
+        tokenAddress: data.address || address,
         symbol: data.symbol || 'UNKNOWN',
         name: data.name || 'Unknown Token',
         icon: data.icon || '',
