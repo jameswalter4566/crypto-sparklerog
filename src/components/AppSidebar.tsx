@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 
 const menuItems = [
   {
-    title: "New Coins",
+    title: "Trending Coins",
     icon: Coins,
     path: "/",
   },
