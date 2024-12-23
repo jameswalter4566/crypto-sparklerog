@@ -48,7 +48,7 @@ export function NewCoinCard({
             <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
               <AvatarImage 
                 src={imageUrl || "/placeholder.svg"} 
-                alt={name} 
+                alt={name || "Unknown Coin"} 
                 className="object-cover"
                 onError={(e) => {
                   const img = e.target as HTMLImageElement;
@@ -58,7 +58,7 @@ export function NewCoinCard({
               <AvatarFallback>{symbolFallback}</AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-1">
-              <CopyAddressButton solanaAddr={mintAddress} />
+              <CopyAddressButton solanaAddr={mintAddress || ""} />
               <VoiceChatCounter coinId={id} />
             </div>
           </div>
@@ -66,9 +66,9 @@ export function NewCoinCard({
         <CardContent className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-1">
             <CardTitle className="text-xs sm:text-sm">
-              <span className="truncate max-w-[120px]">{name}</span>
+              <span className="truncate max-w-[120px]">{name || "Unnamed Coin"}</span>
             </CardTitle>
-            <span className="text-xs text-gray-400">{symbol}</span>
+            <span className="text-xs text-gray-400">{symbol || "N/A"}</span>
             <div className="mt-1 text-sm font-medium">{formatPrice(price)}</div>
             <div className={`text-xs ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
