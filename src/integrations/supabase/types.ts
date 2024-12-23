@@ -11,65 +11,83 @@ export type Database = {
     Tables: {
       coins: {
         Row: {
+          announcement_url: string[] | null
+          blockchain_site: string[] | null
           change_24h: number | null
+          chat_url: string[] | null
           circulating_supply: number | null
           coin_id: string | null
           coingecko_id: string | null
           decimals: number | null
           description: string | null
           historic_data: Json | null
+          homepage: string | null
           id: string
           image_url: string | null
           liquidity: number | null
           market_cap: number | null
           name: string
           non_circulating_supply: number | null
+          official_forum_url: string[] | null
           price: number | null
           solana_addr: string | null
           symbol: string
           total_supply: number | null
+          twitter_screen_name: string | null
           updated_at: string | null
           volume_24h: number | null
         }
         Insert: {
+          announcement_url?: string[] | null
+          blockchain_site?: string[] | null
           change_24h?: number | null
+          chat_url?: string[] | null
           circulating_supply?: number | null
           coin_id?: string | null
           coingecko_id?: string | null
           decimals?: number | null
           description?: string | null
           historic_data?: Json | null
+          homepage?: string | null
           id: string
           image_url?: string | null
           liquidity?: number | null
           market_cap?: number | null
           name: string
           non_circulating_supply?: number | null
+          official_forum_url?: string[] | null
           price?: number | null
           solana_addr?: string | null
           symbol: string
           total_supply?: number | null
+          twitter_screen_name?: string | null
           updated_at?: string | null
           volume_24h?: number | null
         }
         Update: {
+          announcement_url?: string[] | null
+          blockchain_site?: string[] | null
           change_24h?: number | null
+          chat_url?: string[] | null
           circulating_supply?: number | null
           coin_id?: string | null
           coingecko_id?: string | null
           decimals?: number | null
           description?: string | null
           historic_data?: Json | null
+          homepage?: string | null
           id?: string
           image_url?: string | null
           liquidity?: number | null
           market_cap?: number | null
           name?: string
           non_circulating_supply?: number | null
+          official_forum_url?: string[] | null
           price?: number | null
           solana_addr?: string | null
           symbol?: string
           total_supply?: number | null
+          twitter_screen_name?: string | null
           updated_at?: string | null
           volume_24h?: number | null
         }
