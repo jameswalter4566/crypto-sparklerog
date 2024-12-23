@@ -1,5 +1,10 @@
-import fetch from 'node-fetch';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const fetchTerminalData = async (solana_addr: string) => {
   try {
@@ -60,10 +65,10 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
     return {
       market_cap: market_cap?.usd || null,
       homepage: homepage?.[0] || null,
-      blockchain_site: blockchain_site?.filter((url) => url) || null,
-      official_forum_url: official_forum_url?.filter((url) => url) || null,
-      chat_url: chat_url?.filter((url) => url) || null,
-      announcement_url: announcement_url?.filter((url) => url) || null,
+      blockchain_site: blockchain_site?.filter((url: string) => url) || null,
+      official_forum_url: official_forum_url?.filter((url: string) => url) || null,
+      chat_url: chat_url?.filter((url: string) => url) || null,
+      announcement_url: announcement_url?.filter((url: string) => url) || null,
       twitter_screen_name: twitter_screen_name || null,
     };
   } catch (err) {
@@ -97,7 +102,12 @@ const fetchMarketChartData = async (coingecko_id: string) => {
   }
 };
 
-Deno.serve(async (req) => {
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
@@ -105,7 +115,13 @@ Deno.serve(async (req) => {
     if (!id) {
       return new Response(
         JSON.stringify({ error: "ID parameter is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { 
+          status: 400, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
@@ -128,7 +144,13 @@ Deno.serve(async (req) => {
     if (!coinData) {
       return new Response(
         JSON.stringify({ error: "Coin not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { 
+          status: 404, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
@@ -176,22 +198,36 @@ Deno.serve(async (req) => {
             historic_data: chartData?.prices || null,
           },
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
     // Return existing data if no fresh data available
     return new Response(
       JSON.stringify({ data: coinData }),
-      { headers: { "Content-Type": "application/json" } }
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders 
+        } 
+      }
     );
 
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders 
+        } 
+      }
     );
   }
 });
-
-export { fetchTerminalData, fetchMainCoinGeckoData, fetchMarketChartData };
