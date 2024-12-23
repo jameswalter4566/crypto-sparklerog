@@ -1,143 +1,132 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { Database } from '../_shared/database.types.ts'
-import { fetchSolscanData } from '../_shared/solscan.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { Database } from "../_shared/database.types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+async function fetchPumpFunData(tokenAddress: string) {
+  console.log('Fetching data from Pump.fun for token:', tokenAddress);
+  
+  try {
+    const response = await fetch(`https://pump.fun/coin/${tokenAddress}`, {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Cache-Control': 'no-cache'
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Pump.fun API error:', response.status);
+      throw new Error(`Pump.fun API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Successfully fetched Pump.fun data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching from Pump.fun:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const url = new URL(req.url)
-    const id = url.searchParams.get('id')
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
 
     if (!id) {
-      throw new Error('Token ID is required')
+      throw new Error('Token ID is required');
     }
 
-    console.log('Processing request for token:', id)
+    console.log('Processing request for token:', id);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase configuration')
+      throw new Error('Missing Supabase configuration');
     }
 
-    const supabase = createClient<Database>(supabaseUrl, supabaseKey)
+    const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
     // Get coin data from database
     const { data: dbCoin, error: dbError } = await supabase
       .from('coins')
       .select('*')
       .eq('id', id)
-      .maybeSingle()
+      .maybeSingle();
 
     if (dbError) {
-      console.error('Database error:', dbError)
-      throw new Error('Failed to fetch token data from database')
+      console.error('Database error:', dbError);
+      throw new Error('Failed to fetch token data from database');
     }
 
-    // If no coin found in database, fetch from blockchain
-    if (!dbCoin) {
-      console.log('Coin not found in database, fetching from blockchain...')
-      try {
-        const solanaData = await fetchSolscanData(id)
-        
-        if (!solanaData || !solanaData.data) {
-          console.error('No data returned from fetchSolscanData')
-          throw new Error('Token data not available')
-        }
-
-        // Insert the new coin data
-        const { error: insertError } = await supabase
-          .from('coins')
-          .insert({
-            id: id,
-            name: solanaData.data.name,
-            symbol: solanaData.data.symbol,
-            price: solanaData.data.price,
-            market_cap: solanaData.data.marketcap,
-            volume_24h: solanaData.data.volume24h,
-            total_supply: solanaData.data.total_supply,
-            image_url: solanaData.data.icon,
-            solana_addr: id,
-            description: solanaData.data.description,
-            decimals: solanaData.data.decimals,
-            updated_at: new Date().toISOString(),
-          })
-
-        if (insertError) {
-          console.error('Error inserting new coin:', insertError)
-          // Continue even if insert fails - we can still return the data
-        }
-
-        return new Response(
-          JSON.stringify({
-            terminalData: solanaData.data,
-            mainData: solanaData.data
-          }), 
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      } catch (error) {
-        console.error('Error fetching Solana data:', error)
-        throw new Error('Failed to fetch token data from blockchain')
-      }
-    }
-
-    // Fetch fresh data for existing coin
-    console.log('Fetching fresh data for existing coin:', id)
     try {
-      const freshData = await fetchSolscanData(dbCoin.solana_addr || id)
+      // Always fetch fresh data from Pump.fun
+      const pumpData = await fetchPumpFunData(id);
+      
+      if (pumpData) {
+        // Transform Pump.fun data to match our schema
+        const transformedData = {
+          id: id,
+          name: pumpData.name || "Unknown Token",
+          symbol: pumpData.symbol || "???",
+          price: pumpData.price || null,
+          market_cap: pumpData.marketCap || null,
+          volume_24h: pumpData.volume24h || null,
+          total_supply: pumpData.totalSupply || null,
+          image_url: pumpData.image || null,
+          solana_addr: id,
+          description: pumpData.description || null,
+          decimals: pumpData.decimals || null,
+          updated_at: new Date().toISOString(),
+        };
 
-      if (freshData && freshData.data) {
         // Update database with new data
         const { error: updateError } = await supabase
           .from('coins')
-          .update({
-            price: freshData.data.price,
-            market_cap: freshData.data.marketcap,
-            volume_24h: freshData.data.volume24h,
-            image_url: freshData.data.icon || dbCoin.image_url,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', id)
+          .upsert(transformedData);
 
         if (updateError) {
-          console.error('Error updating coin data:', updateError)
-          // Continue even if update fails - we can still return the data
+          console.error('Error updating coin data:', updateError);
         }
 
         return new Response(
           JSON.stringify({
-            terminalData: freshData.data,
-            mainData: freshData.data
+            terminalData: transformedData,
+            mainData: transformedData
           }), 
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        );
       }
     } catch (error) {
-      console.error('Error fetching fresh data:', error)
-      // Fall back to database data if fresh fetch fails
+      console.error('Error fetching from Pump.fun:', error);
+      // If we have database data, return that as fallback
+      if (dbCoin) {
+        return new Response(
+          JSON.stringify({
+            terminalData: dbCoin,
+            mainData: dbCoin
+          }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      throw error;
     }
 
-    // Return database data as fallback
-    return new Response(
-      JSON.stringify({
-        terminalData: dbCoin,
-        mainData: dbCoin
-      }), 
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    throw new Error('Failed to fetch token data');
 
   } catch (error) {
-    console.error('Error in get-coin function:', error)
+    console.error('Error in get-coin function:', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -147,6 +136,6 @@ serve(async (req) => {
         status: error instanceof Error && error.message.includes('not found') ? 404 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    )
+    );
   }
-})
+});
