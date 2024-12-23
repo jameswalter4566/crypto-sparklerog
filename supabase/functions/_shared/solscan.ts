@@ -23,7 +23,6 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Fetching Solscan data for address:', address);
     
-    // Use the token/meta endpoint instead of transfer
     const response = await fetch(
       `https://pro-api.solscan.io/v2.0/token/meta?token=${address}`,
       {
@@ -34,23 +33,40 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       }
     );
 
-    // Log the raw response for debugging
     console.log('Solscan response status:', response.status);
+    
+    // Get the raw response text first
     const rawText = await response.text();
     console.log('Solscan raw response:', rawText);
 
-    // Try to parse the response as JSON
+    // Try to parse the JSON response
     let data;
     try {
       data = JSON.parse(rawText);
+      console.log('Parsed Solscan data:', data);
     } catch (parseError) {
       console.error('Failed to parse Solscan response:', parseError);
       return null;
     }
 
-    if (!response.ok || !data.success) {
-      console.error('Solscan API error:', response.status, data);
+    // Check both the HTTP status and the success field in the response
+    if (!response.ok) {
+      console.error('Solscan API HTTP error:', response.status, data);
       return null;
+    }
+
+    if (!data.success || !data.data) {
+      console.error('Solscan API returned unsuccessful response:', data);
+      return null;
+    }
+
+    // Validate required fields
+    const requiredFields = ['tokenAddress', 'name', 'symbol'];
+    for (const field of requiredFields) {
+      if (!data.data[field]) {
+        console.error(`Missing required field in Solscan response: ${field}`);
+        return null;
+      }
     }
 
     return data;

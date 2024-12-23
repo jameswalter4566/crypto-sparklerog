@@ -19,17 +19,28 @@ serve(async (req) => {
       throw new Error('Solana address is required');
     }
 
-    console.log('Fetching data for Solana address:', solana_addr);
+    console.log('Processing request for Solana address:', solana_addr);
 
     // Fetch data from Solscan API
     const solscanData = await fetchSolscanData(solana_addr);
     
     if (!solscanData || !solscanData.data) {
-      console.error('Failed to fetch or invalid Solscan data:', solscanData);
-      throw new Error('Failed to fetch valid token data from Solscan');
+      const errorMessage = 'Failed to fetch valid token data from Solscan';
+      console.error(errorMessage, { solscanData });
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { 
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
 
     const tokenData = solscanData.data;
+    console.log('Successfully fetched token data:', tokenData);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -55,7 +66,7 @@ serve(async (req) => {
       updated_at: new Date().toISOString()
     };
 
-    console.log('Prepared coin data:', coinData);
+    console.log('Prepared coin data for database:', coinData);
 
     // Insert or update coin data in database
     const { error: upsertError } = await supabaseClient
@@ -78,10 +89,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in add-coin function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        details: error instanceof Error ? error.stack : undefined
       }),
       { 
         status: 400,
