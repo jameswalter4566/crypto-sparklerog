@@ -15,7 +15,6 @@ async function fetchPumpFunData(tokenAddress: string) {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Cache-Control': 'no-cache',
       },
     });
 
@@ -25,7 +24,7 @@ async function fetchPumpFunData(tokenAddress: string) {
     }
 
     const rawData = await response.json();
-    console.log('Raw API response:', rawData);
+    console.log('Raw API response:', JSON.stringify(rawData, null, 2));
 
     const tokenData = rawData.coins?.find((coin: any) => coin.mint === tokenAddress);
     
@@ -33,9 +32,10 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error('Token not found in Pump.fun response');
     }
 
-    console.log('Found token data:', tokenData);
+    console.log('Found token data (raw):', JSON.stringify(tokenData, null, 2));
 
-    return {
+    // Log each field we're trying to map
+    const mappedData = {
       id: tokenAddress,
       name: tokenData.name || 'Unknown Token',
       symbol: tokenData.symbol || '???',
@@ -59,6 +59,10 @@ async function fetchPumpFunData(tokenAddress: string) {
       announcement_url: null,
       twitter_screen_name: tokenData.twitter || null,
     };
+
+    console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
+
+    return mappedData;
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
     throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
@@ -81,8 +85,7 @@ serve(async (req) => {
     console.log('Processing request for token:', tokenAddress);
 
     const pumpData = await fetchPumpFunData(tokenAddress);
-    console.log('Processed Pump.fun data:', pumpData);
-
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
