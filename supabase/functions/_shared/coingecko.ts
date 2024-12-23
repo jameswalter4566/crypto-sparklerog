@@ -15,9 +15,14 @@ export async function fetchCoinGeckoData(address: string): Promise<CoinGeckoProR
       }
     );
 
+    // Log the raw response for debugging
+    console.log('CoinGecko onchain response status:', onchainResponse.status);
+    const onchainData = await onchainResponse.text();
+    console.log('CoinGecko onchain raw response:', onchainData);
+
     if (onchainResponse.ok) {
-      const data = await onchainResponse.json();
-      console.log('CoinGecko Pro onchain data:', data);
+      const data = JSON.parse(onchainData);
+      console.log('CoinGecko Pro onchain parsed data:', data);
       return data;
     }
 
@@ -33,15 +38,20 @@ export async function fetchCoinGeckoData(address: string): Promise<CoinGeckoProR
       }
     );
 
+    // Log the raw response for debugging
+    console.log('CoinGecko info response status:', infoResponse.status);
+    const infoData = await infoResponse.text();
+    console.log('CoinGecko info raw response:', infoData);
+
     if (infoResponse.ok) {
-      const data = await infoResponse.json();
-      console.log('CoinGecko Pro info data:', data);
+      const data = JSON.parse(infoData);
+      console.log('CoinGecko Pro info parsed data:', data);
       return data;
     }
 
     console.warn('Failed to fetch CoinGecko Pro data:', 
-      onchainResponse.status, await onchainResponse.text(),
-      infoResponse.status, await infoResponse.text()
+      `Onchain status: ${onchainResponse.status}`,
+      `Info status: ${infoResponse.status}`
     );
     return null;
   } catch (error) {
