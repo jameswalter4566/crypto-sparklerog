@@ -10,7 +10,11 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
   try {
-    const response = await fetch(`https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`, {
+    // Log the full URL we're fetching from
+    const url = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
+    console.log('Fetching from URL:', url);
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -18,23 +22,47 @@ async function fetchPumpFunData(tokenAddress: string) {
       },
     });
 
+    // Log the response status and headers
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
       console.error('Pump.fun API error:', response.status);
-      throw new Error(`Pump.fun API error: ${response.status}`);
+      // Try to read the error message from the response
+      const errorText = await response.text();
+      console.error('Error response body:', errorText);
+      throw new Error(`Pump.fun API error: ${response.status}. Response: ${errorText}`);
     }
 
-    const rawData = await response.json();
-    console.log('Raw API response:', JSON.stringify(rawData, null, 2));
+    // Get the raw text first to inspect it
+    const responseText = await response.text();
+    console.log('Raw response text:', responseText);
 
-    const tokenData = rawData.coins?.find((coin: any) => coin.mint === tokenAddress);
+    // Try to parse the JSON
+    let rawData;
+    try {
+      rawData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.error('Invalid JSON received:', responseText);
+      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+    }
+
+    console.log('Parsed JSON data:', JSON.stringify(rawData, null, 2));
+
+    if (!rawData || !rawData.coins) {
+      throw new Error('Invalid response format: missing coins array');
+    }
+
+    const tokenData = rawData.coins.find((coin: any) => coin.mint === tokenAddress);
     
     if (!tokenData) {
       throw new Error('Token not found in Pump.fun response');
     }
 
-    console.log('Found token data (raw):', JSON.stringify(tokenData, null, 2));
+    console.log('Found token data:', JSON.stringify(tokenData, null, 2));
 
-    // Log each field we're trying to map
+    // Map the data to our schema
     const mappedData = {
       id: tokenAddress,
       name: tokenData.name || 'Unknown Token',
@@ -54,18 +82,18 @@ async function fetchPumpFunData(tokenAddress: string) {
       non_circulating_supply: tokenData.non_circulating_supply || null,
       historic_data: tokenData.historic_data || null,
       homepage: tokenData.website || null,
-      blockchain_site: tokenData.metadata_uri ? [tokenData.metadata_uri] : null,
-      chat_url: tokenData.telegram ? [tokenData.telegram] : null,
+      blockchain_site: Array.isArray(tokenData.metadata_uri) ? tokenData.metadata_uri : tokenData.metadata_uri ? [tokenData.metadata_uri] : null,
+      chat_url: Array.isArray(tokenData.telegram) ? tokenData.telegram : tokenData.telegram ? [tokenData.telegram] : null,
       announcement_url: null,
       twitter_screen_name: tokenData.twitter || null,
     };
 
     console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
-
     return mappedData;
+
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
+    throw error;
   }
 }
 
@@ -95,12 +123,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { error: updateError } = await supabase
+    const { error: upsertError } = await supabase
       .from('coins')
       .upsert(pumpData);
 
-    if (updateError) {
-      console.error('Error updating coin data:', updateError);
+    if (upsertError) {
+      console.error('Error upserting data to Supabase:', upsertError);
+      throw upsertError;
     }
 
     return new Response(
