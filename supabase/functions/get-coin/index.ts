@@ -63,8 +63,11 @@ serve(async (req) => {
           name: solanaData.data.name,
           symbol: solanaData.data.symbol,
           price: solanaData.data.price,
+          market_cap: solanaData.data.marketcap,
+          volume_24h: solanaData.data.volume24h,
           decimals: solanaData.data.decimals,
           total_supply: parseFloat(solanaData.data.supply),
+          image_url: solanaData.data.icon,
           solana_addr: id,
           updated_at: new Date().toISOString(),
         })
@@ -75,7 +78,12 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({
         terminalData: solanaData.data,
-        mainData: null
+        mainData: {
+          market_cap: solanaData.data.marketcap,
+          volume_24h: solanaData.data.volume24h,
+          price: solanaData.data.price,
+          image_url: solanaData.data.icon
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -91,7 +99,9 @@ serve(async (req) => {
         .from('coins')
         .update({
           price: freshData.data.price,
+          market_cap: freshData.data.marketcap,
           volume_24h: freshData.data.volume24h,
+          image_url: freshData.data.icon || dbCoin.image_url,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -104,8 +114,9 @@ serve(async (req) => {
         terminalData: freshData.data,
         mainData: {
           market_cap: freshData.data.marketcap,
-          total_volume: freshData.data.volume24h,
-          price_change_24h: freshData.data.priceChange24h,
+          volume_24h: freshData.data.volume24h,
+          price: freshData.data.price,
+          image_url: freshData.data.icon || dbCoin.image_url
         }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -124,11 +135,13 @@ serve(async (req) => {
         circulating_supply: dbCoin.circulating_supply,
         non_circulating_supply: dbCoin.non_circulating_supply,
         decimals: dbCoin.decimals,
+        icon: dbCoin.image_url
       },
       mainData: {
         market_cap: dbCoin.market_cap,
-        total_volume: dbCoin.volume_24h,
-        price_change_24h: dbCoin.change_24h,
+        volume_24h: dbCoin.volume_24h,
+        price: dbCoin.price,
+        image_url: dbCoin.image_url
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

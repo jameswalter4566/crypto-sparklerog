@@ -6,77 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function fetchSolanaTokenData(address: string) {
-  try {
-    console.log('Fetching Solana token data for:', address);
-    
-    // Initialize connection to Solana mainnet
-    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-    
-    // Get mint info using raw RPC call since we can't use SPL Token in Deno
-    const mintPubkey = new PublicKey(address);
-    const accountInfo = await connection.getAccountInfo(mintPubkey);
-    
-    if (!accountInfo) {
-      throw new Error('Token account not found');
-    }
-
-    // Get token metadata if available (optional)
-    let name = "Unknown Token";
-    let symbol = "???";
-    let decimals = 0;
-    
-    try {
-      const response = await fetch(
-        `https://api.dexscreener.com/latest/dex/tokens/${address}`,
-        {
-          headers: {
-            'accept': 'application/json',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const pair = data.pairs?.[0];
-        if (pair) {
-          name = pair.baseToken?.name || name;
-          symbol = pair.baseToken?.symbol || symbol;
-          decimals = pair.baseToken?.decimals || decimals;
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to fetch token metadata from DexScreener:', error);
-    }
-
-    return {
-      success: true,
-      data: {
-        tokenAddress: address,
-        symbol: symbol,
-        name: name,
-        icon: '',
-        website: '',
-        twitter: '',
-        decimals: decimals,
-        holder: 0,
-        supply: accountInfo.lamports.toString(),
-        price: 0,
-        volume24h: 0,
-        priceChange24h: 0,
-        marketcap: 0
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching Solana token data:', error);
-    return null;
-  }
-}
-
 async function fetchDexScreener(address: string) {
   try {
-    console.log('Attempting DexScreener fetch for:', address);
+    console.log('Fetching DexScreener data for:', address);
     const response = await fetch(
       `https://api.dexscreener.com/latest/dex/tokens/${address}`,
       {
@@ -93,30 +25,53 @@ async function fetchDexScreener(address: string) {
     }
 
     const data = await response.json();
-    console.log('DexScreener fetch succeeded:', data);
+    console.log('DexScreener data received:', data);
     
-    const pair = data.pairs?.[0];
-    if (!pair) {
+    if (!data.pairs || data.pairs.length === 0) {
       console.warn('No pairs found in DexScreener response');
       return null;
+    }
+
+    const pair = data.pairs[0];
+    const baseToken = pair.baseToken;
+    
+    // Calculate market cap if possible
+    const marketCap = baseToken.liquidity?.usd 
+      ? parseFloat(baseToken.liquidity.usd) 
+      : null;
+
+    // Get logo URL from Jupiter API as fallback
+    let logoUrl = null;
+    try {
+      const jupiterResponse = await fetch(
+        `https://token.jup.ag/all`
+      );
+      if (jupiterResponse.ok) {
+        const jupiterData = await jupiterResponse.json();
+        const token = jupiterData.tokens.find((t: any) => t.address === address);
+        if (token) {
+          logoUrl = token.logoURI;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to fetch logo from Jupiter:', error);
     }
 
     return {
       success: true,
       data: {
         tokenAddress: address,
-        symbol: pair.baseToken?.symbol || 'UNKNOWN',
-        name: pair.baseToken?.name || 'Unknown Token',
-        icon: '',
-        website: '',
-        twitter: '',
-        decimals: pair.baseToken?.decimals || 0,
+        symbol: baseToken?.symbol || 'UNKNOWN',
+        name: baseToken?.name || 'Unknown Token',
+        icon: logoUrl,
+        decimals: baseToken?.decimals || 0,
         holder: 0,
-        supply: parseFloat(pair.baseToken?.liquidity?.base || '0'),
+        supply: parseFloat(baseToken?.liquidity?.base || '0'),
         price: parseFloat(pair.priceUsd || '0'),
         volume24h: parseFloat(pair.volume?.h24 || '0'),
         priceChange24h: parseFloat(pair.priceChange?.h24 || '0'),
-        marketcap: parseFloat(pair.liquidity?.usd || '0')
+        marketcap: marketCap,
+        liquidity: parseFloat(pair.liquidity?.usd || '0')
       }
     };
   } catch (error) {
@@ -125,26 +80,76 @@ async function fetchDexScreener(address: string) {
   }
 }
 
+async function fetchSolanaTokenData(address: string) {
+  try {
+    console.log('Fetching Solana token data for:', address);
+    
+    // Initialize connection to Solana mainnet
+    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+    
+    // Get mint info
+    const mintPubkey = new PublicKey(address);
+    const accountInfo = await connection.getAccountInfo(mintPubkey);
+    
+    if (!accountInfo) {
+      throw new Error('Token account not found');
+    }
+
+    // Try to get metadata from token list
+    let tokenMetadata = null;
+    try {
+      const response = await fetch('https://token.jup.ag/all');
+      if (response.ok) {
+        const data = await response.json();
+        tokenMetadata = data.tokens.find((token: any) => token.address === address);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch token metadata:', error);
+    }
+
+    return {
+      success: true,
+      data: {
+        tokenAddress: address,
+        symbol: tokenMetadata?.symbol || 'UNKNOWN',
+        name: tokenMetadata?.name || 'Unknown Token',
+        icon: tokenMetadata?.logoURI || '',
+        decimals: tokenMetadata?.decimals || 0,
+        holder: 0,
+        supply: accountInfo.lamports.toString(),
+        price: 0,
+        volume24h: 0,
+        priceChange24h: 0,
+        marketcap: 0,
+        liquidity: 0
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching Solana token data:', error);
+    return null;
+  }
+}
+
 export async function fetchSolscanData(address: string) {
   try {
     console.log('Starting token data fetch for address:', address);
     
-    // Try Solana RPC first
-    const solanaData = await fetchSolanaTokenData(address);
-    if (solanaData) {
-      console.log('Successfully fetched data from Solana RPC');
-      return solanaData;
-    }
-
-    // If Solana RPC fails, try DexScreener
-    console.log('Solana RPC fetch failed, trying DexScreener');
+    // Try DexScreener first for price and market data
     const dexScreenerData = await fetchDexScreener(address);
     if (dexScreenerData) {
       console.log('Successfully fetched data from DexScreener');
       return dexScreenerData;
     }
 
-    throw new Error('Failed to fetch token data from both Solana RPC and DexScreener');
+    // If DexScreener fails, fallback to basic Solana data
+    console.log('DexScreener fetch failed, trying Solana RPC');
+    const solanaData = await fetchSolanaTokenData(address);
+    if (solanaData) {
+      console.log('Successfully fetched data from Solana RPC');
+      return solanaData;
+    }
+
+    throw new Error('Failed to fetch token data from both DexScreener and Solana RPC');
   } catch (error) {
     console.error('Error fetching token data:', error);
     throw error;
