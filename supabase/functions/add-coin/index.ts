@@ -1,51 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { calculateMarketCap } from "../_shared/market-cap.ts";
+import { fetchCoinGeckoData } from "../_shared/coingecko.ts";
+import { CoinGeckoTerminalResponse } from "../_shared/types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface CoinGeckoTerminalResponse {
-  data?: {
-    attributes?: {
-      name: string;
-      symbol: string;
-      price: number;
-      volume_24h: number;
-      liquidity: number;
-      total_supply: number;
-      circulating_supply: number;
-      non_circulating_supply: number;
-      coingecko_coin_id: string | null;
-      description: string | null;
-      token_standard: string | null;
-      decimals: number | null;
-      image_url: string | null;
-      market_cap: number | null;
-    }
-  }
-}
-
-interface CoinGeckoResponse {
-  market_data?: {
-    market_cap?: {
-      usd?: number;
-    };
-    total_volume?: {
-      usd?: number;
-    };
-    price_change_percentage_24h?: number;
-  };
-  links?: {
-    homepage?: string[];
-    blockchain_site?: string[];
-    official_forum_url?: string[];
-    chat_url?: string[];
-    announcement_url?: string[];
-    twitter_screen_name?: string;
-  };
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -81,77 +43,12 @@ serve(async (req) => {
     console.log('GeckoTerminal response:', JSON.stringify(data, null, 2));
     
     const attributes = data?.data?.attributes;
-
     if (!attributes) {
       throw new Error('No token data found');
     }
 
-    // If we have a CoinGecko ID, fetch additional data from CoinGecko
-    let coinGeckoData = null;
-    if (attributes.coingecko_coin_id) {
-      try {
-        console.log('Fetching CoinGecko data for ID:', attributes.coingecko_coin_id);
-        const geckoResponse = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${attributes.coingecko_coin_id}?localization=false&tickers=false&community_data=false&developer_data=false`,
-          {
-            headers: {
-              'accept': 'application/json',
-              'x-cg-demo-api-key': 'CG-FPFWTmsu6NTuzHvntsXiRxJJ',
-              'User-Agent': 'Solana Token Tracker/1.0'
-            }
-          }
-        );
-
-        if (geckoResponse.ok) {
-          coinGeckoData = await geckoResponse.json() as CoinGeckoResponse;
-          console.log('CoinGecko data:', JSON.stringify(coinGeckoData, null, 2));
-        } else {
-          console.error('Failed to fetch CoinGecko data:', await geckoResponse.text());
-        }
-      } catch (error) {
-        console.error('Error fetching CoinGecko data:', error);
-      }
-    }
-
-    // Calculate market cap with improved precision and fallback handling
-    function calculateMarketCap(
-      coinGeckoMarketCap: number | null | undefined,
-      terminalMarketCap: number | null,
-      price: number | null,
-      circulatingSupply: number | null
-    ): number | null {
-      console.log('Calculating market cap with:', {
-        coinGeckoMarketCap,
-        terminalMarketCap,
-        price,
-        circulatingSupply
-      });
-
-      // Prefer CoinGecko data
-      if (typeof coinGeckoMarketCap === 'number' && !isNaN(coinGeckoMarketCap)) {
-        console.log('Using CoinGecko market cap:', coinGeckoMarketCap);
-        return coinGeckoMarketCap;
-      }
-
-      // Use GeckoTerminal data
-      if (typeof terminalMarketCap === 'number' && !isNaN(terminalMarketCap)) {
-        console.log('Using GeckoTerminal market cap:', terminalMarketCap);
-        return terminalMarketCap;
-      }
-
-      // Calculate from price and circulating supply
-      if (typeof price === 'number' && 
-          !isNaN(price) && 
-          typeof circulatingSupply === 'number' && 
-          !isNaN(circulatingSupply)) {
-        const calculated = +(price * circulatingSupply).toFixed(2);
-        console.log('Calculated market cap:', calculated);
-        return calculated;
-      }
-
-      console.log('No valid market cap could be calculated');
-      return null;
-    }
+    // Fetch CoinGecko Pro data
+    const coinGeckoData = await fetchCoinGeckoData(solana_addr);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -160,7 +57,7 @@ serve(async (req) => {
     );
 
     const marketCap = calculateMarketCap(
-      coinGeckoData?.market_data?.market_cap?.usd,
+      coinGeckoData?.data?.market_data?.market_cap?.usd,
       attributes.market_cap,
       attributes.price,
       attributes.circulating_supply
@@ -185,12 +82,12 @@ serve(async (req) => {
       decimals: attributes.decimals,
       image_url: attributes.image_url,
       solana_addr: solana_addr,
-      homepage: coinGeckoData?.links?.homepage?.[0] || null,
-      blockchain_site: coinGeckoData?.links?.blockchain_site || null,
-      official_forum_url: coinGeckoData?.links?.official_forum_url || null,
-      chat_url: coinGeckoData?.links?.chat_url || null,
-      announcement_url: coinGeckoData?.links?.announcement_url || null,
-      twitter_screen_name: coinGeckoData?.links?.twitter_screen_name || null,
+      homepage: coinGeckoData?.data?.links?.homepage?.[0] || null,
+      blockchain_site: coinGeckoData?.data?.links?.blockchain_site || null,
+      official_forum_url: coinGeckoData?.data?.links?.official_forum_url || null,
+      chat_url: coinGeckoData?.data?.links?.chat_url || null,
+      announcement_url: coinGeckoData?.data?.links?.announcement_url || null,
+      twitter_screen_name: coinGeckoData?.data?.links?.twitter_screen_name || null,
       updated_at: new Date().toISOString()
     };
 
