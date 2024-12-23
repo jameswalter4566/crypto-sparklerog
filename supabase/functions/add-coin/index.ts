@@ -21,22 +21,12 @@ serve(async (req) => {
 
     console.log('Processing request for Solana address:', solana_addr);
 
-    // Fetch data from Solscan API
+    // Fetch data from Solscan API with improved error handling
     const solscanData = await fetchSolscanData(solana_addr);
     
     if (!solscanData || !solscanData.data) {
-      const errorMessage = 'Failed to fetch valid token data from Solscan';
-      console.error(errorMessage, { solscanData });
-      return new Response(
-        JSON.stringify({ error: errorMessage }),
-        { 
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      console.error('Failed to fetch valid token data from Solscan', { solscanData });
+      throw new Error('Failed to fetch valid token data from Solscan');
     }
 
     const tokenData = solscanData.data;
@@ -92,8 +82,7 @@ serve(async (req) => {
     console.error('Error in add-coin function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
-        details: error instanceof Error ? error.stack : undefined
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
       }),
       { 
         status: 400,
