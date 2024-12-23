@@ -11,10 +11,22 @@ interface CoinMetadata {
   description: string;
   image_url: string;
   total_supply: number | null;
-  coingecko_coin_id: string | null;
+  coingecko_id: string | null;  // Changed from coingecko_coin_id to match DB schema
   updated_at: string;
   price: number;
   change_24h: number | null;
+  market_cap: number | null;
+  volume_24h: number | null;
+  liquidity: number | null;
+  circulating_supply: number | null;
+  non_circulating_supply: number | null;
+  decimals: number | null;
+  homepage: string | null;
+  blockchain_site: string[] | null;
+  official_forum_url: string[] | null;
+  chat_url: string[] | null;
+  announcement_url: string[] | null;
+  twitter_screen_name: string | null;
 }
 
 const CoinSearch = () => {
@@ -116,6 +128,7 @@ const CoinSearch = () => {
             price={coin.price}
             change24h={coin.change_24h}
             imageUrl={coin.image_url}
+            mintAddress={coin.id}
           />
         ))}
       </div>
