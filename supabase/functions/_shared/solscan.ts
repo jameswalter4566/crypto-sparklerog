@@ -21,9 +21,9 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
   try {
     console.log('Fetching Solscan data for address:', address);
     
-    // Using the public endpoint with proper headers
+    // Using the correct endpoint with proper headers
     const response = await fetch(
-      `https://public-api.solscan.io/token/meta?tokenAddress=${address}`,
+      `https://api.solscan.io/account?address=${address}`,
       {
         headers: {
           'accept': 'application/json',
@@ -37,7 +37,11 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Solscan API HTTP error:', response.status, errorText);
+      console.error('Solscan API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText
+      });
       throw new Error(`Solscan API error: ${response.status} - ${errorText}`);
     }
 
@@ -59,23 +63,23 @@ export async function fetchSolscanData(address: string): Promise<SolscanTokenRes
       throw new Error('Invalid response format from Solscan');
     }
 
-    // For the public API, the response structure is slightly different
+    // Transform the response to match our expected format
     const tokenData = {
       success: true,
       data: {
-        tokenAddress: data.address || address,
-        symbol: data.symbol || 'UNKNOWN',
-        name: data.name || 'Unknown Token',
-        icon: data.icon || '',
-        website: data.website || '',
-        twitter: data.twitter || '',
-        decimals: data.decimals || 0,
-        holder: data.holder || 0,
-        supply: data.supply || 0,
-        price: data.price || 0,
-        volume24h: data.volume24h || 0,
-        priceChange24h: data.priceChange24h || 0,
-        marketcap: data.marketcap || 0
+        tokenAddress: address,
+        symbol: data.tokenInfo?.symbol || 'UNKNOWN',
+        name: data.tokenInfo?.name || 'Unknown Token',
+        icon: data.tokenInfo?.icon || '',
+        website: data.tokenInfo?.website || '',
+        twitter: data.tokenInfo?.twitter || '',
+        decimals: data.tokenInfo?.decimals || 0,
+        holder: data.tokenInfo?.holder || 0,
+        supply: data.tokenInfo?.supply || 0,
+        price: data.tokenInfo?.price || 0,
+        volume24h: data.tokenInfo?.volume24h || 0,
+        priceChange24h: data.tokenInfo?.priceChange24h || 0,
+        marketcap: data.tokenInfo?.marketcap || 0
       }
     };
 
