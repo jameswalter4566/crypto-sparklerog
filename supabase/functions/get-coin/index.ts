@@ -15,6 +15,7 @@ async function fetchPumpFunData(tokenAddress: string) {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Cache-Control': 'no-cache',
       },
     });
 
@@ -30,11 +31,10 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error('Invalid data received from Pump.fun');
     }
 
-    // Transform Pump.fun data to match our schema
     return {
       id: tokenAddress,
       name: data.name,
-      symbol: data.symbol,
+      symbol: data.symbol || 'UNKNOWN',
       price: data.price || null,
       market_cap: data.marketCap || null,
       volume_24h: data.volume24h || null,
@@ -53,7 +53,7 @@ async function fetchPumpFunData(tokenAddress: string) {
       blockchain_site: data.blockchainSite || null,
       chat_url: data.chatUrl || null,
       announcement_url: data.announcementUrl || null,
-      twitter_screen_name: data.twitterScreenName || null
+      twitter_screen_name: data.twitterScreenName || null,
     };
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
@@ -98,7 +98,6 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating coin data:', updateError);
-      // Continue even if database update fails
     }
 
     return new Response(
