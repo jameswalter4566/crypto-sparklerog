@@ -1,58 +1,53 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { getMint } from '@solana/spl-token';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
 
-interface SolscanTokenResponse {
-  success: boolean;
-  data: {
-    tokenAddress: string;
-    symbol: string;
-    name: string;
-    icon: string;
-    website: string;
-    twitter: string;
-    decimals: number;
-    holder: number;
-    supply: number;
-    price: number;
-    volume24h: number;
-    priceChange24h: number;
-    marketcap: number;
-  };
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-async function fetchSolanaTokenData(address: string): Promise<SolscanTokenResponse | null> {
+async function fetchSolanaTokenData(address: string) {
   try {
     console.log('Fetching Solana token data for:', address);
     
     // Initialize connection to Solana mainnet
     const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     
-    // Get mint info
+    // Get mint info using raw RPC call since we can't use SPL Token in Deno
     const mintPubkey = new PublicKey(address);
-    const mintInfo = await getMint(connection, mintPubkey);
+    const accountInfo = await connection.getAccountInfo(mintPubkey);
     
+    if (!accountInfo) {
+      throw new Error('Token account not found');
+    }
+
     // Get token metadata if available (optional)
     let name = "Unknown Token";
     let symbol = "???";
+    let decimals = 0;
     
     try {
       const response = await fetch(
-        `https://api.solscan.io/v2/token/meta?token=${address}`,
+        `https://api.dexscreener.com/latest/dex/tokens/${address}`,
         {
           headers: {
             'accept': 'application/json',
-            'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5ODkyMTAxNzksImVtYWlsIjoiZGV0aHNxdWFkYWlyc29mdDE0NkBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5ODkyMTB9.xw_B2uzgczFn2F-ZeW2u4tvvapS_iRvLIRKNz2DB7K0'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
           }
         }
       );
 
       if (response.ok) {
-        const metadata = await response.json();
-        name = metadata.data?.name || name;
-        symbol = metadata.data?.symbol || symbol;
+        const data = await response.json();
+        const pair = data.pairs?.[0];
+        if (pair) {
+          name = pair.baseToken?.name || name;
+          symbol = pair.baseToken?.symbol || symbol;
+          decimals = pair.baseToken?.decimals || decimals;
+        }
       }
     } catch (error) {
-      console.warn('Failed to fetch token metadata from Solscan:', error);
+      console.warn('Failed to fetch token metadata from DexScreener:', error);
     }
 
     return {
@@ -64,9 +59,9 @@ async function fetchSolanaTokenData(address: string): Promise<SolscanTokenRespon
         icon: '',
         website: '',
         twitter: '',
-        decimals: mintInfo.decimals,
+        decimals: decimals,
         holder: 0,
-        supply: Number(mintInfo.supply.toString()),
+        supply: accountInfo.lamports.toString(),
         price: 0,
         volume24h: 0,
         priceChange24h: 0,
@@ -79,7 +74,7 @@ async function fetchSolanaTokenData(address: string): Promise<SolscanTokenRespon
   }
 }
 
-async function fetchDexScreener(address: string): Promise<SolscanTokenResponse | null> {
+async function fetchDexScreener(address: string) {
   try {
     console.log('Attempting DexScreener fetch for:', address);
     const response = await fetch(
@@ -112,10 +107,10 @@ async function fetchDexScreener(address: string): Promise<SolscanTokenResponse |
         tokenAddress: address,
         symbol: pair.baseToken?.symbol || 'UNKNOWN',
         name: pair.baseToken?.name || 'Unknown Token',
-        icon: '', // DexScreener doesn't provide icons
+        icon: '',
         website: '',
         twitter: '',
-        decimals: 0,
+        decimals: pair.baseToken?.decimals || 0,
         holder: 0,
         supply: parseFloat(pair.baseToken?.liquidity?.base || '0'),
         price: parseFloat(pair.priceUsd || '0'),
@@ -130,7 +125,7 @@ async function fetchDexScreener(address: string): Promise<SolscanTokenResponse |
   }
 }
 
-export async function fetchSolscanData(address: string): Promise<SolscanTokenResponse | null> {
+export async function fetchSolscanData(address: string) {
   try {
     console.log('Starting token data fetch for address:', address);
     
