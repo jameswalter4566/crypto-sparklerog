@@ -9,18 +9,18 @@ interface TokenDetailsProps {
     name: string;
     symbol: string;
     image: string | null;
-    price: number;
-    description: string;
-    tokenStandard: string;
-    decimals: number;
-    marketCap: number;
-    volume24h: number;
-    liquidity: number;
+    price: number | null;
+    description: string | null;
+    tokenStandard: string | null;
+    decimals: number | null;
+    marketCap: number | null;
+    volume24h: number | null;
+    liquidity: number | null;
     solanaAddr?: string;
     supply: {
-      total: number;
-      circulating: number;
-      nonCirculating: number;
+      total: number | null;
+      circulating: number | null;
+      nonCirculating: number | null;
     };
   };
   onClick: () => void;
@@ -46,7 +46,7 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
         price={coinData.price}
         description={coinData.description}
         tokenStandard={coinData.tokenStandard}
-        decimals={coinData.decimals}
+        decimals={coinData.decimals || undefined}
         solanaAddr={coinData.solanaAddr}
         updatedAt={lastUpdated}
         onRefresh={handleRefresh}

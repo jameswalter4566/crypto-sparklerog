@@ -7,6 +7,13 @@ interface TokenStatsProps {
 }
 
 export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps) => {
+  const formatValue = (value: number | null): string => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return "N/A";
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <Card>
@@ -15,7 +22,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps)
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            ${marketCap?.toLocaleString() ?? "N/A"}
+            {formatValue(marketCap)}
           </p>
         </CardContent>
       </Card>
@@ -26,7 +33,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps)
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            ${volume24h?.toLocaleString() ?? "N/A"}
+            {formatValue(volume24h)}
           </p>
         </CardContent>
       </Card>
@@ -37,7 +44,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps)
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            ${liquidity?.toLocaleString() ?? "N/A"}
+            {formatValue(liquidity)}
           </p>
         </CardContent>
       </Card>
