@@ -26,6 +26,10 @@ async function fetchPumpFunData(tokenAddress: string) {
     const responseText = await response.text();
     console.log('Raw response text:', responseText);
 
+    if (!responseText) {
+      throw new Error('Empty response from API');
+    }
+
     let rawData;
     try {
       rawData = JSON.parse(responseText);
@@ -46,26 +50,26 @@ async function fetchPumpFunData(tokenAddress: string) {
     // Map the data to our schema with detailed logging
     const mappedData = {
       id: tokenAddress,
-      name: tokenData.name || 'Unknown Token',
-      symbol: tokenData.symbol || '???',
-      price: tokenData.price || null,
-      market_cap: tokenData.marketCap || null,
-      volume_24h: tokenData.volume24h || null,
-      total_supply: tokenData.totalSupply || null,
+      name: tokenData.name || null,
+      symbol: tokenData.symbol || null,
+      price: typeof tokenData.price === 'number' ? tokenData.price : null,
+      market_cap: typeof tokenData.marketCap === 'number' ? tokenData.marketCap : null,
+      volume_24h: typeof tokenData.volume24h === 'number' ? tokenData.volume24h : null,
+      total_supply: typeof tokenData.totalSupply === 'number' ? tokenData.totalSupply : null,
       image_url: tokenData.image || null,
       solana_addr: tokenAddress,
       description: tokenData.description || null,
-      decimals: tokenData.decimals || null,
+      decimals: typeof tokenData.decimals === 'number' ? tokenData.decimals : null,
       updated_at: new Date().toISOString(),
-      liquidity: tokenData.liquidity || null,
-      change_24h: tokenData.priceChange24h || null,
-      circulating_supply: tokenData.circulatingSupply || null,
-      non_circulating_supply: tokenData.nonCirculatingSupply || null,
-      historic_data: tokenData.historicData || null,
+      liquidity: typeof tokenData.liquidity === 'number' ? tokenData.liquidity : null,
+      change_24h: typeof tokenData.priceChange24h === 'number' ? tokenData.priceChange24h : null,
+      circulating_supply: typeof tokenData.circulatingSupply === 'number' ? tokenData.circulatingSupply : null,
+      non_circulating_supply: typeof tokenData.nonCirculatingSupply === 'number' ? tokenData.nonCirculatingSupply : null,
+      historic_data: Array.isArray(tokenData.historicData) ? tokenData.historicData : null,
       homepage: tokenData.website || null,
-      blockchain_site: tokenData.blockchainSites || null,
-      chat_url: tokenData.chatUrls || null,
-      announcement_url: tokenData.announcementUrls || null,
+      blockchain_site: Array.isArray(tokenData.blockchainSites) ? tokenData.blockchainSites : null,
+      chat_url: Array.isArray(tokenData.chatUrls) ? tokenData.chatUrls : null,
+      announcement_url: Array.isArray(tokenData.announcementUrls) ? tokenData.announcementUrls : null,
       twitter_screen_name: tokenData.twitter || null,
     };
 
@@ -74,7 +78,7 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
+    throw error;
   }
 }
 
@@ -106,13 +110,19 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { error: upsertError } = await supabase
-      .from('coins')
-      .upsert(pumpData);
+    // Only upsert if we have valid data
+    if (pumpData.name && pumpData.symbol) {
+      const { error: upsertError } = await supabase
+        .from('coins')
+        .upsert(pumpData);
 
-    if (upsertError) {
-      console.error('Error upserting data to Supabase:', upsertError);
-      throw upsertError;
+      if (upsertError) {
+        console.error('Error upserting data to Supabase:', upsertError);
+        throw upsertError;
+      }
+    } else {
+      console.error('Invalid token data - missing required fields:', pumpData);
+      throw new Error('Invalid token data - missing required fields');
     }
 
     return new Response(
