@@ -1,5 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const fetchCoinGeckoTerminalData = async (solana_addr: string) => {
   try {
     const response = await fetch(
@@ -74,13 +80,24 @@ const fetchMainCoinGeckoData = async (coingecko_id: string) => {
 };
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
     const { solana_addr } = await req.json();
     
     if (!solana_addr) {
       return new Response(
         JSON.stringify({ error: "Solana address is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
@@ -88,7 +105,13 @@ Deno.serve(async (req) => {
     if (!attributes) {
       return new Response(
         JSON.stringify({ error: "Failed to fetch token data" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { 
+          status: 404, 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
@@ -132,13 +155,24 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, data: coinData }),
-      { headers: { "Content-Type": "application/json" } }
+      { 
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders 
+        } 
+      }
     );
 
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders 
+        } 
+      }
     );
   }
 });
