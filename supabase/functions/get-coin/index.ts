@@ -10,81 +10,62 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
   try {
-    // Log the full URL we're fetching from
-    const url = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
+    const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
     console.log('Fetching from URL:', url);
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      },
-    });
-
-    // Log the response status and headers
+    const response = await fetch(url);
     console.log('Response status:', response.status);
     console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
-      console.error('Pump.fun API error:', response.status);
-      // Try to read the error message from the response
       const errorText = await response.text();
-      console.error('Error response body:', errorText);
-      throw new Error(`Pump.fun API error: ${response.status}. Response: ${errorText}`);
+      console.error('API error response:', errorText);
+      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    // Get the raw text first to inspect it
     const responseText = await response.text();
     console.log('Raw response text:', responseText);
 
-    // Try to parse the JSON
     let rawData;
     try {
       rawData = JSON.parse(responseText);
+      console.log('Parsed data:', JSON.stringify(rawData, null, 2));
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      console.error('Invalid JSON received:', responseText);
       throw new Error(`Failed to parse JSON response: ${parseError.message}`);
     }
 
-    console.log('Parsed JSON data:', JSON.stringify(rawData, null, 2));
-
-    if (!rawData || !rawData.coins) {
-      throw new Error('Invalid response format: missing coins array');
+    if (!rawData || !rawData.data) {
+      console.error('Invalid response format:', rawData);
+      throw new Error('Invalid response format: missing data');
     }
 
-    const tokenData = rawData.coins.find((coin: any) => coin.mint === tokenAddress);
-    
-    if (!tokenData) {
-      throw new Error('Token not found in Pump.fun response');
-    }
+    const tokenData = rawData.data;
+    console.log('Token data:', JSON.stringify(tokenData, null, 2));
 
-    console.log('Found token data:', JSON.stringify(tokenData, null, 2));
-
-    // Map the data to our schema
+    // Map the data to our schema with detailed logging
     const mappedData = {
       id: tokenAddress,
       name: tokenData.name || 'Unknown Token',
       symbol: tokenData.symbol || '???',
-      price: tokenData.price || tokenData.market_cap || null,
-      market_cap: tokenData.usd_market_cap || null,
-      volume_24h: tokenData.volume_24h || null,
-      total_supply: tokenData.total_supply || null,
-      image_url: tokenData.image_uri || null,
+      price: tokenData.price || null,
+      market_cap: tokenData.marketCap || null,
+      volume_24h: tokenData.volume24h || null,
+      total_supply: tokenData.totalSupply || null,
+      image_url: tokenData.image || null,
       solana_addr: tokenAddress,
       description: tokenData.description || null,
       decimals: tokenData.decimals || null,
       updated_at: new Date().toISOString(),
-      liquidity: tokenData.virtual_sol_reserves || null,
-      change_24h: tokenData.price_change_24h || null,
-      circulating_supply: tokenData.circulating_supply || null,
-      non_circulating_supply: tokenData.non_circulating_supply || null,
-      historic_data: tokenData.historic_data || null,
+      liquidity: tokenData.liquidity || null,
+      change_24h: tokenData.priceChange24h || null,
+      circulating_supply: tokenData.circulatingSupply || null,
+      non_circulating_supply: tokenData.nonCirculatingSupply || null,
+      historic_data: tokenData.historicData || null,
       homepage: tokenData.website || null,
-      blockchain_site: Array.isArray(tokenData.metadata_uri) ? tokenData.metadata_uri : tokenData.metadata_uri ? [tokenData.metadata_uri] : null,
-      chat_url: Array.isArray(tokenData.telegram) ? tokenData.telegram : tokenData.telegram ? [tokenData.telegram] : null,
-      announcement_url: null,
+      blockchain_site: tokenData.blockchainSites || null,
+      chat_url: tokenData.chatUrls || null,
+      announcement_url: tokenData.announcementUrls || null,
       twitter_screen_name: tokenData.twitter || null,
     };
 
@@ -93,11 +74,12 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw error;
+    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
   }
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -114,6 +96,7 @@ serve(async (req) => {
 
     const pumpData = await fetchPumpFunData(tokenAddress);
     
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
