@@ -8,7 +8,7 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
   const [currentPrice, setCurrentPrice] = useState<number | null>(initialPrice);
 
   useEffect(() => {
-    if (initialPrice === null) {
+    if (initialPrice === null || typeof initialPrice !== 'number' || isNaN(initialPrice)) {
       setCurrentPrice(null);
       return;
     }
@@ -22,7 +22,9 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
   }, [initialPrice]);
 
   const formatPrice = (p: number | null) => {
-    if (p === null) return 'Price not available';
+    if (p === null || typeof p !== 'number' || isNaN(p)) {
+      return 'Price not available';
+    }
     return `Price SOL ${p.toFixed(6).replace('0.0', '0.0₅')}`;
   };
 
