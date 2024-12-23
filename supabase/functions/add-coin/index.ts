@@ -27,6 +27,17 @@ interface CoinGeckoTerminalResponse {
   }
 }
 
+interface CoinGeckoResponse {
+  market_data?: {
+    market_cap?: {
+      usd?: number;
+    };
+    total_volume?: {
+      usd?: number;
+    };
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -60,13 +71,40 @@ serve(async (req) => {
       throw new Error('No token data found');
     }
 
+    // If we have a CoinGecko ID, fetch additional data from CoinGecko
+    let coinGeckoMarketCap = null;
+    if (attributes.coingecko_coin_id) {
+      try {
+        console.log('Fetching CoinGecko data for ID:', attributes.coingecko_coin_id);
+        const geckoResponse = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${attributes.coingecko_coin_id}?localization=false&tickers=false&community_data=false&developer_data=false`,
+          {
+            headers: {
+              'accept': 'application/json',
+              'x-cg-demo-api-key': 'CG-FPFWTmsu6NTuzHvntsXiRxJJ'
+            }
+          }
+        );
+
+        if (geckoResponse.ok) {
+          const geckoData: CoinGeckoResponse = await geckoResponse.json();
+          coinGeckoMarketCap = geckoData.market_data?.market_cap?.usd || null;
+          console.log('CoinGecko market cap:', coinGeckoMarketCap);
+        } else {
+          console.error('Failed to fetch CoinGecko data:', await geckoResponse.text());
+        }
+      } catch (error) {
+        console.error('Error fetching CoinGecko data:', error);
+      }
+    }
+
     // Calculate market cap if not directly provided
-    const marketCap = attributes.market_cap || 
+    const marketCap = coinGeckoMarketCap || attributes.market_cap || 
       (attributes.price && attributes.circulating_supply 
         ? attributes.price * attributes.circulating_supply 
         : null);
 
-    console.log('Calculated market cap:', marketCap);
+    console.log('Final market cap value:', marketCap);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
