@@ -3,7 +3,7 @@ interface PriceChangeProps {
 }
 
 export function PriceChange({ change24h }: PriceChangeProps) {
-  if (change24h === null || typeof change24h !== 'number' || isNaN(change24h)) {
+  if (typeof change24h !== "number" || isNaN(change24h)) {
     return <span className="text-gray-400">N/A</span>;
   }
 
