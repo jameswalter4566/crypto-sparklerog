@@ -21,7 +21,6 @@ async function fetchPumpFunData(tokenAddress: string) {
     });
     
     console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -45,38 +44,36 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error(`Failed to parse JSON response: ${parseError.message}`);
     }
 
-    if (!rawData || !rawData.data) {
+    // Validate essential fields
+    if (!rawData || typeof rawData !== 'object') {
       console.error('Invalid response format:', rawData);
-      throw new Error('Invalid response format: missing data');
+      throw new Error('Invalid response format: not an object');
     }
 
-    const tokenData = rawData.data;
-    console.log('Token data:', JSON.stringify(tokenData, null, 2));
-
-    // Map the data to our schema with detailed logging
+    // Map the data to our schema, with careful type checking
     const mappedData = {
       id: tokenAddress,
-      name: tokenData.name || null,
-      symbol: tokenData.symbol || null,
-      price: typeof tokenData.price === 'number' ? tokenData.price : null,
-      market_cap: typeof tokenData.marketCap === 'number' ? tokenData.marketCap : null,
-      volume_24h: typeof tokenData.volume24h === 'number' ? tokenData.volume24h : null,
-      total_supply: typeof tokenData.totalSupply === 'number' ? tokenData.totalSupply : null,
-      image_url: tokenData.image || null,
+      name: rawData.name || 'Unknown Token',
+      symbol: rawData.symbol || '???',
+      price: typeof rawData.price === 'number' ? rawData.price : null,
+      market_cap: typeof rawData.marketCap === 'number' ? rawData.marketCap : null,
+      volume_24h: typeof rawData.volume24h === 'number' ? rawData.volume24h : null,
+      total_supply: typeof rawData.totalSupply === 'number' ? rawData.totalSupply : null,
+      image_url: rawData.image || null,
       solana_addr: tokenAddress,
-      description: tokenData.description || null,
-      decimals: typeof tokenData.decimals === 'number' ? tokenData.decimals : null,
+      description: rawData.description || null,
+      decimals: typeof rawData.decimals === 'number' ? rawData.decimals : null,
       updated_at: new Date().toISOString(),
-      liquidity: typeof tokenData.liquidity === 'number' ? tokenData.liquidity : null,
-      change_24h: typeof tokenData.priceChange24h === 'number' ? tokenData.priceChange24h : null,
-      circulating_supply: typeof tokenData.circulatingSupply === 'number' ? tokenData.circulatingSupply : null,
-      non_circulating_supply: typeof tokenData.nonCirculatingSupply === 'number' ? tokenData.nonCirculatingSupply : null,
-      historic_data: Array.isArray(tokenData.historicData) ? tokenData.historicData : null,
-      homepage: tokenData.website || null,
-      blockchain_site: Array.isArray(tokenData.blockchainSites) ? tokenData.blockchainSites : null,
-      chat_url: Array.isArray(tokenData.chatUrls) ? tokenData.chatUrls : null,
-      announcement_url: Array.isArray(tokenData.announcementUrls) ? tokenData.announcementUrls : null,
-      twitter_screen_name: tokenData.twitter || null,
+      liquidity: typeof rawData.liquidity === 'number' ? rawData.liquidity : null,
+      change_24h: typeof rawData.priceChange24h === 'number' ? rawData.priceChange24h : null,
+      circulating_supply: typeof rawData.circulatingSupply === 'number' ? rawData.circulatingSupply : null,
+      non_circulating_supply: typeof rawData.nonCirculatingSupply === 'number' ? rawData.nonCirculatingSupply : null,
+      historic_data: Array.isArray(rawData.historicData) ? rawData.historicData : null,
+      homepage: rawData.website || null,
+      blockchain_site: Array.isArray(rawData.blockchainSites) ? rawData.blockchainSites : null,
+      chat_url: Array.isArray(rawData.chatUrls) ? rawData.chatUrls : null,
+      announcement_url: Array.isArray(rawData.announcementUrls) ? rawData.announcementUrls : null,
+      twitter_screen_name: rawData.twitter || null,
     };
 
     console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
