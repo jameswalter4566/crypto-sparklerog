@@ -8,7 +8,7 @@ interface NewCoinCardProps {
   id: string;
   name: string;
   symbol: string;
-  price: number;
+  price: number | null;
   change24h: number | null;
   imageUrl?: string;
   mintAddress?: string;
@@ -18,10 +18,27 @@ export function NewCoinCard({
   id, 
   name, 
   symbol, 
+  price,
+  change24h,
   imageUrl,
   mintAddress 
 }: NewCoinCardProps) {
-  const symbolFallback = symbol ? symbol.slice(0, 2) : "??";
+  const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
+
+  const formatPrice = (value: number | null) => {
+    if (value === null || typeof value !== 'number' || isNaN(value)) {
+      return 'Price not available';
+    }
+    return `SOL ${value.toFixed(6)}`;
+  };
+
+  const formatChange = (value: number | null) => {
+    if (value === null || typeof value !== 'number' || isNaN(value)) {
+      return 'N/A';
+    }
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
+  };
 
   return (
     <Link to={`/coin/${id}`} className="block">
@@ -41,9 +58,17 @@ export function NewCoinCard({
         <CardContent className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-1">
             <CardTitle className="text-xs sm:text-sm md:text-base">
-              <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px] block">{name}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px] block">
+                {name}
+              </span>
             </CardTitle>
             <span className="text-xs text-gray-400">{symbol}</span>
+            <div className="mt-1 text-sm font-medium">
+              {formatPrice(price)}
+            </div>
+            <div className={`text-xs ${change24h && change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {formatChange(change24h)}
+            </div>
           </div>
         </CardContent>
       </Card>
