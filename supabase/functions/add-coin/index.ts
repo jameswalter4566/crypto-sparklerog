@@ -28,7 +28,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if coin already exists and get its data
+    // Check if coin exists and get minimal data
     const { data: existingCoin } = await supabaseClient
       .from('coins')
       .select('id, updated_at')
@@ -48,6 +48,7 @@ serve(async (req) => {
         throw new Error('Invalid token data received from Solscan');
       }
 
+      // Prepare minimal required data for database
       tokenData = {
         id: solana_addr,
         name: solscanData.data.name,
@@ -61,7 +62,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       };
 
-      // Upsert the data
+      // Upsert only necessary fields
       const { error: upsertError } = await supabaseClient
         .from('coins')
         .upsert(tokenData);
@@ -74,7 +75,7 @@ serve(async (req) => {
       console.log('Using existing coin data');
       const { data: coin, error } = await supabaseClient
         .from('coins')
-        .select('*')
+        .select('id, name, symbol, price, market_cap, volume_24h, change_24h, image_url, solana_addr, updated_at')
         .eq('id', solana_addr)
         .single();
 

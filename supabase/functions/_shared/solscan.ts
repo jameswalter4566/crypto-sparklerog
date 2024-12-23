@@ -25,27 +25,14 @@ async function fetchDexScreener(address: string) {
     }
 
     const data = await response.json();
-    if (!data.pairs || data.pairs.length === 0) {
+    if (!data.pairs || !data.pairs[0]) {
       console.warn('No pairs found in DexScreener response');
       return null;
     }
 
-    // Only get the first pair
+    // Only get the first pair and extract minimal required data
     const pair = data.pairs[0];
     const baseToken = pair.baseToken;
-
-    // Get logo URL from Jupiter API efficiently
-    let logoUrl = null;
-    try {
-      const jupiterResponse = await fetch('https://token.jup.ag/all');
-      if (jupiterResponse.ok) {
-        const jupiterData = await jupiterResponse.json();
-        const token = jupiterData.tokens.find((t: any) => t.address === address);
-        logoUrl = token?.logoURI;
-      }
-    } catch (error) {
-      console.warn('Failed to fetch logo from Jupiter:', error);
-    }
 
     return {
       success: true,
@@ -53,7 +40,6 @@ async function fetchDexScreener(address: string) {
         tokenAddress: address,
         symbol: baseToken?.symbol || 'UNKNOWN',
         name: baseToken?.name || 'Unknown Token',
-        icon: logoUrl,
         decimals: baseToken?.decimals || 0,
         price: parseFloat(pair.priceUsd || '0'),
         volume24h: parseFloat(pair.volume?.h24 || '0'),
@@ -79,26 +65,14 @@ async function fetchSolanaTokenData(address: string) {
       throw new Error('Token account not found');
     }
 
-    // Fetch metadata from token list efficiently
-    let tokenMetadata = null;
-    try {
-      const response = await fetch('https://token.jup.ag/all');
-      if (response.ok) {
-        const data = await response.json();
-        tokenMetadata = data.tokens.find((token: any) => token.address === address);
-      }
-    } catch (error) {
-      console.warn('Failed to fetch token metadata:', error);
-    }
-
+    // Return minimal required data
     return {
       success: true,
       data: {
         tokenAddress: address,
-        symbol: tokenMetadata?.symbol || 'UNKNOWN',
-        name: tokenMetadata?.name || 'Unknown Token',
-        icon: tokenMetadata?.logoURI || '',
-        decimals: tokenMetadata?.decimals || 0,
+        symbol: 'UNKNOWN',
+        name: 'Unknown Token',
+        decimals: 0,
         price: 0,
         volume24h: 0,
         priceChange24h: 0,
@@ -120,6 +94,21 @@ export async function fetchSolscanData(address: string) {
     const dexScreenerData = await fetchDexScreener(address);
     if (dexScreenerData) {
       console.log('Successfully fetched data from DexScreener');
+      
+      // Fetch logo URL from Jupiter API efficiently
+      try {
+        const jupiterResponse = await fetch('https://token.jup.ag/all');
+        if (jupiterResponse.ok) {
+          const jupiterData = await jupiterResponse.json();
+          const token = jupiterData.tokens.find((t: any) => t.address === address);
+          if (token?.logoURI) {
+            dexScreenerData.data.icon = token.logoURI;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch logo from Jupiter:', error);
+      }
+      
       return dexScreenerData;
     }
 
