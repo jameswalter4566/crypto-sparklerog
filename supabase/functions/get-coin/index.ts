@@ -9,10 +9,10 @@ const corsHeaders = {
 async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
-  try {
-    const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
-    console.log('Fetching from URL:', url);
+  const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
+  console.log('Fetching from URL:', url);
 
+  try {
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
@@ -50,7 +50,7 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error('Invalid response format: not an object');
     }
 
-    // Map the data to our schema, with careful type checking
+    // Map all available data points to our schema
     const mappedData = {
       id: tokenAddress,
       name: rawData.name || 'Unknown Token',
@@ -74,6 +74,8 @@ async function fetchPumpFunData(tokenAddress: string) {
       chat_url: Array.isArray(rawData.chatUrls) ? rawData.chatUrls : null,
       announcement_url: Array.isArray(rawData.announcementUrls) ? rawData.announcementUrls : null,
       twitter_screen_name: rawData.twitter || null,
+      coingecko_id: rawData.coingeckoId || null,
+      coin_id: rawData.coinId || null,
     };
 
     console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
@@ -81,12 +83,11 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw error;
+    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -101,7 +102,8 @@ serve(async (req) => {
 
     console.log('Processing request for token:', tokenAddress);
 
-    const pumpData = await fetchPumpFunData(tokenAddress);
+    // Fetch data from Pump.fun
+    const coinData = await fetchPumpFunData(tokenAddress);
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -113,23 +115,23 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Only upsert if we have valid data
-    if (pumpData.name && pumpData.symbol) {
-      const { error: upsertError } = await supabase
-        .from('coins')
-        .upsert(pumpData);
+    // Upsert the coin data to ensure we save/update all fields
+    const { error: upsertError } = await supabase
+      .from('coins')
+      .upsert(coinData, {
+        onConflict: 'id',
+        ignoreDuplicates: false
+      });
 
-      if (upsertError) {
-        console.error('Error upserting data to Supabase:', upsertError);
-        throw upsertError;
-      }
-    } else {
-      console.error('Invalid token data - missing required fields:', pumpData);
-      throw new Error('Invalid token data - missing required fields');
+    if (upsertError) {
+      console.error('Error upserting data to Supabase:', upsertError);
+      throw upsertError;
     }
 
+    console.log('Successfully saved coin data to database');
+
     return new Response(
-      JSON.stringify(pumpData),
+      JSON.stringify(coinData),
       { 
         headers: { 
           ...corsHeaders, 
