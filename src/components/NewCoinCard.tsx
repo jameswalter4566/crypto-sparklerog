@@ -61,9 +61,9 @@ export function NewCoinCard({
             <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
           </div>
         )}
-        <CardHeader className="p-3 sm:p-4">
-          <div className="flex flex-col items-center gap-3">
-            <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
+        <CardHeader className="p-4 sm:p-5">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="h-28 w-28 sm:h-40 sm:w-40">
               <AvatarImage 
                 src={imageSource}
                 alt={name || "Unknown Coin"}
@@ -76,20 +76,20 @@ export function NewCoinCard({
               />
               <AvatarFallback>{symbolFallback}</AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
               <VoiceChatCounter coinId={id} />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col items-center gap-2">
-            <CardTitle className="text-sm sm:text-base">
-              <span className="truncate max-w-[160px]">{name || "Unnamed Coin"}</span>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col items-center gap-3">
+            <CardTitle className="text-base sm:text-lg">
+              <span className="truncate max-w-[180px]">{name || "Unnamed Coin"}</span>
             </CardTitle>
-            <span className="text-sm sm:text-base text-gray-400">{symbol || "N/A"}</span>
-            <div className="mt-1 text-base sm:text-lg font-medium">{formatPrice(price)}</div>
-            <div className={`text-sm sm:text-base ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
+            <span className="text-base sm:text-lg text-gray-400">{symbol || "N/A"}</span>
+            <div className="mt-1 text-lg sm:text-xl font-medium">{formatPrice(price)}</div>
+            <div className={`text-base sm:text-lg ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
             </div>
           </div>
