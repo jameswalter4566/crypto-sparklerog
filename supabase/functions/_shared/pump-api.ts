@@ -39,26 +39,27 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    // Get the content type header
-    const contentType = response.headers.get('content-type');
-    console.log('Content-Type:', contentType);
-
-    // Get the content encoding header
-    const contentEncoding = response.headers.get('content-encoding');
-    console.log('Content-Encoding:', contentEncoding);
-
-    // Read the complete response as text
     const rawText = await response.text();
-    console.log('Complete raw response:', rawText);
-    console.log('Response length:', rawText.length);
-
-    if (!rawText.trim()) {
-      throw new Error('Empty response from API');
-    }
+    console.log('Raw API Response:', rawText);
 
     try {
       const parsedData = JSON.parse(rawText);
-      console.log('Successfully parsed response data:', JSON.stringify(parsedData, null, 2));
+      console.log('Parsed API Response:', JSON.stringify(parsedData, null, 2));
+      
+      // Log specific fields we're interested in
+      if (Array.isArray(parsedData)) {
+        parsedData.forEach((item, index) => {
+          console.log(`Token ${index} details:`, {
+            mint: item.mint,
+            price: item.price,
+            price_usd: item.price_usd,
+            total_supply: item.total_supply,
+            market_cap: item.market_cap,
+            virtual_sol_reserves: item.virtual_sol_reserves
+          });
+        });
+      }
+      
       return parsedData;
     } catch (parseError) {
       console.error('JSON parse error:', parseError);

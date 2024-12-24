@@ -25,6 +25,7 @@ export interface PumpApiResponse {
   name: string;
   symbol: string;
   price: number;
+  price_usd: number;
   price_change_24h: number;
   market_cap: number;
   volume_24h: number;
