@@ -23,6 +23,8 @@ serve(async (req) => {
       throw new Error('Token ID is required');
     }
 
+    console.log('Processing request for token:', tokenAddress);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -39,6 +41,11 @@ serve(async (req) => {
       .eq('id', tokenAddress)
       .single();
 
+    if (dbError && dbError.code !== 'PGRST116') {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
+
     if (existingData) {
       const lastUpdate = new Date(existingData.updated_at || '');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -53,10 +60,7 @@ serve(async (req) => {
     }
 
     // Try search endpoint with captcha token
-    console.log('Fetching from Pump API with params:', {
-      searchTerm: tokenAddress,
-      captchaToken: captchaToken ? 'present' : 'missing'
-    });
+    console.log('Fetching fresh data from Pump API for token:', tokenAddress);
 
     const searchResponse = await fetchFromPumpApi('/coins', {
       searchTerm: tokenAddress,
@@ -67,41 +71,35 @@ serve(async (req) => {
       captchaToken
     });
 
-    if (!searchResponse.ok) {
-      console.error('Pump API error:', await searchResponse.text());
-      throw new Error(`Pump API error: ${searchResponse.status}`);
-    }
+    const responseText = await searchResponse.text();
+    console.log('Raw API response:', responseText);
 
     let searchData;
     try {
-      const responseText = await searchResponse.text();
-      console.log('Raw API response:', responseText);
       searchData = JSON.parse(responseText);
     } catch (error) {
       console.error('JSON parse error:', error);
-      throw new Error('Invalid response from Pump API');
+      throw new Error(`Invalid JSON response: ${responseText.slice(0, 200)}...`);
     }
 
-    console.log('Parsed search data:', searchData);
-    
     if (!Array.isArray(searchData)) {
-      throw new Error('Unexpected API response format');
+      console.error('Unexpected response format:', searchData);
+      throw new Error('API response is not an array');
     }
-    
-    let coinData: CoinData | null = null;
+
+    console.log('Found', searchData.length, 'tokens in search results');
     
     const matchingToken = searchData.find(item => 
       item.mint?.toLowerCase() === tokenAddress.toLowerCase()
     );
     
-    if (matchingToken) {
-      console.log('Found matching token:', matchingToken);
-      coinData = mapPumpApiToCoinData(matchingToken);
-    }
-
-    if (!coinData) {
+    if (!matchingToken) {
+      console.log('No matching token found in search results');
       throw new Error('Token not found');
     }
+
+    console.log('Found matching token:', matchingToken);
+    const coinData = mapPumpApiToCoinData(matchingToken);
 
     // Update database with new data
     const { error: upsertError } = await supabase
@@ -118,6 +116,8 @@ serve(async (req) => {
       console.error('Error upserting data to Supabase:', upsertError);
       throw upsertError;
     }
+
+    console.log('Successfully updated database with new coin data');
 
     return new Response(
       JSON.stringify(coinData),

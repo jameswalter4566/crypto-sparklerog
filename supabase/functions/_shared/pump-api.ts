@@ -17,18 +17,32 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
   
   console.log('Fetching from Pump API:', url);
   
-  const response = await fetch(url, {
-    headers: {
-      'Accept': 'application/json',
-      'Origin': 'https://pump.fun',
-      'Referer': 'https://pump.fun/'
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Origin': 'https://pump.fun',
+        'Referer': 'https://pump.fun/',
+        'User-Agent': 'Mozilla/5.0 (compatible; PumpBot/1.0)'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Pump API error response:', errorText);
+      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
-  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API error: ${response.status}. Response: ${errorText}`);
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Unexpected content type:', contentType, 'Response:', text);
+      throw new Error('API did not return JSON');
+    }
+
+    return response;
+  } catch (error) {
+    console.error('Error fetching from Pump API:', error);
+    throw error;
   }
-
-  return response;
 }
