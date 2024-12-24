@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CoinGridProps {
   coins?: CoinData[];
@@ -39,7 +41,9 @@ interface CoinQueryResult {
 }
 
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
-  const { data: coins, isLoading } = useQuery({
+  const { toast } = useToast();
+
+  const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
       console.log('Fetching trending coins');
@@ -111,11 +115,42 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           marketCap: trend.coins.market_cap,
           usdMarketCap: trend.coins.usd_market_cap
         };
-      }).filter(Boolean); // Remove any null values
+      }).filter(Boolean);
     },
     gcTime: Infinity,
     staleTime: 30000,
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase.channel('coin_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'coins'
+        },
+        async (payload) => {
+          console.log('Received real-time update:', payload);
+          
+          // Refetch data when we receive an update
+          await refetch();
+          
+          // Show toast notification
+          toast({
+            title: "Price Update",
+            description: `${payload.new.name || 'A coin'}'s data has been updated.`,
+          });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch, toast]);
 
   if (isLoading) {
     return <div>Loading...</div>;
