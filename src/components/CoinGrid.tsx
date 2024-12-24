@@ -33,6 +33,7 @@ interface CoinQueryResult {
     image_url: string | null;
     solana_addr: string | null;
     historic_data: HistoricDataItem[] | null;
+    market_cap: number | null;
     usd_market_cap: number | null;
   } | null;
 }
@@ -56,6 +57,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
             image_url,
             solana_addr,
             historic_data,
+            market_cap,
             usd_market_cap
           )
         `)
@@ -106,6 +108,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           ...trend.coins,
           searchCount: trend.search_count,
           priceHistory,
+          marketCap: trend.coins.market_cap,
           usdMarketCap: trend.coins.usd_market_cap
         };
       }).filter(Boolean); // Remove any null values
