@@ -9,10 +9,10 @@ import { RugAnalysis } from "./RugAnalysis";
 export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAddr?: string }) => {
   const { toast } = useToast();
   const [rugAnalysis, setRugAnalysis] = useState({
-    devAnalysis: "22.31% of supply ($6,780 USD)",
-    launchAnalysis: "Dev wallet has been linked to 3 coin launches that all sold within 24 hours!",
-    socialMediaStatus: "Token does not have any verified social media profiles linked.",
-    rugScore: 90
+    devAnalysis: "Rug Analysis to be implemented in the upcoming patch update",
+    launchAnalysis: "Rug Analysis to be implemented in the upcoming patch update",
+    socialMediaStatus: "Rug Analysis to be implemented in the upcoming patch update",
+    rugScore: null
   });
 
   const handleSaveToLibrary = () => {
@@ -49,9 +49,9 @@ export const TokenActions = ({ symbol, solanaAddr }: { symbol: string; solanaAdd
       <AskAgentButton 
         onAnalysisComplete={handleAnalysisComplete}
         coinData={{
-          devHoldings: "22.31% of supply ($6,780 USD)",
-          launchHistory: "3 previous launches, all sold within 24h",
-          socialMedia: "No verified profiles"
+          devHoldings: "To be implemented",
+          launchHistory: "To be implemented",
+          socialMedia: "To be implemented"
         }}
       />
     </div>

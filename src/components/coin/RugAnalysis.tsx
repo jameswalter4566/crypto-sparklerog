@@ -8,7 +8,7 @@ interface RugAnalysisProps {
     devAnalysis: string;
     launchAnalysis: string;
     socialMediaStatus: string;
-    rugScore: number;
+    rugScore: number | null;
   };
 }
 
@@ -16,7 +16,7 @@ export const RugAnalysis = ({ rugAnalysis }: RugAnalysisProps) => {
   const rugData = [
     {
       name: 'Rug Score',
-      value: rugAnalysis.rugScore,
+      value: rugAnalysis.rugScore || 0,
       fill: '#ea384c'
     }
   ];
@@ -70,7 +70,7 @@ export const RugAnalysis = ({ rugAnalysis }: RugAnalysisProps) => {
             </div>
             <div>
               <p className="text-sm font-semibold mb-1">RUG SCORE</p>
-              <p className="text-2xl font-bold text-[#ea384c]">{rugAnalysis.rugScore}%</p>
+              <p className="text-2xl font-bold text-[#ea384c]">???%</p>
             </div>
           </div>
         </div>
