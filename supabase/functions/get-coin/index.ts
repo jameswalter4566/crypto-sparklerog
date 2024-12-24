@@ -1,3 +1,5 @@
+// supabase/functions/get-coin/index.ts
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { fetchFromPumpApi } from "../_shared/pump-api.ts";
@@ -90,7 +92,9 @@ serve(async (req) => {
       }
 
       console.log('Found matching token:', matchingToken);
-      const coinData = mapPumpApiToCoinData(matchingToken);
+
+      // The mapPumpApiToCoinData function will ensure we get both market_cap and usd_market_cap properly
+      const coinData: CoinData = mapPumpApiToCoinData(matchingToken);
 
       // Update database with new data
       const { error: upsertError } = await supabase
