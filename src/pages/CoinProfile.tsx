@@ -43,22 +43,35 @@ const CoinProfile = () => {
         throw new Error(result.error);
       }
 
-      // Combine terminal and main data
-      const combinedData = {
-        ...result.terminalData,
-        ...(result.mainData || {}),
-        id,
-        // Ensure numeric values are properly typed
-        price: result.terminalData?.price ? Number(result.terminalData.price) : null,
-        market_cap: result.mainData?.market_cap ? Number(result.mainData.market_cap) : null,
-        volume_24h: result.terminalData?.volume_24h ? Number(result.terminalData.volume_24h) : null,
-        liquidity: result.terminalData?.liquidity ? Number(result.terminalData.liquidity) : null,
-        total_supply: result.terminalData?.total_supply ? Number(result.terminalData.total_supply) : null,
-        circulating_supply: result.terminalData?.circulating_supply ? Number(result.terminalData.circulating_supply) : null,
-        non_circulating_supply: result.terminalData?.non_circulating_supply ? Number(result.terminalData.non_circulating_supply) : null,
+      // Map the response data directly to our component's expected format
+      const coinData = {
+        id: result.id,
+        name: result.name || 'Unknown Token',
+        symbol: result.symbol || '???',
+        image_url: result.image_url,
+        price: typeof result.price === 'number' ? result.price : null,
+        description: result.description,
+        token_standard: 'SPL', // Solana tokens are SPL standard
+        decimals: result.decimals,
+        market_cap: result.market_cap,
+        volume_24h: result.volume_24h,
+        liquidity: result.liquidity,
+        solana_addr: result.solana_addr || id,
+        supply: {
+          total: result.total_supply,
+          circulating: result.circulating_supply,
+          nonCirculating: result.non_circulating_supply
+        },
+        historic_data: result.historic_data || [],
+        social: {
+          homepage: result.homepage,
+          twitter: result.twitter_screen_name,
+          chat: result.chat_url,
+          announcement: result.announcement_url
+        }
       };
 
-      setCoin(combinedData);
+      setCoin(coinData);
       
       if (isRefresh) {
         toast({
@@ -78,7 +91,7 @@ const CoinProfile = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [API_URL, id, toast]);
+  }, [id, toast]);
 
   useEffect(() => {
     fetchCoinData();
@@ -109,12 +122,6 @@ const CoinProfile = () => {
     );
   }
 
-  // Process historic_data for PriceChart
-  const priceData = coin.historic_data?.map(([timestamp, price]: [number, number]) => ({
-    date: new Date(timestamp).toLocaleDateString(),
-    price: Number(price) || 0,
-  })) || [];
-
   return (
     <div className="p-6">
       <TokenHeader
@@ -125,7 +132,7 @@ const CoinProfile = () => {
         description={coin.description}
         tokenStandard={coin.token_standard}
         decimals={coin.decimals}
-        updatedAt={coin.updated_at}
+        updatedAt={new Date().toISOString()}
         onRefresh={() => fetchCoinData(true)}
         refreshing={refreshing}
         solanaAddr={coin.solana_addr}
@@ -138,13 +145,13 @@ const CoinProfile = () => {
       />
 
       <TokenSupply
-        total={coin.total_supply}
-        circulating={coin.circulating_supply}
-        nonCirculating={coin.non_circulating_supply}
+        total={coin.supply.total}
+        circulating={coin.supply.circulating}
+        nonCirculating={coin.supply.nonCirculating}
       />
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
-        <PriceChart data={priceData} />
+        <PriceChart data={coin.historic_data || []} />
         <SwapInterface defaultTokenAddress={coin.solana_addr} />
       </div>
 
