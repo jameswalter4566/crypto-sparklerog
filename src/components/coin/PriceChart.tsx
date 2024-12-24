@@ -17,6 +17,14 @@ interface PriceChartProps {
 }
 
 export const PriceChart = ({ data }: PriceChartProps) => {
+  // Generate mock data if no data is provided
+  const mockData = Array.from({ length: 30 }, (_, i) => ({
+    date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    price: Math.sin(i * 0.5) * 10 + 20 + Math.random() * 5
+  }));
+
+  const chartData = data.length > 0 ? data : mockData;
+
   return (
     <Card className="w-full h-[600px]">
       <CardHeader>
@@ -24,12 +32,19 @@ export const PriceChart = ({ data }: PriceChartProps) => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={500}>
-          <AreaChart data={data}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8}/>
                 <stop offset="95%" stopColor="#9945FF" stopOpacity={0}/>
               </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
@@ -64,7 +79,9 @@ export const PriceChart = ({ data }: PriceChartProps) => {
               stroke="#9945FF" 
               strokeWidth={2}
               fillOpacity={1} 
-              fill="url(#colorPrice)" 
+              fill="url(#colorPrice)"
+              filter="url(#glow)"
+              className="animate-laser-glow" 
             />
           </AreaChart>
         </ResponsiveContainer>
