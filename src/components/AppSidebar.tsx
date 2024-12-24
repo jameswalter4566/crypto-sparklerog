@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Coins, Trophy, Search, Rocket, Star, ExternalLink } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LucideIcon } from "lucide-react";
 
@@ -44,12 +44,6 @@ const menuItems: MenuItem[] = [
     title: "Meme Coin Leaderboard",
     icon: Trophy,
     path: "/leaderboard",
-  },
-  {
-    title: "Agent Company",
-    icon: ExternalLink,
-    path: "https://agentcompany.fun",
-    external: true,
   },
 ];
 
