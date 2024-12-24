@@ -82,34 +82,12 @@ export default {
           "50%": { 
             boxShadow: "0 0 50px rgba(153,69,255,0.9)"
           }
-        },
-        "text-glow": {
-          "0%, 100%": {
-            textShadow: "0 0 10px rgba(153,69,255,0.5)",
-            color: "white"
-          },
-          "50%": {
-            textShadow: "0 0 20px rgba(153,69,255,0.9)",
-            color: "#9945FF"
-          }
-        },
-        "laser-border": {
-          "0%, 100%": {
-            borderColor: "#9945FF",
-            boxShadow: "0 0 10px #9945FF, inset 0 0 5px #9945FF"
-          },
-          "50%": {
-            borderColor: "#8B5CF6",
-            boxShadow: "0 0 20px #8B5CF6, inset 0 0 10px #8B5CF6"
-          }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "glow-pulse": "glow-pulse 1.5s ease-in-out infinite",
-        "text-glow": "text-glow 2s ease-in-out infinite",
-        "laser-border": "laser-border 2s ease-in-out infinite"
+        "glow-pulse": "glow-pulse 1.5s ease-in-out infinite"
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
