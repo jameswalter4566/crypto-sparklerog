@@ -18,6 +18,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
   console.log('Fetching from Pump API:', url);
   
   try {
+    console.log('Making request to:', url);
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
@@ -27,6 +28,9 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       }
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     // First check if the response is ok
     if (!response.ok) {
       const errorText = await response.text();
@@ -34,29 +38,21 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    // Check content type
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('Unexpected content type:', contentType);
-      throw new Error('API did not return JSON content type');
-    }
+    // Get the raw response text for debugging
+    const rawText = await response.text();
+    console.log('Raw API response:', rawText);
 
-    // Get the response text first
-    const responseText = await response.text();
-    console.log('Raw API response:', responseText);
-
-    // Validate that we have actual content
-    if (!responseText.trim()) {
-      console.error('Empty response received');
+    // If we got an empty response, throw an error
+    if (!rawText.trim()) {
       throw new Error('Empty response from API');
     }
 
     // Try to parse JSON
     try {
-      return JSON.parse(responseText);
+      return JSON.parse(rawText);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      throw new Error(`Invalid JSON response: ${responseText.slice(0, 200)}...`);
+      throw new Error(`Invalid JSON response: ${rawText.slice(0, 200)}...`);
     }
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
