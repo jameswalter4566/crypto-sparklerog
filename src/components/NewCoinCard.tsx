@@ -51,7 +51,7 @@ export function NewCoinCard({
     <Link to={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
         {searchCount !== undefined && searchCount > 0 && (
-          <div className="absolute top-1 right-1 z-10 flex flex-col items-center">
+          <div className="absolute top-2 right-2 z-10 flex flex-col items-center">
             <Badge 
               variant="secondary" 
               className="text-[12.5px] px-2 py-1 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
@@ -61,9 +61,9 @@ export function NewCoinCard({
             <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
           </div>
         )}
-        <CardHeader className="p-2 sm:p-3">
-          <div className="flex flex-col items-center gap-2">
-            <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
+        <CardHeader className="p-3 sm:p-4">
+          <div className="flex flex-col items-center gap-3">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
               <AvatarImage 
                 src={imageSource}
                 alt={name || "Unknown Coin"}
@@ -76,20 +76,20 @@ export function NewCoinCard({
               />
               <AvatarFallback>{symbolFallback}</AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
               <VoiceChatCounter coinId={id} />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-2 sm:p-3">
-          <div className="flex flex-col items-center gap-1">
-            <CardTitle className="text-xs sm:text-sm">
-              <span className="truncate max-w-[120px]">{name || "Unnamed Coin"}</span>
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col items-center gap-2">
+            <CardTitle className="text-sm sm:text-base">
+              <span className="truncate max-w-[160px]">{name || "Unnamed Coin"}</span>
             </CardTitle>
-            <span className="text-xs text-gray-400">{symbol || "N/A"}</span>
-            <div className="mt-1 text-sm font-medium">{formatPrice(price)}</div>
-            <div className={`text-xs ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
+            <span className="text-sm sm:text-base text-gray-400">{symbol || "N/A"}</span>
+            <div className="mt-1 text-base sm:text-lg font-medium">{formatPrice(price)}</div>
+            <div className={`text-sm sm:text-base ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
             </div>
           </div>
