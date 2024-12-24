@@ -11,6 +11,7 @@ import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
 import RocketLaunch from "./pages/RocketLaunch";
+import NewCoins from "./pages/NewCoins";
 
 const queryClient = new QueryClient();
 
@@ -42,7 +43,7 @@ const App = () => (
               </div>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/new-coins" element={<div className="p-4 sm:p-6">New Coins Coming Soon</div>} />
+                <Route path="/new-coins" element={<NewCoins />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />
