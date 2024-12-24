@@ -21,6 +21,22 @@ interface HistoricDataItem {
   timestamp: string | number;
 }
 
+interface CoinQueryResult {
+  coin_id: string;
+  search_count: number;
+  coins: {
+    id: string;
+    name: string;
+    symbol: string;
+    price: number;
+    change_24h: number;
+    image_url: string | null;
+    solana_addr: string | null;
+    historic_data: HistoricDataItem[] | null;
+    usd_market_cap: number | null;
+  } | null;
+}
+
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   const { data: coins, isLoading } = useQuery({
     queryKey: ['trending-coins'],
@@ -53,7 +69,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
       console.log('Trending coins data:', trendingCoins);
 
-      return trendingCoins.map(trend => {
+      return (trendingCoins as CoinQueryResult[]).map(trend => {
         if (!trend.coins) {
           console.error('Missing coins data for trend:', trend);
           return null;
@@ -63,7 +79,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         
         try {
           if (trend.coins.historic_data) {
-            const historyData = trend.coins.historic_data as unknown as HistoricDataItem[];
+            const historyData = trend.coins.historic_data;
             
             if (Array.isArray(historyData)) {
               priceHistory = historyData
