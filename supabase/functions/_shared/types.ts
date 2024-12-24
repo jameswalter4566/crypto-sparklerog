@@ -1,42 +1,62 @@
-export interface CoinGeckoTerminalResponse {
-  data?: {
-    attributes?: {
-      name: string;
-      symbol: string;
-      price: number;
-      volume_24h: number;
-      liquidity: number;
-      total_supply: number;
-      circulating_supply: number;
-      non_circulating_supply: number;
-      coingecko_coin_id: string | null;
-      description: string | null;
-      token_standard: string | null;
-      decimals: number | null;
-      image_url: string | null;
-      market_cap: number | null;
-    }
-  }
+export interface CoinData {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number | null;
+  change_24h: number | null;
+  market_cap: number | null;
+  volume_24h: number | null;
+  liquidity: number | null;
+  total_supply: number | null;
+  circulating_supply: number | null;
+  non_circulating_supply: number | null;
+  coingecko_id: string | null;
+  description: string | null;
+  decimals: number | null;
+  image_url: string | null;
+  solana_addr: string | null;
+  historic_data: Array<{
+    price: number;
+    timestamp: string;
+  }> | null;
+  homepage: string | null;
+  blockchain_site: string[] | null;
+  official_forum_url: string[] | null;
+  chat_url: string[] | null;
+  announcement_url: string[] | null;
+  twitter_screen_name: string | null;
 }
 
-export interface CoinGeckoProResponse {
-  data?: {
-    market_data?: {
-      market_cap?: {
-        usd?: number;
-      };
-      total_volume?: {
-        usd?: number;
-      };
-      price_change_percentage_24h?: number;
-    };
-    links?: {
-      homepage?: string[];
-      blockchain_site?: string[];
-      official_forum_url?: string[];
-      chat_url?: string[];
-      announcement_url?: string[];
-      twitter_screen_name?: string;
-    };
-  }
+export interface PumpApiResponse {
+  mint: string;
+  name: string;
+  symbol: string;
+  price: number;
+  price_change_24h: number;
+  market_cap: number;
+  volume_24h: number;
+  virtual_sol_reserves: number;
+  total_supply: number;
+  circulating_supply: number;
+  non_circulating_supply: number;
+  description: string;
+  decimals: number;
+  image_uri: string;
+  website: string;
+  twitter: string;
+  telegram: string;
+  price_history: Array<{
+    price: number;
+    timestamp: string;
+  }>;
+}
+
+export interface CoinSearchParams {
+  searchTerm?: string;
+  limit?: number;
+  offset?: number;
+  sort?: string;
+  order?: 'ASC' | 'DESC';
+  includeNsfw?: boolean;
+  captchaToken?: string;
 }

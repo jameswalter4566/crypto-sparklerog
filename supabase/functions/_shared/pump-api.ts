@@ -1,47 +1,34 @@
-export interface PumpApiConfig {
-  baseUrl: string;
-  searchEndpoint: string;
-  directEndpoint: string;
-}
+import { CoinSearchParams } from './types.ts';
 
-export const PUMP_API_CONFIG: PumpApiConfig = {
-  baseUrl: 'https://frontend-api-v2.pump.fun',
-  searchEndpoint: '/coins',
-  directEndpoint: '/coins'
-};
+const PUMP_API_BASE_URL = 'https://frontend-api-v2.pump.fun';
 
-export interface PumpApiParams {
-  offset?: number;
-  limit?: number;
-  sort?: string;
-  order?: string;
-  includeNsfw?: boolean;
-  searchTerm?: string;
-}
+export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParams) {
+  const queryParams = new URLSearchParams();
+  
+  if (params.searchTerm) queryParams.set('searchTerm', params.searchTerm);
+  if (params.limit) queryParams.set('limit', params.limit.toString());
+  if (params.offset) queryParams.set('offset', params.offset.toString());
+  if (params.sort) queryParams.set('sort', params.sort);
+  if (params.order) queryParams.set('order', params.order);
+  if (params.includeNsfw !== undefined) queryParams.set('includeNsfw', params.includeNsfw.toString());
+  if (params.captchaToken) queryParams.set('captchaToken', params.captchaToken);
 
-export async function fetchFromPumpApi(
-  endpoint: string,
-  params: PumpApiParams,
-  captchaToken?: string
-): Promise<Response> {
-  const searchParams = new URLSearchParams({
-    offset: (params.offset || 0).toString(),
-    limit: (params.limit || 50).toString(),
-    sort: params.sort || 'market_cap',
-    order: params.order || 'DESC',
-    includeNsfw: (params.includeNsfw || false).toString(),
-    ...(params.searchTerm && { searchTerm: params.searchTerm }),
-    ...(captchaToken && { captchaToken })
-  });
-
-  const url = `${PUMP_API_CONFIG.baseUrl}${endpoint}?${searchParams}`;
+  const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  
   console.log('Fetching from Pump API:', url);
-
-  return fetch(url, {
+  
+  const response = await fetch(url, {
     headers: {
       'Accept': 'application/json',
       'Origin': 'https://pump.fun',
       'Referer': 'https://pump.fun/'
     }
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error: ${response.status}. Response: ${errorText}`);
+  }
+
+  return response;
 }
