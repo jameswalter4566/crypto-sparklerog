@@ -1,54 +1,47 @@
 import { CoinData, PumpApiResponse } from './types.ts';
 
 export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
-  console.log('Mapping coin data for:', data.mint);
-  console.log('Raw data from API:', {
-    price: data.price,
-    usd_market_cap: data.usd_market_cap,
-    total_supply: data.total_supply,
-    market_cap: data.market_cap,
-    virtual_sol_reserves: data.virtual_sol_reserves,
-    virtual_token_reserves: data.virtual_token_reserves
+  console.log('Mapping coin data:', {
+    mint: data.mint,
+    name: data.name,
+    virtualSolReserves: data.virtual_sol_reserves,
+    virtualTokenReserves: data.virtual_token_reserves,
+    usdMarketCap: data.usd_market_cap
   });
 
-  // Calculate liquidity in USD using virtual SOL reserves
-  const solInUsd = 0.6; // Current approximate SOL price in USD
-  const liquidityInUsd = data.virtual_sol_reserves 
-    ? (data.virtual_sol_reserves / 1e9) * solInUsd // Convert lamports to SOL and multiply by USD price
+  // Calculate price in SOL using virtual reserves
+  const priceInSol = data.virtual_sol_reserves && data.virtual_token_reserves
+    ? (data.virtual_sol_reserves / 1e9) / (data.virtual_token_reserves / 1e9)
     : null;
 
-  // Calculate price in USD using virtual reserves
-  const priceInUsd = data.usd_market_cap && data.total_supply
-    ? data.usd_market_cap / (data.total_supply / 1e9)
+  console.log('Calculated price in SOL:', priceInSol);
+
+  // Calculate liquidity in SOL
+  const liquidityInSol = data.virtual_sol_reserves
+    ? data.virtual_sol_reserves / 1e9 // Convert lamports to SOL
     : null;
 
-  // Use the provided USD market cap directly
-  const marketCapUsd = data.usd_market_cap || null;
-
-  console.log('Calculated values:', {
-    priceInUsd,
-    marketCapUsd,
-    liquidityInUsd,
-    totalSupply: data.total_supply / 1e9, // Convert to actual supply
-    virtualSolReserves: data.virtual_sol_reserves / 1e9 // Convert to actual SOL
-  });
+  console.log('Calculated liquidity in SOL:', liquidityInSol);
 
   return {
     id: data.mint,
     name: data.name,
     symbol: data.symbol,
-    price: priceInUsd,
-    change_24h: null, // We'll need to calculate this from historic data
-    market_cap: marketCapUsd,
+    price: priceInSol,
+    change_24h: null, // We'll need historic data to calculate this
+    market_cap: data.usd_market_cap || null,
     volume_24h: null, // Not provided in current API response
-    liquidity: liquidityInUsd,
-    total_supply: data.total_supply / 1e9, // Convert to actual supply
-    circulating_supply: null, // Not provided in current API response
-    non_circulating_supply: null, // Not provided in current API response
+    liquidity: liquidityInSol,
+    total_supply: data.total_supply ? data.total_supply / 1e9 : null,
     description: data.description,
-    decimals: 9, // Standard for most SPL tokens
     image_url: data.image_uri,
     solana_addr: data.mint,
+    homepage: data.website || null,
+    blockchain_site: null,
+    official_forum_url: null,
+    chat_url: data.telegram ? [data.telegram] : null,
+    announcement_url: null,
+    twitter_screen_name: data.twitter?.replace('https://x.com/', '') || null,
     historic_data: null // We'll need to implement this separately
   };
 }
