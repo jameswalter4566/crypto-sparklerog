@@ -34,8 +34,8 @@ export const PriceChart = ({ data }: PriceChartProps) => {
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#9945FF" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#4B9CD3" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#4B9CD3" stopOpacity={0}/>
               </linearGradient>
               <filter id="glow">
                 <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -47,7 +47,7 @@ export const PriceChart = ({ data }: PriceChartProps) => {
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="rgba(153, 69, 255, 0.1)"
+              stroke="rgba(75, 156, 211, 0.1)"
             />
             <XAxis 
               dataKey="date"
@@ -63,7 +63,7 @@ export const PriceChart = ({ data }: PriceChartProps) => {
             <Area 
               type="monotone" 
               dataKey="price" 
-              stroke="#9945FF" 
+              stroke="#4B9CD3" 
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorPrice)"

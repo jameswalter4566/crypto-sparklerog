@@ -2,8 +2,8 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -70,7 +70,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     onClick={() => handleNavigation(item.path, item.external)}
-                    className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 bg-primary bg-opacity-5 shadow-[0_0_15px_rgba(153,69,255,0.3)] hover:shadow-[0_0_25px_rgba(153,69,255,0.5)] hover:text-white rounded-md px-4 py-2 cursor-pointer text-primary"
+                    className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 bg-primary bg-opacity-5 shadow-[0_0_15px_rgba(75,156,211,0.3)] hover:shadow-[0_0_25px_rgba(75,156,211,0.5)] hover:text-white rounded-md px-4 py-2 cursor-pointer text-primary"
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>

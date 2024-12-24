@@ -29,14 +29,14 @@ export const MiniPriceChart = ({ data }: MiniPriceChartProps) => {
         <LineChart data={validData}>
           <defs>
             <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#9945FF" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#4B9CD3" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#4B9CD3" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <Line
             type="monotone"
             dataKey="price"
-            stroke="#9945FF"
+            stroke="#4B9CD3"
             strokeWidth={2}
             dot={false}
             fill="url(#colorPrice)"
