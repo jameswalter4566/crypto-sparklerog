@@ -1,6 +1,5 @@
 import { Input } from '@/components/ui/input';
 import { ArrowDownUp, Loader2, DollarSign } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface TokenInputsProps {
   amount: string;
@@ -10,9 +9,9 @@ interface TokenInputsProps {
   priceQuote: number | null;
   isLoading?: boolean;
   disabled?: boolean;
+  mode?: 'buy' | 'sell';
+  tokenBalance?: number | null;
 }
-
-const QUICK_BUY_AMOUNTS = [0.25, 0.5, 1, 2, 5, 10];
 
 export const TokenInputs = ({
   amount,
@@ -22,26 +21,31 @@ export const TokenInputs = ({
   priceQuote,
   isLoading = false,
   disabled = false,
+  mode = 'buy',
+  tokenBalance
 }: TokenInputsProps) => {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-2">
-        {QUICK_BUY_AMOUNTS.map((value) => (
-          <Button
-            key={value}
-            variant="outline"
-            onClick={() => onAmountChange(value.toString())}
-            disabled={disabled}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20 active:bg-primary/30 text-white rounded-xl transition-colors"
-          >
-            <DollarSign className="h-4 w-4 mr-1" />
-            {value}
-          </Button>
-        ))}
-      </div>
+      {mode === 'buy' && (
+        <div className="grid grid-cols-3 gap-2">
+          {[0.25, 0.5, 1, 2, 5, 10].map((value) => (
+            <button
+              key={value}
+              onClick={() => onAmountChange(value.toString())}
+              disabled={disabled}
+              className="bg-primary/10 border border-primary/20 hover:bg-primary/20 active:bg-primary/30 text-white rounded-xl transition-colors px-4 py-2 flex items-center justify-center gap-1"
+            >
+              <DollarSign className="h-4 w-4" />
+              {value}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div>
-        <label className="block text-sm font-medium mb-1">Amount to buy in SOL</label>
+        <label className="block text-sm font-medium mb-1">
+          {mode === 'buy' ? 'Amount in SOL' : 'Amount of tokens to sell'}
+        </label>
         <Input
           type="number"
           placeholder="0.0"
@@ -49,10 +53,15 @@ export const TokenInputs = ({
           onChange={(e) => onAmountChange(e.target.value)}
           className="w-full bg-black/30"
           min="0"
-          max="100000"
+          max={mode === 'sell' && tokenBalance ? tokenBalance.toString() : "100000"}
           step="0.000001"
           disabled={disabled}
         />
+        {mode === 'sell' && tokenBalance && (
+          <div className="text-sm text-gray-400 mt-1">
+            Available balance: {tokenBalance.toFixed(6)} tokens
+          </div>
+        )}
       </div>
 
       <div className="flex justify-center">
@@ -78,7 +87,9 @@ export const TokenInputs = ({
             Fetching quote...
           </>
         ) : priceQuote ? (
-          `Estimated output: ${priceQuote.toFixed(6)} tokens`
+          `Estimated ${mode === 'buy' ? 'output' : 'SOL received'}: ${mode === 'buy' ? 
+            priceQuote.toFixed(6) + ' tokens' : 
+            priceQuote.toFixed(6) + ' SOL'}`
         ) : null}
       </div>
     </div>

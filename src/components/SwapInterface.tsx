@@ -2,13 +2,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TokenInputs } from './swap/TokenInputs';
 import { useSwap } from '@/hooks/useSwap';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowDownUp } from 'lucide-react';
+import { useState } from 'react';
 
 interface SwapInterfaceProps {
   defaultTokenAddress?: string;
 }
 
 export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
+  const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const {
     amount,
     tokenAddress,
@@ -18,12 +20,58 @@ export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
     handleAmountChange,
     handleTokenAddressChange,
     handleSwap,
+    handleSell,
+    tokenBalance,
   } = useSwap(defaultTokenAddress);
+
+  const handleSellPercentage = (percentage: number) => {
+    if (tokenBalance) {
+      const sellAmount = (tokenBalance * percentage).toString();
+      handleAmountChange(sellAmount);
+    }
+  };
 
   return (
     <Card className="p-8 max-w-xl w-full mx-auto bg-black/50 backdrop-blur-sm border-gray-800">
-      <h2 className="text-2xl font-bold mb-6">Buy</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">{mode === 'buy' ? 'Buy' : 'Sell'}</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setMode(mode === 'buy' ? 'sell' : 'buy')}
+          className="flex items-center gap-2"
+        >
+          <ArrowDownUp className="h-4 w-4" />
+          Switch to {mode === 'buy' ? 'Sell' : 'Buy'}
+        </Button>
+      </div>
       
+      {mode === 'sell' && tokenBalance && (
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Button
+            variant="outline"
+            onClick={() => handleSellPercentage(0.25)}
+            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+          >
+            25%
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleSellPercentage(0.5)}
+            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+          >
+            50%
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleSellPercentage(1)}
+            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+          >
+            100%
+          </Button>
+        </div>
+      )}
+
       <TokenInputs
         amount={amount}
         tokenAddress={tokenAddress}
@@ -32,10 +80,12 @@ export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
         priceQuote={priceQuote}
         isLoading={isQuoteLoading}
         disabled={isLoading}
+        mode={mode}
+        tokenBalance={tokenBalance}
       />
 
       <Button 
-        onClick={handleSwap} 
+        onClick={mode === 'buy' ? handleSwap : handleSell}
         disabled={isLoading || !amount || !tokenAddress || isQuoteLoading}
         className="w-full mt-6"
       >
@@ -45,7 +95,7 @@ export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
             Processing...
           </>
         ) : (
-          'Buy Now'
+          mode === 'buy' ? 'Buy Now' : 'Sell Now'
         )}
       </Button>
     </Card>

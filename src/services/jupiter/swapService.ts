@@ -41,3 +41,37 @@ export const executeSwap = async (tokenAddress: string, amount: string, userPubl
   
   return await swapResponse.json();
 };
+
+export const executeSell = async (tokenAddress: string, amount: string, userPublicKey: string) => {
+  // Get quote from Jupiter for selling tokens back to SOL
+  const quoteResponse = await fetch(
+    `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=${Number(amount) * LAMPORTS_PER_SOL}&slippageBps=50`
+  );
+  
+  if (!quoteResponse.ok) {
+    const errorData = await quoteResponse.json();
+    throw new Error(errorData.message || 'Failed to get quote');
+  }
+  
+  const quoteData = await quoteResponse.json();
+
+  // Get swap transaction
+  const swapRequestBody = {
+    quoteResponse: quoteData,
+    userPublicKey: userPublicKey,
+    wrapUnwrapSOL: true,
+  };
+
+  const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(swapRequestBody),
+  });
+
+  if (!swapResponse.ok) {
+    const errorData = await swapResponse.json();
+    throw new Error(errorData.message || 'Failed to get swap transaction');
+  }
+  
+  return await swapResponse.json();
+};
