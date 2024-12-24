@@ -12,6 +12,7 @@ const NewCoins = () => {
     queryFn: async () => {
       console.log('Fetching new coins...');
       try {
+        // Get the 30 most recently updated coins
         const { data, error } = await supabase
           .from('coins')
           .select('*')
@@ -31,6 +32,19 @@ const NewCoins = () => {
         if (!data) {
           console.log('No coins data returned');
           return [];
+        }
+
+        // Clean up old coins if we have more than 30
+        if (data.length === 30) {
+          const oldestCoin = data[data.length - 1];
+          const { error: cleanupError } = await supabase
+            .from('coins')
+            .delete()
+            .lt('updated_at', oldestCoin.updated_at);
+
+          if (cleanupError) {
+            console.error('Error cleaning up old coins:', cleanupError);
+          }
         }
 
         const mappedCoins: CoinData[] = data.map(coin => ({
