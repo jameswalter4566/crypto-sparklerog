@@ -65,9 +65,8 @@ const NewCoins = () => {
 
   return (
     <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
-      <h1 className="text-2xl font-bold px-4">New Coins</h1>
       <div className="p-4 sm:p-6">
-        <CoinGrid coins={coins} isLoading={isLoading} />
+        <CoinGrid coins={coins} isLoading={isLoading} title="New Coins" />
       </div>
     </div>
   );
