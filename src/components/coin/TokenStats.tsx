@@ -13,16 +13,24 @@ export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: To
       return "N/A";
     }
 
+    // Format with proper decimal places and commas
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
     // Format large numbers with appropriate suffixes
     if (value >= 1e9) {
-      return `$${(value / 1e9).toFixed(2)}B`;
+      return formatter.format(value / 1e9) + 'B';
     } else if (value >= 1e6) {
-      return `$${(value / 1e6).toFixed(2)}M`;
+      return formatter.format(value / 1e6) + 'M';
     } else if (value >= 1e3) {
-      return `$${(value / 1e3).toFixed(2)}K`;
+      return formatter.format(value / 1e3) + 'K';
     }
     
-    return `$${value.toLocaleString()}`;
+    return formatter.format(value);
   };
 
   // Add detailed logging of the raw values
