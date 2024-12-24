@@ -33,14 +33,13 @@ const NewCoins = () => {
           return [];
         }
 
-        // Map the database fields to match our CoinData interface
         const mappedCoins: CoinData[] = data.map(coin => ({
           id: coin.id,
           name: coin.name,
           symbol: coin.symbol,
           price: coin.price,
           change_24h: coin.change_24h,
-          imageUrl: coin.image_url || "/placeholder.svg", // Map image_url to imageUrl
+          imageUrl: coin.image_url || "/placeholder.svg",
           mintAddress: coin.solana_addr
         }));
 
@@ -65,8 +64,11 @@ const NewCoins = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6">
-      <CoinGrid coins={coins} isLoading={isLoading} />
+    <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
+      <h1 className="text-2xl font-bold px-4">New Coins</h1>
+      <div className="p-4 sm:p-6">
+        <CoinGrid coins={coins} isLoading={isLoading} />
+      </div>
     </div>
   );
 };
