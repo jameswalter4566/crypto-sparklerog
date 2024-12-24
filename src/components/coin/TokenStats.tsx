@@ -7,7 +7,7 @@ interface TokenStatsProps {
   usdMarketCap?: number | null;
 }
 
-export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: TokenStatsProps) => {
+export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsProps) => {
   const formatValue = (value: number | null): string => {
     if (value === null || isNaN(value)) {
       return "N/A";
@@ -34,7 +34,6 @@ export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: To
   };
 
   // Add detailed logging of the raw values
-  console.log('Raw Market Cap:', marketCap);
   console.log('Raw USD Market Cap:', usdMarketCap);
   console.log('Raw Volume 24h:', volume24h);
   console.log('Raw Liquidity:', liquidity);
@@ -47,7 +46,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: To
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            {formatValue(usdMarketCap || marketCap)}
+            {formatValue(usdMarketCap)}
           </p>
         </CardContent>
       </Card>
