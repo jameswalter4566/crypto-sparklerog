@@ -42,7 +42,7 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     price: priceInSol,
     change_24h: null,
     market_cap: marketCap,
-    usd_market_cap: usdMarketCap, // Make sure this is properly set
+    usd_market_cap: usdMarketCap,
     volume_24h: null,
     liquidity: liquidityInSol,
     total_supply: data.total_supply ? data.total_supply / Math.pow(10, 9) : null,
