@@ -149,7 +149,7 @@ const App = () => {
                   <div className="flex flex-col sm:flex-row items-center justify-between h-full px-2 sm:px-4 md:px-6 gap-2 sm:gap-0">
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
                       <img 
-                        src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
+                        src="/u1251571754_httpss.mj.runNz6izZD6Xoc_Create_me_a_four_letter__08879d3a-1b7c-44e1-aae1-8d48bb2ee55a_1.png" 
                         alt="Logo" 
                         className="h-8 sm:h-12 md:h-16"
                       />
