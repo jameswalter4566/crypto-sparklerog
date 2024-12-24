@@ -4,6 +4,7 @@ import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { LineChart, Line } from "recharts";
 
 interface NewCoinCardProps {
   id: string;
@@ -27,6 +28,22 @@ export function NewCoinCard({
   searchCount
 }: NewCoinCardProps) {
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
+
+  // Generate random data for decorative chart
+  const generateChartData = () => {
+    const data = [];
+    let lastValue = 50;
+    for (let i = 0; i < 20; i++) {
+      // Random walk algorithm for natural-looking price movement
+      lastValue += (Math.random() - 0.5) * 20;
+      if (lastValue < 0) lastValue = 10;
+      if (lastValue > 100) lastValue = 90;
+      data.push({ value: lastValue });
+    }
+    return data;
+  };
+
+  const chartData = generateChartData();
 
   const formatPrice = (value: number | null) => {
     if (typeof value !== "number" || isNaN(value)) {
@@ -93,6 +110,17 @@ export function NewCoinCard({
             <div className="mt-1 text-xl sm:text-2xl font-medium truncate max-w-[180px] sm:max-w-[220px]">{formatPrice(price)}</div>
             <div className={`text-lg sm:text-xl ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
+            </div>
+            <div className="w-full h-[60px] mt-2 opacity-30">
+              <LineChart width={300} height={60} data={chartData}>
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke={change24h && change24h >= 0 ? "#14F195" : "#ef4444"}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
             </div>
           </div>
         </CardContent>
