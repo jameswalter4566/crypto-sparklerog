@@ -53,6 +53,11 @@ serve(async (req) => {
     }
 
     // Try search endpoint with captcha token
+    console.log('Fetching from Pump API with params:', {
+      searchTerm: tokenAddress,
+      captchaToken: captchaToken ? 'present' : 'missing'
+    });
+
     const searchResponse = await fetchFromPumpApi('/coins', {
       searchTerm: tokenAddress,
       limit: 50,
@@ -62,20 +67,36 @@ serve(async (req) => {
       captchaToken
     });
 
-    const searchData = await searchResponse.json();
-    console.log('Search API Response:', JSON.stringify(searchData, null, 2));
+    if (!searchResponse.ok) {
+      console.error('Pump API error:', await searchResponse.text());
+      throw new Error(`Pump API error: ${searchResponse.status}`);
+    }
+
+    let searchData;
+    try {
+      const responseText = await searchResponse.text();
+      console.log('Raw API response:', responseText);
+      searchData = JSON.parse(responseText);
+    } catch (error) {
+      console.error('JSON parse error:', error);
+      throw new Error('Invalid response from Pump API');
+    }
+
+    console.log('Parsed search data:', searchData);
+    
+    if (!Array.isArray(searchData)) {
+      throw new Error('Unexpected API response format');
+    }
     
     let coinData: CoinData | null = null;
     
-    if (Array.isArray(searchData)) {
-      const matchingToken = searchData.find(item => 
-        item.mint?.toLowerCase() === tokenAddress.toLowerCase()
-      );
-      
-      if (matchingToken) {
-        console.log('Found matching token in search results');
-        coinData = mapPumpApiToCoinData(matchingToken);
-      }
+    const matchingToken = searchData.find(item => 
+      item.mint?.toLowerCase() === tokenAddress.toLowerCase()
+    );
+    
+    if (matchingToken) {
+      console.log('Found matching token:', matchingToken);
+      coinData = mapPumpApiToCoinData(matchingToken);
     }
 
     if (!coinData) {
