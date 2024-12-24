@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
-import { Badge as BadgeIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface NewCoinCardProps {
   id: string;
@@ -51,19 +51,12 @@ export function NewCoinCard({
     <Link to={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
         {searchCount !== undefined && searchCount > 0 && (
-          <div className="absolute top-2 right-2 z-10 flex items-center justify-center">
-            <div className="relative">
-              <BadgeIcon 
-                className="w-6 h-6 text-yellow-500" 
-                style={{ 
-                  filter: 'drop-shadow(0 0 2px rgba(234, 179, 8, 0.5))'
-                }}
-              />
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-black">
-                {searchCount}
-              </span>
-            </div>
-          </div>
+          <Badge 
+            variant="secondary" 
+            className="absolute top-2 right-2 z-10"
+          >
+            {searchCount} searches
+          </Badge>
         )}
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
