@@ -9,10 +9,10 @@ const corsHeaders = {
 async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
-  const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
-  console.log('Fetching from URL:', url);
-
   try {
+    const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
+    console.log('Fetching from URL:', url);
+
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
@@ -21,8 +21,7 @@ async function fetchPumpFunData(tokenAddress: string) {
     });
     
     console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API error response:', errorText);
@@ -32,32 +31,40 @@ async function fetchPumpFunData(tokenAddress: string) {
     const rawData = await response.json();
     console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
 
+    // Check if rawData is an array and get the first item if it is
+    const data = Array.isArray(rawData) ? rawData[0] : rawData;
+    
+    if (!data || !data.mint) {
+      console.error('Invalid data structure received:', data);
+      throw new Error('Invalid data structure received from API');
+    }
+
     // Enhanced mapping with fallbacks and type checking
     const mappedData = {
       id: tokenAddress,
-      name: rawData.name || 'Unknown Token',
-      symbol: rawData.symbol || '???',
-      image_url: rawData.image_uri || rawData.image || null,
-      price: typeof rawData.price === 'number' ? rawData.price : null,
-      change_24h: typeof rawData.price_change_24h === 'number' ? rawData.price_change_24h : null,
-      market_cap: typeof rawData.market_cap === 'number' ? rawData.market_cap : null,
-      usd_market_cap: typeof rawData.usd_market_cap === 'number' ? rawData.usd_market_cap : null,
-      volume_24h: typeof rawData.volume_24h === 'number' ? rawData.volume_24h : null,
-      liquidity: typeof rawData.virtual_sol_reserves === 'number' ? rawData.virtual_sol_reserves : null,
-      total_supply: typeof rawData.total_supply === 'number' ? rawData.total_supply : null,
-      circulating_supply: typeof rawData.circulating_supply === 'number' ? rawData.circulating_supply : null,
-      non_circulating_supply: typeof rawData.non_circulating_supply === 'number' ? rawData.non_circulating_supply : null,
+      name: data.name || 'Unknown Token',
+      symbol: data.symbol || '???',
+      image_url: data.image_uri || data.image || null,
+      price: typeof data.price === 'number' ? data.price : null,
+      change_24h: typeof data.price_change_24h === 'number' ? data.price_change_24h : null,
+      market_cap: typeof data.market_cap === 'number' ? data.market_cap : null,
+      usd_market_cap: typeof data.usd_market_cap === 'number' ? data.usd_market_cap : null,
+      volume_24h: typeof data.volume_24h === 'number' ? data.volume_24h : null,
+      liquidity: typeof data.virtual_sol_reserves === 'number' ? data.virtual_sol_reserves : null,
+      total_supply: typeof data.total_supply === 'number' ? data.total_supply : null,
+      circulating_supply: typeof data.circulating_supply === 'number' ? data.circulating_supply : null,
+      non_circulating_supply: typeof data.non_circulating_supply === 'number' ? data.non_circulating_supply : null,
       updated_at: new Date().toISOString(),
       solana_addr: tokenAddress,
-      description: rawData.description || null,
-      decimals: typeof rawData.decimals === 'number' ? rawData.decimals : null,
-      historic_data: Array.isArray(rawData.price_history) ? rawData.price_history : null,
-      homepage: rawData.website || null,
-      blockchain_site: [rawData.explorer_url].filter(Boolean),
-      chat_url: [rawData.telegram].filter(Boolean),
-      twitter_screen_name: rawData.twitter || null,
+      description: data.description || null,
+      decimals: typeof data.decimals === 'number' ? data.decimals : null,
+      historic_data: Array.isArray(data.price_history) ? data.price_history : null,
+      homepage: data.website || null,
+      blockchain_site: [data.explorer_url].filter(Boolean),
+      chat_url: [data.telegram].filter(Boolean),
+      twitter_screen_name: data.twitter || null,
       coingecko_id: null,
-      coin_id: rawData.mint || null,
+      coin_id: data.mint || null,
       official_forum_url: null,
       announcement_url: null
     };
@@ -67,11 +74,12 @@ async function fetchPumpFunData(tokenAddress: string) {
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
-    throw new Error(`Failed to fetch data from Pump.fun: ${error.message}`);
+    throw error;
   }
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -88,6 +96,10 @@ serve(async (req) => {
 
     const coinData = await fetchPumpFunData(tokenAddress);
     
+    if (!coinData) {
+      throw new Error('Failed to fetch coin data');
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -124,10 +136,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in get-coin function:', error);
+    
+    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
-        details: error instanceof Error ? error.stack : undefined
+        details: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,
