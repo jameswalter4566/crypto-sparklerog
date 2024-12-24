@@ -46,30 +46,42 @@ export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
         </Button>
       </div>
       
-      {mode === 'sell' && tokenBalance && (
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <Button
-            variant="outline"
-            onClick={() => handleSellPercentage(0.25)}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
-          >
-            25%
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleSellPercentage(0.5)}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
-          >
-            50%
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleSellPercentage(1)}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
-          >
-            100%
-          </Button>
-        </div>
+      {mode === 'sell' && (
+        <>
+          {tokenBalance && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <Button
+                variant="outline"
+                onClick={() => handleSellPercentage(0.25)}
+                className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+              >
+                25%
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleSellPercentage(0.5)}
+                className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+              >
+                50%
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleSellPercentage(1)}
+                className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+              >
+                100%
+              </Button>
+            </div>
+          )}
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4 text-sm text-yellow-200">
+            <p>If your sell button is experiencing glitches, you can always swap directly from your Phantom wallet:</p>
+            <ol className="list-decimal ml-4 mt-2 space-y-1">
+              <li>Open Phantom wallet</li>
+              <li>Select Swap</li>
+              <li>Select the coin you bought and swap back into Solana to cash out!</li>
+            </ol>
+          </div>
+        </>
       )}
 
       <TokenInputs
