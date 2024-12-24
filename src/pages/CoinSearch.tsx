@@ -24,24 +24,41 @@ const CoinSearch = () => {
   const { toast } = useToast();
 
   const updateSearchCount = async (coinId: string) => {
-    const { error } = await supabase
+    console.log('Updating search count for coin:', coinId);
+    
+    // First, get the current search count
+    const { data: currentData, error: fetchError } = await supabase
+      .from('coin_searches')
+      .select('search_count')
+      .eq('coin_id', coinId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      console.error('Error fetching current search count:', fetchError);
+      return;
+    }
+
+    const currentCount = currentData?.search_count || 0;
+    const newCount = currentCount + 1;
+
+    // Then update or insert with the incremented count
+    const { error: upsertError } = await supabase
       .from('coin_searches')
       .upsert(
         { 
           coin_id: coinId,
           last_searched_at: new Date().toISOString(),
-          search_count: 1
+          search_count: newCount
         },
         {
-          onConflict: 'coin_id',
-          ignoreDuplicates: false
+          onConflict: 'coin_id'
         }
-      )
-      .select()
-      .single();
+      );
 
-    if (error) {
-      console.error('Error updating search count:', error);
+    if (upsertError) {
+      console.error('Error updating search count:', upsertError);
+    } else {
+      console.log('Successfully updated search count to:', newCount);
     }
   };
 
@@ -64,6 +81,8 @@ const CoinSearch = () => {
           description: "Coin is already in the list.",
           variant: "default",
         });
+        // Even if the coin is in the list, we should still increment the search count
+        await updateSearchCount(mintAddress);
         setIsLoading(false);
         return;
       }
@@ -103,9 +122,8 @@ const CoinSearch = () => {
         coinMetadata = result as CoinMetadata;
       }
 
-      // Add the new coin to the state
+      // Add the new coin to the state and update search count
       if (coinMetadata) {
-        // Update search count
         await updateSearchCount(coinMetadata.id);
         
         setCoins((prevCoins) => [...prevCoins, coinMetadata as CoinMetadata]);
