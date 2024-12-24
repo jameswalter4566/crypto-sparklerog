@@ -25,7 +25,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#9945FF",
+          DEFAULT: "#1EAEDB",
           foreground: "#ffffff",
         },
         secondary: {
@@ -77,18 +77,18 @@ export default {
         },
         "glow-pulse": {
           "0%, 100%": { 
-            boxShadow: "0 0 25px rgba(153,69,255,0.5)"
+            boxShadow: "0 0 25px rgba(30,174,219,0.5)"
           },
           "50%": { 
-            boxShadow: "0 0 50px rgba(153,69,255,0.9)"
+            boxShadow: "0 0 50px rgba(30,174,219,0.9)"
           }
         },
         "laser-glow": {
           "0%, 100%": { 
-            boxShadow: "0 0 15px rgba(153,69,255,0.3), 0 0 30px rgba(153,69,255,0.2), 0 0 45px rgba(153,69,255,0.1)"
+            boxShadow: "0 0 15px rgba(30,174,219,0.3), 0 0 30px rgba(30,174,219,0.2), 0 0 45px rgba(30,174,219,0.1)"
           },
           "50%": { 
-            boxShadow: "0 0 20px rgba(153,69,255,0.5), 0 0 40px rgba(153,69,255,0.3), 0 0 60px rgba(153,69,255,0.2)"
+            boxShadow: "0 0 20px rgba(30,174,219,0.5), 0 0 40px rgba(30,174,219,0.3), 0 0 60px rgba(30,174,219,0.2)"
           }
         }
       },
