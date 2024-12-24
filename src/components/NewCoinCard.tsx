@@ -24,7 +24,6 @@ export function NewCoinCard({
   name, 
   symbol, 
   price, 
-  change24h, 
   imageUrl, 
   mintAddress,
   searchCount,
@@ -38,14 +37,6 @@ export function NewCoinCard({
       return "Price not available";
     }
     return `SOL ${value.toFixed(6)}`;
-  };
-
-  const formatChange = (value: number | null) => {
-    if (typeof value !== "number" || isNaN(value)) {
-      return "N/A";
-    }
-    const sign = value >= 0 ? "+" : "";
-    return `${sign}${value.toFixed(2)}%`;
   };
 
   const formatMarketCap = (value: number | null) => {
@@ -108,9 +99,6 @@ export function NewCoinCard({
             </CardTitle>
             <span className="text-lg sm:text-xl text-gray-400 truncate max-w-[180px] sm:max-w-[220px]">{symbol || "N/A"}</span>
             <div className="mt-1 text-xl sm:text-2xl font-medium truncate max-w-[180px] sm:max-w-[220px]">{formatPrice(price)}</div>
-            <div className={`text-lg sm:text-xl ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {formatChange(change24h)}
-            </div>
             {usdMarketCap && (
               <div className="text-lg sm:text-xl text-gray-400">
                 MC: {formatMarketCap(usdMarketCap)}
