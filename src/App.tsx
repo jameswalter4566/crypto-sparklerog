@@ -143,7 +143,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename="/">
           <SidebarProvider>
             <div className="min-h-screen flex w-full bg-black text-white">
               <AppSidebar />
@@ -179,6 +179,7 @@ const App = () => {
                   <Route path="/launch" element={<LaunchCoin />} />
                   <Route path="/rocket-launch" element={<RocketLaunch />} />
                   <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
+                  <Route path="*" element={<Index />} /> {/* Add catch-all route */}
                 </Routes>
               </main>
             </div>
