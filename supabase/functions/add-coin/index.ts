@@ -19,7 +19,6 @@ async function fetchPumpFunData(solanaAddr: string) {
   });
 
   console.log('Pump.fun API Response Status:', response.status);
-  console.log('Pump.fun API Response Headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -29,6 +28,16 @@ async function fetchPumpFunData(solanaAddr: string) {
 
   const rawData = await response.json();
   console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
+  
+  // Validate market cap specifically
+  if (rawData.market_cap) {
+    console.log('Received market cap value:', rawData.market_cap);
+    if (typeof rawData.market_cap !== 'number' || isNaN(rawData.market_cap)) {
+      console.warn('Invalid market cap value received:', rawData.market_cap);
+    }
+  } else {
+    console.log('No market cap value provided in API response');
+  }
 
   return rawData;
 }
@@ -73,11 +82,14 @@ serve(async (req) => {
         );
       }
 
+      // Log market cap update specifically
+      console.log('Updating market cap from', existingCoin.market_cap, 'to', pumpData.market_cap);
+
       // Update existing coin with new data
       const updatedData = {
         ...existingCoin,
         price: pumpData.price ?? existingCoin.price,
-        market_cap: pumpData.market_cap ?? existingCoin.market_cap,
+        market_cap: typeof pumpData.market_cap === 'number' ? pumpData.market_cap : existingCoin.market_cap,
         volume_24h: pumpData.volume_24h ?? existingCoin.volume_24h,
         liquidity: pumpData.virtual_sol_reserves ?? existingCoin.liquidity,
         change_24h: pumpData.price_change_24h ?? existingCoin.change_24h,
@@ -109,6 +121,9 @@ serve(async (req) => {
       throw new Error('Invalid response from Pump.fun API');
     }
 
+    // Log market cap for new coin
+    console.log('New coin market cap:', pumpData.market_cap);
+
     // Map API data to our schema
     const coinData = {
       id: solana_addr,
@@ -117,7 +132,7 @@ serve(async (req) => {
       image_url: pumpData.image_uri || pumpData.image || null,
       price: typeof pumpData.price === 'number' ? pumpData.price : null,
       change_24h: typeof pumpData.price_change_24h === 'number' ? pumpData.price_change_24h : null,
-      market_cap: typeof pumpData.market_cap === 'number' ? pumpData.market_cap : null,
+      market_cap: typeof pumpData.market_cap === 'number' && !isNaN(pumpData.market_cap) ? pumpData.market_cap : null,
       volume_24h: typeof pumpData.volume_24h === 'number' ? pumpData.volume_24h : null,
       liquidity: typeof pumpData.virtual_sol_reserves === 'number' ? pumpData.virtual_sol_reserves : null,
       total_supply: typeof pumpData.total_supply === 'number' ? pumpData.total_supply : null,
