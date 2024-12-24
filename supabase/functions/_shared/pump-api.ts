@@ -21,33 +21,34 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     console.log('Making request to:', url);
     const response = await fetch(url, {
       headers: {
-        'Accept': 'application/json',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.9',
         'Origin': 'https://pump.fun',
         'Referer': 'https://pump.fun/',
-        'User-Agent': 'Mozilla/5.0 (compatible; PumpBot/1.0)'
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       }
     });
 
     console.log('Response status:', response.status);
     console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-    // First check if the response is ok
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Pump API error response:', errorText);
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    // Get the raw response text for debugging
     const rawText = await response.text();
     console.log('Raw API response:', rawText);
 
-    // If we got an empty response, throw an error
     if (!rawText.trim()) {
       throw new Error('Empty response from API');
     }
 
-    // Try to parse JSON
     try {
       return JSON.parse(rawText);
     } catch (parseError) {
