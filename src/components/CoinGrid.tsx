@@ -53,15 +53,16 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
       console.log('Trending coins data:', trendingCoins);
 
       return trendingCoins.map(trend => {
-        // Parse historic_data if it exists
         let priceHistory: PriceHistoryItem[] | null = null;
         
         try {
           if (trend.coins.historic_data) {
-            const historyData = trend.coins.historic_data as HistoricDataItem[];
+            // First cast to unknown, then to HistoricDataItem[]
+            const historyData = trend.coins.historic_data as unknown as HistoricDataItem[];
+            
             if (Array.isArray(historyData)) {
               priceHistory = historyData
-                .filter(item => 
+                .filter((item): item is HistoricDataItem => 
                   typeof item === 'object' && 
                   item !== null && 
                   'price' in item && 
