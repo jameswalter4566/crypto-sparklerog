@@ -68,7 +68,8 @@ const CoinProfile = () => {
           twitter: result.twitter_screen_name,
           chat: result.chat_url,
           announcement: result.announcement_url
-        }
+        },
+        usd_market_cap: result.usd_market_cap || null // Added USD market cap
       };
 
       setCoin(coinData);
@@ -142,6 +143,7 @@ const CoinProfile = () => {
         marketCap={coin.market_cap}
         volume24h={coin.volume_24h}
         liquidity={coin.liquidity}
+        usdMarketCap={coin.usd_market_cap} // Pass the USD market cap
       />
 
       <TokenSupply

@@ -41,6 +41,7 @@ async function fetchPumpFunData(tokenAddress: string) {
       price: typeof rawData.price === 'number' ? rawData.price : null,
       change_24h: typeof rawData.price_change_24h === 'number' ? rawData.price_change_24h : null,
       market_cap: typeof rawData.market_cap === 'number' ? rawData.market_cap : null,
+      usd_market_cap: typeof rawData.usd_market_cap === 'number' ? rawData.usd_market_cap : null,
       volume_24h: typeof rawData.volume_24h === 'number' ? rawData.volume_24h : null,
       liquidity: typeof rawData.virtual_sol_reserves === 'number' ? rawData.virtual_sol_reserves : null,
       total_supply: typeof rawData.total_supply === 'number' ? rawData.total_supply : null,

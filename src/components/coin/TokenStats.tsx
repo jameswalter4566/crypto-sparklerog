@@ -4,9 +4,10 @@ interface TokenStatsProps {
   marketCap: number | null;
   volume24h: number | null;
   liquidity: number | null;
+  usdMarketCap?: number | null;
 }
 
-export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps) => {
+export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: TokenStatsProps) => {
   const formatValue = (value: number | null): string => {
     if (value === null || isNaN(value)) {
       return "N/A";
@@ -25,6 +26,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps)
   };
 
   console.log('Market Cap value:', marketCap); // Debug log
+  console.log('USD Market Cap value:', usdMarketCap); // Debug log
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -34,7 +36,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity }: TokenStatsProps)
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            {formatValue(marketCap)}
+            {usdMarketCap ? formatValue(usdMarketCap) : formatValue(marketCap)}
           </p>
         </CardContent>
       </Card>
