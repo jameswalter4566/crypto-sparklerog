@@ -1,44 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { Transaction, VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
+import { Transaction, VersionedTransaction, Connection } from '@solana/web3.js';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { fetchPriceQuote, executeSwap, executeSell } from '@/services/jupiter/swapService';
+import { useSwapState } from './swap/useSwapState';
+import { useTokenBalance } from './swap/useTokenBalance';
 
 const connection = new Connection(
   'https://rpc.helius.xyz/?api-key=726140d8-6b0d-4719-8702-682d81e94a37'
 );
 
 export const useSwap = (defaultTokenAddress?: string) => {
-  const [amount, setAmount] = useState('');
-  const [tokenAddress, setTokenAddress] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-  const [priceQuote, setPriceQuote] = useState<number | null>(null);
-  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const {
+    amount,
+    setAmount,
+    tokenAddress,
+    setTokenAddress,
+    isLoading,
+    setIsLoading,
+    isQuoteLoading,
+    setIsQuoteLoading,
+    priceQuote,
+    setPriceQuote,
+    tokenBalance,
+    setTokenBalance,
+  } = useSwapState(defaultTokenAddress);
+
+  useTokenBalance(tokenAddress, setTokenBalance);
 
   useEffect(() => {
     if (defaultTokenAddress && isValidSolanaAddress(defaultTokenAddress)) {
       setTokenAddress(defaultTokenAddress);
-      fetchTokenBalance(defaultTokenAddress);
     }
   }, [defaultTokenAddress]);
-
-  const fetchTokenBalance = async (address: string) => {
-    try {
-      // @ts-ignore
-      const { solana } = window;
-      if (!solana?.isPhantom) return;
-
-      const response = await solana.connect();
-      const userPublicKey = response.publicKey;
-      
-      // Fetch token balance logic here
-      // This is a placeholder - implement actual token balance fetching
-      setTokenBalance(100); // Example balance
-    } catch (error) {
-      console.error('Error fetching token balance:', error);
-    }
-  };
 
   const handleAmountChange = async (value: string) => {
     setAmount(value);
@@ -52,7 +46,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       try {
         const price = await fetchPriceQuote(tokenAddress, value);
         if (price) {
-          setPriceQuote(Number(price) * Number(value));
+          setPriceQuote(Number(price));
         }
       } catch (error) {
         console.error('Price quote error:', error);
@@ -70,7 +64,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       try {
         const price = await fetchPriceQuote(value, amount);
         if (price) {
-          setPriceQuote(Number(price) * Number(amount));
+          setPriceQuote(Number(price));
         }
       } catch (error) {
         console.error('Price quote error:', error);
@@ -83,12 +77,43 @@ export const useSwap = (defaultTokenAddress?: string) => {
 
   const validateAmount = (value: string): boolean => {
     const numValue = Number(value);
-    return !isNaN(numValue) && numValue > 0 && numValue <= 100000;
+    return !isNaN(numValue) && numValue > 0;
+  };
+
+  const handleTransaction = async (
+    transactionBuffer: Buffer,
+    successMessage: string
+  ) => {
+    let transaction;
+    try {
+      transaction = VersionedTransaction.deserialize(transactionBuffer);
+    } catch {
+      transaction = Transaction.from(transactionBuffer);
+    }
+
+    // @ts-ignore
+    const signedTransaction = await window.solana.signTransaction(transaction);
+    const serializedTransaction = signedTransaction instanceof VersionedTransaction 
+      ? signedTransaction.serialize()
+      : signedTransaction.serialize();
+      
+    const txid = await connection.sendRawTransaction(
+      serializedTransaction,
+      { skipPreflight: false, maxRetries: 3 }
+    );
+    
+    toast.success(successMessage, {
+      description: `Transaction ID: ${txid}`,
+      action: {
+        label: "View",
+        onClick: () => window.open(`https://explorer.solana.com/tx/${txid}`, '_blank'),
+      },
+    });
   };
 
   const handleSwap = async () => {
     if (!validateAmount(amount)) {
-      toast.error('Please enter a valid amount between 0 and 100,000 SOL');
+      toast.error('Please enter a valid amount');
       return;
     }
 
@@ -109,30 +134,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       const { swapTransaction } = await executeSwap(tokenAddress, amount, userPublicKey.toString());
       const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
-      let transaction;
-      try {
-        transaction = VersionedTransaction.deserialize(transactionBuffer);
-      } catch {
-        transaction = Transaction.from(transactionBuffer);
-      }
-
-      const signedTransaction = await window.solana.signTransaction(transaction);
-      const serializedTransaction = signedTransaction instanceof VersionedTransaction 
-        ? signedTransaction.serialize()
-        : signedTransaction.serialize();
-        
-      const txid = await connection.sendRawTransaction(
-        serializedTransaction,
-        { skipPreflight: false, maxRetries: 3 }
-      );
-      
-      toast.success("Swap successful!", {
-        description: `Transaction ID: ${txid}`,
-        action: {
-          label: "View",
-          onClick: () => window.open(`https://explorer.solana.com/tx/${txid}`, '_blank'),
-        },
-      });
+      await handleTransaction(transactionBuffer, "Swap successful!");
     } catch (error) {
       console.error('Swap error:', error);
       const errorMessage = error instanceof Error 
@@ -167,30 +169,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       const { swapTransaction } = await executeSell(tokenAddress, amount, userPublicKey.toString());
       const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
-      let transaction;
-      try {
-        transaction = VersionedTransaction.deserialize(transactionBuffer);
-      } catch {
-        transaction = Transaction.from(transactionBuffer);
-      }
-
-      const signedTransaction = await window.solana.signTransaction(transaction);
-      const serializedTransaction = signedTransaction instanceof VersionedTransaction 
-        ? signedTransaction.serialize()
-        : signedTransaction.serialize();
-        
-      const txid = await connection.sendRawTransaction(
-        serializedTransaction,
-        { skipPreflight: false, maxRetries: 3 }
-      );
-      
-      toast.success("Sell successful!", {
-        description: `Transaction ID: ${txid}`,
-        action: {
-          label: "View",
-          onClick: () => window.open(`https://explorer.solana.com/tx/${txid}`, '_blank'),
-        },
-      });
+      await handleTransaction(transactionBuffer, "Sell successful!");
     } catch (error) {
       console.error('Sell error:', error);
       const errorMessage = error instanceof Error 
