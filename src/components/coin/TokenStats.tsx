@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TokenStatsProps {
-  marketCap: number | null;
+  marketCap?: number | null; // Made optional
   volume24h: number | null;
   liquidity: number | null;
   usdMarketCap?: number | null;

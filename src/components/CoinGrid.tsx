@@ -54,11 +54,15 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
       console.log('Trending coins data:', trendingCoins);
 
       return trendingCoins.map(trend => {
+        if (!trend.coins) {
+          console.error('Missing coins data for trend:', trend);
+          return null;
+        }
+
         let priceHistory: PriceHistoryItem[] | null = null;
         
         try {
           if (trend.coins.historic_data) {
-            // First cast to unknown, then to HistoricDataItem[]
             const historyData = trend.coins.historic_data as unknown as HistoricDataItem[];
             
             if (Array.isArray(historyData)) {
@@ -88,7 +92,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           priceHistory,
           usdMarketCap: trend.coins.usd_market_cap
         };
-      });
+      }).filter(Boolean); // Remove any null values
     },
     gcTime: Infinity,
     staleTime: 30000,
