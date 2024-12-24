@@ -53,7 +53,7 @@ export const TokenInputs = ({
           onChange={(e) => onAmountChange(e.target.value)}
           className="w-full bg-black/30"
           min="0"
-          max={mode === 'sell' && tokenBalance ? tokenBalance.toString() : undefined}
+          max={mode === 'sell' && tokenBalance ? tokenBalance.toString() : "100000"}
           step="0.000001"
           disabled={disabled}
         />
