@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface CoinGridProps {
   coins?: CoinData[];
@@ -134,7 +135,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
   // Set up real-time subscription
   useEffect(() => {
-    const channel = supabase.channel('coin_updates')
+    const channel: RealtimeChannel = supabase.channel('coin_updates')
       .on(
         'postgres_changes',
         {
