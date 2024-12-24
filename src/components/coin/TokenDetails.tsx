@@ -14,6 +14,7 @@ interface TokenDetailsProps {
     tokenStandard: string | null;
     decimals: number | null;
     marketCap: number | null;
+    usdMarketCap: number | null;
     volume24h: number | null;
     liquidity: number | null;
     solanaAddr?: string;
@@ -37,6 +38,13 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
     setIsRefreshing(false);
   };
 
+  // Log the values being passed to TokenStats
+  console.log('TokenDetails - Values being passed to TokenStats:', {
+    usdMarketCap: coinData.usdMarketCap,
+    volume24h: coinData.volume24h,
+    liquidity: coinData.liquidity
+  });
+
   return (
     <div onClick={onClick} className="cursor-pointer hover:opacity-80 transition-opacity">
       <TokenHeader
@@ -54,7 +62,7 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
       />
 
       <TokenStats
-        marketCap={coinData.marketCap}
+        usdMarketCap={coinData.usdMarketCap}
         volume24h={coinData.volume24h}
         liquidity={coinData.liquidity}
       />

@@ -147,9 +147,9 @@ const CoinProfile = () => {
       />
       
       <TokenStats
+        usdMarketCap={coin.usd_market_cap}
         volume24h={coin.volume_24h}
         liquidity={coin.liquidity}
-        usdMarketCap={coin.usd_market_cap}
       />
 
       <TokenSupply
