@@ -160,7 +160,7 @@ const App = () => {
                       alt="Logo" 
                       className="h-10 sm:h-12 ml-2 sm:ml-4 md:hidden"
                     />
-                    <div className="flex-1 max-w-2xl mx-auto">
+                    <div className="flex-1 max-w-2xl mx-auto pl-16 md:pl-24">
                       <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
                     </div>
                   </div>
