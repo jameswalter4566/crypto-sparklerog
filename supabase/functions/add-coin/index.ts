@@ -47,31 +47,46 @@ serve(async (req) => {
 
     // Fetch data from Pump.fun API
     console.log('Fetching data from Pump.fun API...');
-    const pumpResponse = await fetch(`https://frontend-api.pump.fun/coins/${solana_addr}`);
+    const pumpResponse = await fetch(`https://frontend-api-v2.pump.fun/coins/${solana_addr}`);
     
     if (!pumpResponse.ok) {
       console.error('Error from Pump.fun API:', await pumpResponse.text());
-      throw new Error('Failed to fetch token data from Pump.fun');
+      throw new Error(`Pump.fun API returned status ${pumpResponse.status}`);
     }
 
     const pumpData = await pumpResponse.json();
     console.log('Received data from Pump.fun:', pumpData);
+
+    if (!pumpData || !pumpData.mint) {
+      throw new Error('Invalid response from Pump.fun API');
+    }
 
     // Transform and prepare data for insertion
     const coinData = {
       id: solana_addr,
       name: pumpData.name || 'Unknown Token',
       symbol: pumpData.symbol || 'UNKNOWN',
-      image_url: pumpData.image || null,
+      image_url: pumpData.image_uri || null,
       price: pumpData.price || null,
-      change_24h: pumpData.priceChange24h || null,
-      market_cap: pumpData.marketCap || null,
-      volume_24h: pumpData.volume24h || null,
-      liquidity: pumpData.liquidity || null,
-      total_supply: pumpData.totalSupply || null,
-      circulating_supply: pumpData.circulatingSupply || null,
+      change_24h: pumpData.price_change_24h || null,
+      market_cap: pumpData.market_cap || null,
+      volume_24h: pumpData.volume_24h || null,
+      liquidity: pumpData.virtual_sol_reserves || null,
+      total_supply: pumpData.total_supply || null,
+      circulating_supply: pumpData.circulating_supply || null,
       updated_at: new Date().toISOString(),
       solana_addr: solana_addr,
+      description: pumpData.description || null,
+      decimals: pumpData.decimals || null,
+      historic_data: pumpData.price_history || null,
+      homepage: pumpData.website || null,
+      blockchain_site: [pumpData.explorer_url].filter(Boolean),
+      chat_url: [pumpData.telegram].filter(Boolean),
+      twitter_screen_name: pumpData.twitter || null,
+      coingecko_id: null,
+      non_circulating_supply: null,
+      announcement_url: null,
+      official_forum_url: null
     };
 
     // Insert the new coin data
