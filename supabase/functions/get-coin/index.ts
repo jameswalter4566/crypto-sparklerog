@@ -1,5 +1,3 @@
-// supabase/functions/get-coin/index.ts
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { fetchFromPumpApi } from "../_shared/pump-api.ts";
@@ -48,20 +46,6 @@ serve(async (req) => {
       throw dbError;
     }
 
-    // If we have recent data (less than 5 minutes old), return it
-    if (existingData) {
-      const lastUpdate = new Date(existingData.updated_at || '');
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      
-      if (lastUpdate > fiveMinutesAgo) {
-        console.log('Using cached data from database');
-        return new Response(
-          JSON.stringify(existingData),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
     // Fetch fresh data from API
     console.log('Fetching fresh data from Pump API for token:', tokenAddress);
     
@@ -88,13 +72,21 @@ serve(async (req) => {
       
       if (!matchingToken) {
         console.log('No matching token found in search results');
+        if (existingData) {
+          console.log('Returning existing data as fallback');
+          return new Response(
+            JSON.stringify(existingData),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         throw new Error('Token not found');
       }
 
-      console.log('Found matching token:', matchingToken);
+      console.log('Raw Pump.fun API Response:', matchingToken);
+      console.log('USD Market Cap from API:', matchingToken.usd_market_cap);
 
-      // The mapPumpApiToCoinData function will ensure we get both market_cap and usd_market_cap properly
-      const coinData: CoinData = mapPumpApiToCoinData(matchingToken);
+      const coinData = mapPumpApiToCoinData(matchingToken);
+      console.log('Mapped coin data before upsert:', coinData);
 
       // Update database with new data
       const { error: upsertError } = await supabase
@@ -110,6 +102,19 @@ serve(async (req) => {
       if (upsertError) {
         console.error('Error upserting data to Supabase:', upsertError);
         throw upsertError;
+      }
+
+      // Verify the data was stored correctly
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('coins')
+        .select('*')
+        .eq('id', coinData.id)
+        .single();
+
+      if (verifyError) {
+        console.error('Error verifying stored data:', verifyError);
+      } else {
+        console.log('Verified stored data:', verifyData);
       }
 
       console.log('Successfully updated database with new coin data');
