@@ -1,4 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+/**
+ * src/components/coin/TokenStats.tsx
+ *
+ * Displays various stats like Market Cap (SOL), Market Cap (USD),
+ * 24h Volume, and Liquidity in a simple card-based layout.
+ */
+
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface TokenStatsProps {
   marketCap?: number | null;
@@ -7,32 +15,12 @@ interface TokenStatsProps {
   liquidity: number | null;
 }
 
-export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: TokenStatsProps) => {
-  const formatValue = (value: number | null): string => {
-    if (value === null || isNaN(value)) {
-      return "N/A";
-    }
-
-    // Format with proper decimal places and commas
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-    // Format large numbers with appropriate suffixes
-    if (value >= 1e9) {
-      return formatter.format(value / 1e9) + 'B';
-    } else if (value >= 1e6) {
-      return formatter.format(value / 1e6) + 'M';
-    } else if (value >= 1e3) {
-      return formatter.format(value / 1e3) + 'K';
-    }
-    
-    return formatter.format(value);
-  };
-
+export const TokenStats: React.FC<TokenStatsProps> = ({
+  marketCap,
+  usdMarketCap,
+  volume24h,
+  liquidity
+}) => {
   console.log('TokenStats - Raw values:', {
     marketCap,
     usdMarketCap,
@@ -40,8 +28,23 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
     liquidity
   });
 
+  const formatValue = (value: number | null): string => {
+    if (value === null || isNaN(value)) {
+      return 'N/A';
+    }
+
+    // Format as USD currency
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Market Cap (SOL) */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-gray-400">Market Cap (SOL)</CardTitle>
@@ -53,6 +56,7 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
         </CardContent>
       </Card>
 
+      {/* Market Cap (USD) */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-gray-400">Market Cap (USD)</CardTitle>
@@ -64,6 +68,7 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
         </CardContent>
       </Card>
 
+      {/* 24h Volume */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-gray-400">24h Volume</CardTitle>
@@ -75,6 +80,7 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
         </CardContent>
       </Card>
 
+      {/* Liquidity */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-gray-400">Liquidity</CardTitle>
