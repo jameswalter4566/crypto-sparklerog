@@ -32,23 +32,22 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           )
         `)
         .order('search_count', { ascending: false })
-        .limit(12);
+        .limit(30);
 
       if (error) {
         console.error('Error fetching trending coins:', error);
         throw error;
       }
 
-      console.log('Trending coins data:', trendingCoins); // Debug log
+      console.log('Trending coins data:', trendingCoins);
 
-      // Transform the data to match the expected CoinData format
       return trendingCoins.map(trend => ({
         ...trend.coins,
         searchCount: trend.search_count
       }));
     },
     gcTime: Infinity,
-    staleTime: 30000, // Refresh data every 30 seconds
+    staleTime: 30000,
   });
 
   if (isLoading) {
@@ -70,8 +69,6 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         {coins?.map((coin) => {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
-
-          console.log('Rendering coin with searchCount:', coin.searchCount); // Debug log
 
           return (
             <NewCoinCard

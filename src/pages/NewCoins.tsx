@@ -16,7 +16,7 @@ const NewCoins = () => {
           .from('coins')
           .select('*')
           .order('updated_at', { ascending: false })
-          .limit(20);
+          .limit(30);
 
         if (error) {
           console.error('Error fetching new coins:', error);
