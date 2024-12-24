@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CoinGrid } from "@/components/CoinGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { CoinData } from "@/data/mockCoins";
 
 const NewCoins = () => {
   const { toast } = useToast();
@@ -32,8 +33,19 @@ const NewCoins = () => {
           return [];
         }
 
-        console.log('Successfully fetched coins:', data);
-        return data;
+        // Map the database fields to match our CoinData interface
+        const mappedCoins: CoinData[] = data.map(coin => ({
+          id: coin.id,
+          name: coin.name,
+          symbol: coin.symbol,
+          price: coin.price,
+          change_24h: coin.change_24h,
+          imageUrl: coin.image_url || "/placeholder.svg", // Map image_url to imageUrl
+          mintAddress: coin.solana_addr
+        }));
+
+        console.log('Successfully fetched coins:', mappedCoins);
+        return mappedCoins;
       } catch (err) {
         console.error('Failed to fetch coins:', err);
         throw err;
