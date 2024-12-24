@@ -1,3 +1,5 @@
+// src/components/TokenStats.tsx
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TokenStatsProps {
