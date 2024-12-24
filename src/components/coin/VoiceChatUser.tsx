@@ -9,16 +9,12 @@ interface VoiceChatUserProps {
     avatar: string;
     isMuted: boolean;
     isTalking: boolean;
-    tokenHolding: {
-      amount: string;
-      percentage: number;
-    };
+    solBalance: number | null;
   };
   onToggleMute: (userId: number) => void;
 }
 
 export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
-  // Since createParticipant now ensures we have a "User" fallback, just use user.username directly.
   const displayName = user.username?.trim() || "User";
 
   return (
@@ -35,14 +31,12 @@ export const VoiceChatUser = ({ user, onToggleMute }: VoiceChatUserProps) => {
       </Avatar>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-sm font-medium text-center">{displayName}</span>
-        {/* Removed the (Dev) tag entirely */}
       </div>
-      <div className="text-xs text-center text-muted-foreground">
-        <div>${user.tokenHolding.amount} (USD)</div>
-        <div className="text-muted-foreground">
-          {user.tokenHolding.percentage.toFixed(2)}% of supply
+      {user.solBalance !== null && (
+        <div className="text-xs text-center text-purple-500 font-medium">
+          {user.solBalance.toFixed(2)} SOL
         </div>
-      </div>
+      )}
       <Button
         variant="ghost"
         size="icon"

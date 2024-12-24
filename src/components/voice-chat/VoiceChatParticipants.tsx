@@ -6,10 +6,7 @@ interface Participant {
   avatar: string;
   isMuted: boolean;
   isTalking: boolean;
-  tokenHolding: {
-    amount: string;
-    percentage: number;
-  };
+  solBalance: number | null;
 }
 
 interface VoiceChatParticipantsProps {

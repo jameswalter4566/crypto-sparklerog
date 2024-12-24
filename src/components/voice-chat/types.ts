@@ -14,13 +14,8 @@ export interface Participant {
   isMuted: boolean;
   /** Whether this participant is currently talking (active speaker) */
   isTalking: boolean;
-  /** Information about the token holdings for this participant */
-  tokenHolding: {
-    /** The amount of tokens this participant holds */
-    amount: string;
-    /** The percentage of total tokens represented by the amount this participant holds */
-    percentage: number;
-  };
+  /** The participant's SOL balance */
+  solBalance: number | null;
 }
 
 /**
@@ -47,4 +42,6 @@ export interface ParticipantProfile {
   display_name: string | null;
   /** The URL to the participant's avatar image, if available */
   avatar_url: string | null;
+  /** The participant's SOL balance */
+  solBalance: number | null;
 }

@@ -10,10 +10,7 @@ export const createParticipant = (
     avatar: profile?.avatar_url || "/placeholder.svg",
     isMuted: false,
     isTalking: false,
-    tokenHolding: {
-      amount: "1000",
-      percentage: 25,
-    },
+    solBalance: profile?.solBalance || null,
   };
 
   console.log("[Participant Utils] Created participant:", participant);
