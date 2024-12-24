@@ -33,14 +33,16 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    // Simulate refresh delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsRefreshing(false);
   };
 
+  // Log the values being passed to TokenStats
   console.log('TokenDetails - Values being passed to TokenStats:', {
     usdMarketCap: coinData.usdMarketCap,
     volume24h: coinData.volume24h,
-    liquidity: coinData.liquidity,
+    liquidity: coinData.liquidity
   });
 
   return (
