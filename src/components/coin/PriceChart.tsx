@@ -3,7 +3,6 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-  Tooltip,
   AreaChart,
   Area,
   ResponsiveContainer
@@ -60,15 +59,6 @@ export const PriceChart = ({ data }: PriceChartProps) => {
               axisLine={false}
               tickLine={false}
               tick={false}
-            />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: '#1C1C1C',
-                border: '1px solid #9945FF',
-                borderRadius: '8px'
-              }}
-              labelStyle={{ color: '#9945FF' }}
-              itemStyle={{ color: '#9945FF' }}
             />
             <Area 
               type="monotone" 
