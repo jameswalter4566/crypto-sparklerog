@@ -18,7 +18,18 @@ const NewCoins = () => {
           .select(`
             coin_id,
             last_searched_at,
-            coins (*)
+            coins (
+              id,
+              name,
+              symbol,
+              price,
+              change_24h,
+              image_url,
+              solana_addr,
+              historic_data,
+              market_cap,
+              usd_market_cap
+            )
           `)
           .order('last_searched_at', { ascending: false })
           .limit(30);
@@ -38,20 +49,24 @@ const NewCoins = () => {
           return [];
         }
 
+        console.log('Search data received:', searchData);
+
         // Map the data to match CoinData structure
-        const mappedCoins: CoinData[] = searchData
+        const mappedCoins = searchData
           .filter(item => item.coins) // Filter out any null coins
           .map(item => ({
-            id: item.coins!.id,
-            name: item.coins!.name,
-            symbol: item.coins!.symbol,
-            price: item.coins!.price,
-            change_24h: item.coins!.change_24h,
-            imageUrl: item.coins!.image_url || "/placeholder.svg",
-            mintAddress: item.coins!.solana_addr
+            id: item.coins.id,
+            name: item.coins.name,
+            symbol: item.coins.symbol,
+            price: item.coins.price,
+            change_24h: item.coins.change_24h,
+            imageUrl: item.coins.image_url || "/placeholder.svg",
+            mintAddress: item.coins.solana_addr,
+            priceHistory: item.coins.historic_data,
+            usdMarketCap: item.coins.usd_market_cap
           }));
 
-        console.log('Successfully fetched coins:', mappedCoins);
+        console.log('Mapped coins:', mappedCoins);
         return mappedCoins;
       } catch (err) {
         console.error('Failed to fetch coins:', err);
@@ -59,7 +74,8 @@ const NewCoins = () => {
       }
     },
     retry: 1,
-    staleTime: 30000,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     gcTime: Infinity
