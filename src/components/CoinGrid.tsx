@@ -48,13 +48,29 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
       console.log('Trending coins data:', trendingCoins);
 
       return trendingCoins.map(trend => {
-        // Parse historic_data if it exists and is valid
+        // Parse historic_data if it exists
         let priceHistory: PriceHistoryItem[] | null = null;
-        if (trend.coins.historic_data && Array.isArray(trend.coins.historic_data)) {
-          priceHistory = trend.coins.historic_data.map(item => ({
-            price: typeof item.price === 'number' ? item.price : 0,
-            timestamp: typeof item.timestamp === 'string' ? item.timestamp : new Date().toISOString()
-          }));
+        
+        try {
+          if (trend.coins.historic_data) {
+            const historyData = trend.coins.historic_data;
+            if (Array.isArray(historyData)) {
+              priceHistory = historyData
+                .filter(item => 
+                  typeof item === 'object' && 
+                  item !== null && 
+                  'price' in item && 
+                  'timestamp' in item
+                )
+                .map(item => ({
+                  price: Number(item.price) || 0,
+                  timestamp: String(item.timestamp) || new Date().toISOString()
+                }));
+            }
+          }
+        } catch (err) {
+          console.error('Error parsing historic data:', err);
+          priceHistory = null;
         }
 
         return {
