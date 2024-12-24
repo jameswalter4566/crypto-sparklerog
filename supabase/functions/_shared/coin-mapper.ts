@@ -4,46 +4,51 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
   console.log('Mapping coin data for:', data.mint);
   console.log('Raw data from API:', {
     price: data.price,
-    price_usd: data.price_usd,
+    usd_market_cap: data.usd_market_cap,
     total_supply: data.total_supply,
     market_cap: data.market_cap,
-    virtual_sol_reserves: data.virtual_sol_reserves
+    virtual_sol_reserves: data.virtual_sol_reserves,
+    virtual_token_reserves: data.virtual_token_reserves
   });
 
-  // Calculate market cap using USD price and total supply
-  const calculatedMarketCap = data.price_usd && data.total_supply 
-    ? data.price_usd * data.total_supply
+  // Calculate liquidity in USD using virtual SOL reserves
+  const solInUsd = 0.6; // Current approximate SOL price in USD
+  const liquidityInUsd = data.virtual_sol_reserves 
+    ? (data.virtual_sol_reserves / 1e9) * solInUsd // Convert lamports to SOL and multiply by USD price
     : null;
 
-  // Convert SOL values to USD where applicable
-  const solPrice = data.price || 0;
-  const usdPrice = data.price_usd || 0;
-  const liquidityInUsd = data.virtual_sol_reserves ? data.virtual_sol_reserves * solPrice : null;
+  // Calculate price in USD using virtual reserves
+  const priceInUsd = data.usd_market_cap && data.total_supply
+    ? data.usd_market_cap / (data.total_supply / 1e9)
+    : null;
+
+  // Use the provided USD market cap directly
+  const marketCapUsd = data.usd_market_cap || null;
 
   console.log('Calculated values:', {
-    calculatedMarketCap,
-    usdPrice,
-    solPrice,
+    priceInUsd,
+    marketCapUsd,
     liquidityInUsd,
-    totalSupply: data.total_supply
+    totalSupply: data.total_supply / 1e9, // Convert to actual supply
+    virtualSolReserves: data.virtual_sol_reserves / 1e9 // Convert to actual SOL
   });
 
   return {
     id: data.mint,
     name: data.name,
     symbol: data.symbol,
-    price: usdPrice,
-    change_24h: data.price_change_24h,
-    market_cap: calculatedMarketCap,
-    volume_24h: data.volume_24h,
+    price: priceInUsd,
+    change_24h: null, // We'll need to calculate this from historic data
+    market_cap: marketCapUsd,
+    volume_24h: null, // Not provided in current API response
     liquidity: liquidityInUsd,
-    total_supply: data.total_supply,
-    circulating_supply: data.circulating_supply,
-    non_circulating_supply: data.non_circulating_supply,
+    total_supply: data.total_supply / 1e9, // Convert to actual supply
+    circulating_supply: null, // Not provided in current API response
+    non_circulating_supply: null, // Not provided in current API response
     description: data.description,
-    decimals: data.decimals,
+    decimals: 9, // Standard for most SPL tokens
     image_url: data.image_uri,
     solana_addr: data.mint,
-    historic_data: data.price_history
+    historic_data: null // We'll need to implement this separately
   };
 }

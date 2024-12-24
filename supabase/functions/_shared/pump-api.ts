@@ -16,7 +16,6 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
   const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   
   console.log('Making request to:', url);
-  console.log('Request params:', JSON.stringify(params, null, 2));
   
   try {
     const response = await fetch(url, {
@@ -30,61 +29,46 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       }
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API error response:', errorText);
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    const rawText = await response.text();
-    console.log('Raw API Response:', rawText);
-
-    try {
-      const parsedData = JSON.parse(rawText);
-      console.log('Parsed API Response:', JSON.stringify(parsedData, null, 2));
-      
-      // Log detailed token information
-      if (Array.isArray(parsedData)) {
-        parsedData.forEach((item, index) => {
-          console.log(`Token ${index} detailed info:`, {
-            mint: item.mint,
-            name: item.name,
-            symbol: item.symbol,
-            price: item.price,
-            price_usd: item.price_usd,
-            total_supply: item.total_supply,
-            market_cap: item.market_cap,
-            virtual_sol_reserves: item.virtual_sol_reserves,
-            circulating_supply: item.circulating_supply,
-            non_circulating_supply: item.non_circulating_supply
-          });
-
-          // Calculate and log derived values
-          const calculatedMarketCap = item.price_usd && item.total_supply 
-            ? item.price_usd * item.total_supply 
-            : null;
-          const liquidityInUsd = item.virtual_sol_reserves && item.price 
-            ? item.virtual_sol_reserves * item.price 
-            : null;
-
-          console.log(`Token ${index} calculated values:`, {
-            calculatedMarketCap,
-            liquidityInUsd,
-            totalSupply: item.total_supply,
-            priceUsd: item.price_usd
-          });
+    const data = await response.json();
+    
+    if (Array.isArray(data)) {
+      data.forEach((item, index) => {
+        console.log(`Token ${index} detailed info:`, {
+          mint: item.mint,
+          name: item.name,
+          symbol: item.symbol,
+          usd_market_cap: item.usd_market_cap,
+          virtual_sol_reserves: item.virtual_sol_reserves,
+          virtual_token_reserves: item.virtual_token_reserves,
+          total_supply: item.total_supply
         });
-      }
-      
-      return parsedData;
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('Failed to parse text:', rawText);
-      throw new Error(`Invalid JSON response: ${rawText}`);
+
+        // Log derived values
+        const solInUsd = 0.6; // Current approximate SOL price
+        const liquidityInUsd = item.virtual_sol_reserves 
+          ? (item.virtual_sol_reserves / 1e9) * solInUsd 
+          : null;
+        const priceInUsd = item.usd_market_cap && item.total_supply
+          ? item.usd_market_cap / (item.total_supply / 1e9)
+          : null;
+
+        console.log(`Token ${index} calculated values:`, {
+          priceInUsd,
+          marketCapUsd: item.usd_market_cap,
+          liquidityInUsd,
+          totalSupply: item.total_supply / 1e9,
+          virtualSolReserves: item.virtual_sol_reserves / 1e9
+        });
+      });
     }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
     throw error;
