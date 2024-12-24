@@ -55,7 +55,6 @@ export async function addCoin(solanaAddr: string): Promise<CoinData> {
       attempt++;
       console.error(`Attempt ${attempt} failed:`, error);
       if (attempt < maxRetries) {
-        // Wait for a short time before retrying (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
       }
     }
@@ -67,19 +66,33 @@ export async function addCoin(solanaAddr: string): Promise<CoinData> {
 export async function getCoin(id: string): Promise<CoinData | null> {
   console.log('Fetching coin data for ID:', id);
   
-  const { data, error } = await supabase
-    .from('coins')
-    .select('*')
-    .eq('id', id)
-    .single();
+  try {
+    // First try to get from Supabase
+    const { data: existingData, error: dbError } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  if (error) {
-    console.error('Error fetching coin:', error);
+    if (dbError) {
+      console.error('Error fetching from database:', dbError);
+    }
+
+    // Fetch fresh data from the API
+    const response = await fetch(`https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/get-coin?id=${id}`);
+    
+    if (!response.ok) {
+      console.error('Error fetching from API:', await response.text());
+      // Return existing data if we have it, otherwise null
+      return existingData || null;
+    }
+
+    const freshData = await response.json();
+    return freshData;
+  } catch (error) {
+    console.error('Error in getCoin:', error);
     return null;
   }
-
-  console.log('Coin data from database:', data);
-  return data;
 }
 
 export async function getCoins(): Promise<CoinData[]> {
@@ -88,7 +101,8 @@ export async function getCoins(): Promise<CoinData[]> {
   const { data, error } = await supabase
     .from('coins')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('market_cap', { ascending: false })
+    .limit(50);
 
   if (error) {
     console.error('Error fetching coins:', error);
@@ -97,4 +111,29 @@ export async function getCoins(): Promise<CoinData[]> {
 
   console.log('Fetched coins:', data);
   return data || [];
+}
+
+// New function to setup real-time price updates
+export function setupRealtimeUpdates(onUpdate: (coin: CoinData) => void) {
+  const subscription = supabase
+    .channel('coin_updates')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'coins',
+      },
+      (payload) => {
+        console.log('Received real-time update:', payload);
+        if (payload.new) {
+          onUpdate(payload.new as CoinData);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    subscription.unsubscribe();
+  };
 }

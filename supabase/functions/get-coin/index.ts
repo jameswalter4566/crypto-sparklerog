@@ -32,23 +32,20 @@ async function fetchPumpFunData(tokenAddress: string) {
     const rawData = await response.json();
     console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
 
-    if (!rawData || typeof rawData !== 'object') {
-      console.error('Invalid response format:', rawData);
-      throw new Error('Invalid response format: not an object');
-    }
-
-    // Map API data to our schema with explicit type checking
+    // Enhanced mapping with fallbacks and type checking
     const mappedData = {
       id: tokenAddress,
       name: rawData.name || 'Unknown Token',
       symbol: rawData.symbol || '???',
       image_url: rawData.image_uri || rawData.image || null,
       price: typeof rawData.price === 'number' ? rawData.price : null,
+      change_24h: typeof rawData.price_change_24h === 'number' ? rawData.price_change_24h : null,
       market_cap: typeof rawData.market_cap === 'number' ? rawData.market_cap : null,
       volume_24h: typeof rawData.volume_24h === 'number' ? rawData.volume_24h : null,
       liquidity: typeof rawData.virtual_sol_reserves === 'number' ? rawData.virtual_sol_reserves : null,
       total_supply: typeof rawData.total_supply === 'number' ? rawData.total_supply : null,
       circulating_supply: typeof rawData.circulating_supply === 'number' ? rawData.circulating_supply : null,
+      non_circulating_supply: typeof rawData.non_circulating_supply === 'number' ? rawData.non_circulating_supply : null,
       updated_at: new Date().toISOString(),
       solana_addr: tokenAddress,
       description: rawData.description || null,
@@ -59,10 +56,9 @@ async function fetchPumpFunData(tokenAddress: string) {
       chat_url: [rawData.telegram].filter(Boolean),
       twitter_screen_name: rawData.twitter || null,
       coingecko_id: null,
-      non_circulating_supply: null,
-      announcement_url: null,
+      coin_id: rawData.mint || null,
       official_forum_url: null,
-      change_24h: typeof rawData.price_change_24h === 'number' ? rawData.price_change_24h : null,
+      announcement_url: null
     };
 
     console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
@@ -89,10 +85,8 @@ serve(async (req) => {
 
     console.log('Processing request for token:', tokenAddress);
 
-    // Fetch data from Pump.fun
     const coinData = await fetchPumpFunData(tokenAddress);
     
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -102,7 +96,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Upsert the coin data to ensure we save/update all fields
+    // Upsert with better error handling
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert(coinData, {
