@@ -16,6 +16,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
   const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   
   console.log('Making request to:', url);
+  console.log('Request params:', params);
   
   try {
     const response = await fetch(url, {
@@ -46,11 +47,11 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     const contentEncoding = response.headers.get('content-encoding');
     console.log('Content-Encoding:', contentEncoding);
 
-    // Read the response as text first to see raw data
+    // Read the complete response as text
     const rawText = await response.text();
-    console.log('Raw response text:', rawText);
-    console.log('Raw response length:', rawText.length);
-    console.log('First 500 characters:', rawText.substring(0, 500));
+    console.log('Complete raw response:', rawText);
+    console.log('Response length:', rawText.length);
+    console.log('Response headers:', response.headers);
 
     if (!rawText.trim()) {
       throw new Error('Empty response from API');
@@ -63,7 +64,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Failed to parse text:', rawText);
-      throw new Error(`Invalid JSON response: ${rawText.slice(0, 200)}...`);
+      throw new Error(`Invalid JSON response: ${rawText}`);
     }
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
