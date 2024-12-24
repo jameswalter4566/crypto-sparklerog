@@ -22,7 +22,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     const response = await fetch(url, {
       headers: {
         'Accept': '*/*',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Encoding': 'gzip',
         'Accept-Language': 'en-US,en;q=0.9',
         'Origin': 'https://pump.fun',
         'Referer': 'https://pump.fun/',
@@ -42,18 +42,38 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    const rawText = await response.text();
-    console.log('Raw API response:', rawText);
+    // Get the content type header
+    const contentType = response.headers.get('content-type');
+    console.log('Content-Type:', contentType);
 
-    if (!rawText.trim()) {
+    // Get the content encoding header
+    const contentEncoding = response.headers.get('content-encoding');
+    console.log('Content-Encoding:', contentEncoding);
+
+    // Read the response as an ArrayBuffer first
+    const buffer = await response.arrayBuffer();
+    
+    // If the response is empty, throw an error
+    if (buffer.byteLength === 0) {
       throw new Error('Empty response from API');
     }
 
+    // Convert ArrayBuffer to text
+    const decoder = new TextDecoder();
+    const text = decoder.decode(buffer);
+    console.log('Decoded response text:', text);
+
+    // If we got an empty response after decoding, throw an error
+    if (!text.trim()) {
+      throw new Error('Empty response from API after decoding');
+    }
+
     try {
-      return JSON.parse(rawText);
+      return JSON.parse(text);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      throw new Error(`Invalid JSON response: ${rawText.slice(0, 200)}...`);
+      console.error('Raw text that failed to parse:', text);
+      throw new Error(`Invalid JSON response: ${text.slice(0, 200)}...`);
     }
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
