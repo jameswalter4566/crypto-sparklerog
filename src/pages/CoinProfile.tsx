@@ -71,6 +71,7 @@ const CoinProfile = () => {
         usd_market_cap: result.usd_market_cap || null
       };
 
+      console.log('Mapped coin data:', coinData);
       setCoin(coinData);
       
       if (isRefresh) {
@@ -121,6 +122,13 @@ const CoinProfile = () => {
       </div>
     );
   }
+
+  // Log the data being passed to TokenStats
+  console.log('Data being passed to TokenStats:', {
+    usdMarketCap: coin.usd_market_cap,
+    volume24h: coin.volume_24h,
+    liquidity: coin.liquidity
+  });
 
   return (
     <div className="p-6">
