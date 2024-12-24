@@ -54,7 +54,7 @@ const NewCoins = () => {
     staleTime: 30000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    cacheTime: Infinity
+    gcTime: Infinity
   });
 
   if (error) {
