@@ -40,9 +40,10 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     name: data.name,
     symbol: data.symbol,
     price: priceInSol,
-    change_24h: null, // We'll need historic data to calculate this
+    change_24h: null,
     market_cap: marketCap,
-    volume_24h: null, // Not provided in current API response
+    usd_market_cap: usdMarketCap, // Make sure this is properly set
+    volume_24h: null,
     liquidity: liquidityInSol,
     total_supply: data.total_supply ? data.total_supply / Math.pow(10, 9) : null,
     description: data.description,
@@ -54,8 +55,7 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     chat_url: data.telegram ? [data.telegram] : null,
     announcement_url: null,
     twitter_screen_name: data.twitter?.replace('https://x.com/', '') || null,
-    historic_data: null,
-    usd_market_cap: usdMarketCap
+    historic_data: null
   };
 
   console.log('Final mapped coin data:', mappedData);
