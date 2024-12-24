@@ -154,12 +154,12 @@ const App = () => {
                       <img 
                         src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
                         alt="Logo" 
-                        className="h-12 sm:h-14 md:h-20 hidden md:block"
+                        className="h-14 sm:h-16 md:h-23 hidden md:block" // Increased from h-12/h-14/h-20
                       />
                       <img 
                         src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
                         alt="Logo" 
-                        className="h-10 sm:h-12 md:hidden"
+                        className="h-12 sm:h-14 md:hidden" // Increased from h-10/h-12
                       />
                     </div>
                     <div className="fixed left-1/2 transform -translate-x-1/2 w-full max-w-xl px-4">
