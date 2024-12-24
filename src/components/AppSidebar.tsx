@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Coins, Trophy, Search, Rocket, Building, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
@@ -46,6 +46,16 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string, external: boolean = false) => {
+    if (external) {
+      window.open(path, "_blank");
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -56,26 +66,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    {item.external ? (
-                      <a 
-                        href={item.path} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </a>
-                    ) : (
-                      <Link 
-                        to={item.path} 
-                        className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    )}
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.path, item.external)}
+                    className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse cursor-pointer"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
