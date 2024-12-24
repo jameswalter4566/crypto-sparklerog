@@ -55,17 +55,17 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   }
 
   return (
-    <div className="space-y-2 sm:space-y-4 px-2">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-        <h2 className="text-base sm:text-lg font-bold animate-text-glow">
+    <div className="space-y-3 sm:space-y-5 px-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+        <h2 className="text-lg sm:text-xl font-bold animate-text-glow">
           {title}
         </h2>
-        <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto text-xs sm:text-sm">
-          <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+        <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto text-sm sm:text-base">
+          <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
           Filter
         </Button>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {coins?.map((coin) => {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
