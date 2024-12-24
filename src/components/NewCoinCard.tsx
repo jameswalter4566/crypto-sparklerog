@@ -40,6 +40,12 @@ export function NewCoinCard({
     return `${sign}${value.toFixed(2)}%`;
   };
 
+  // Use a default placeholder if imageUrl is undefined or empty
+  const defaultImage = "/placeholder.svg";
+  const imageSource = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
+
+  console.log('Rendering coin card with image:', imageSource); // Debug log
+
   return (
     <Link to={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border">
@@ -47,12 +53,13 @@ export function NewCoinCard({
           <div className="flex flex-col items-center gap-2">
             <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
               <AvatarImage 
-                src={imageUrl || "/placeholder.svg"} 
-                alt={name || "Unknown Coin"} 
+                src={imageSource}
+                alt={name || "Unknown Coin"}
                 className="object-cover"
                 onError={(e) => {
+                  console.log('Image failed to load, using fallback'); // Debug log
                   const img = e.target as HTMLImageElement;
-                  img.src = "/placeholder.svg";
+                  img.src = defaultImage;
                 }}
               />
               <AvatarFallback>{symbolFallback}</AvatarFallback>
