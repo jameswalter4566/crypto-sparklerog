@@ -42,5 +42,10 @@ export interface CoinData {
   solana_addr: string | null;
   homepage: string | null;
   twitter_screen_name: string | null;
+  chat_url: string[] | null;
+  announcement_url: string[] | null;
+  blockchain_site: string[] | null;
+  official_forum_url: string[] | null;
   historic_data: Array<{ price: number; timestamp: string; }> | null;
+  usd_market_cap: number | null;
 }
