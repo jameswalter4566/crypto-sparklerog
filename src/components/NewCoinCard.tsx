@@ -53,9 +53,9 @@ export function NewCoinCard({
         {searchCount !== undefined && searchCount > 0 && (
           <Badge 
             variant="secondary" 
-            className="absolute top-2 right-2 z-10"
+            className="absolute top-1 right-1 z-10 text-[10px] px-1.5 py-0.5 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
           >
-            {searchCount} searches
+            {searchCount}
           </Badge>
         )}
         <CardHeader className="p-2 sm:p-3">
