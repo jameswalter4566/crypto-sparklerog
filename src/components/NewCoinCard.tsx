@@ -85,10 +85,12 @@ export function NewCoinCard({
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col items-center gap-4">
             <CardTitle className="text-lg sm:text-xl">
-              <span className="truncate max-w-[200px]">{name || "Unnamed Coin"}</span>
+              <div className="truncate max-w-[180px] sm:max-w-[220px] text-center" title={name || "Unnamed Coin"}>
+                {name || "Unnamed Coin"}
+              </div>
             </CardTitle>
-            <span className="text-lg sm:text-xl text-gray-400">{symbol || "N/A"}</span>
-            <div className="mt-1 text-xl sm:text-2xl font-medium">{formatPrice(price)}</div>
+            <span className="text-lg sm:text-xl text-gray-400 truncate max-w-[180px] sm:max-w-[220px]">{symbol || "N/A"}</span>
+            <div className="mt-1 text-xl sm:text-2xl font-medium truncate max-w-[180px] sm:max-w-[220px]">{formatPrice(price)}</div>
             <div className={`text-lg sm:text-xl ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
             </div>
