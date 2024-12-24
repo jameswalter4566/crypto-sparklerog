@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TokenStatsProps {
-  marketCap?: number | null; // Made optional
+  marketCap?: number | null;
   volume24h: number | null;
   liquidity: number | null;
   usdMarketCap?: number | null;
@@ -13,15 +13,13 @@ export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsPro
       return "N/A";
     }
 
-    // Format with proper decimal places and commas
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
-    // Format large numbers with appropriate suffixes
     if (value >= 1e9) {
       return formatter.format(value / 1e9) + 'B';
     } else if (value >= 1e6) {
@@ -29,14 +27,11 @@ export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsPro
     } else if (value >= 1e3) {
       return formatter.format(value / 1e3) + 'K';
     }
-    
+
     return formatter.format(value);
   };
 
-  // Add detailed logging of the raw values
-  console.log('Raw USD Market Cap:', usdMarketCap);
-  console.log('Raw Volume 24h:', volume24h);
-  console.log('Raw Liquidity:', liquidity);
+  console.log('Raw TokenStats Values:', { usdMarketCap, volume24h, liquidity });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
