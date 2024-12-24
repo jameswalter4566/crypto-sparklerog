@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { CoinGrid } from "@/components/CoinGrid";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const NewCoins = () => {
+  const { toast } = useToast();
+
   const { data: coins, isLoading, error } = useQuery({
     queryKey: ['new-coins'],
     queryFn: async () => {
@@ -12,10 +15,15 @@ const NewCoins = () => {
           .from('coins')
           .select('*')
           .order('updated_at', { ascending: false })
-          .limit(20);  // Changed from 100 to 20
+          .limit(20);
 
         if (error) {
           console.error('Error fetching new coins:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load new coins. Please try again.",
+            variant: "destructive",
+          });
           throw error;
         }
 
@@ -32,12 +40,16 @@ const NewCoins = () => {
       }
     },
     retry: 1,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 30000,
   });
 
   if (error) {
     console.error('Query error:', error);
-    return <div className="p-4 text-red-500">Failed to load coins. Please try again later.</div>;
+    return (
+      <div className="p-4 text-red-500">
+        Failed to load coins. Please try again later.
+      </div>
+    );
   }
 
   return (

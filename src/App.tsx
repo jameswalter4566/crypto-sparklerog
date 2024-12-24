@@ -13,7 +13,14 @@ import LaunchCoin from "./pages/LaunchCoin";
 import RocketLaunch from "./pages/RocketLaunch";
 import NewCoins from "./pages/NewCoins";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
