@@ -42,7 +42,7 @@ export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsPro
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm text-gray-400">Market Cap</CardTitle>
+          <CardTitle className="text-sm text-gray-400">Market Cap (USD)</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
