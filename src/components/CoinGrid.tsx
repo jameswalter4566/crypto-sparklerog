@@ -147,7 +147,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
               change24h={validChange24h}
               imageUrl={coin.image_url || "/placeholder.svg"}
               mintAddress={coin.solana_addr || ""}
-              searchCount={coin.searchCount}
+              lastSearchedAt={coin.lastSearchedAt}
               priceHistory={coin.priceHistory}
               usdMarketCap={coin.usdMarketCap}
             />
