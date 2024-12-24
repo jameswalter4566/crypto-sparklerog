@@ -54,11 +54,11 @@ export function NewCoinCard({
           <div className="absolute top-1 right-1 z-10 flex flex-col items-center">
             <Badge 
               variant="secondary" 
-              className="text-[11.5px] px-2 py-1 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
+              className="text-[12.5px] px-2 py-1 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
             >
               {searchCount}
             </Badge>
-            <span className="text-[8px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
+            <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
           </div>
         )}
         <CardHeader className="p-2 sm:p-3">
