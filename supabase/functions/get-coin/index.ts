@@ -46,6 +46,7 @@ serve(async (req) => {
       throw dbError;
     }
 
+    // If we have recent data (less than 5 minutes old), return it
     if (existingData) {
       const lastUpdate = new Date(existingData.updated_at || '');
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -59,59 +60,75 @@ serve(async (req) => {
       }
     }
 
-    // Try search endpoint with captcha token
+    // Fetch fresh data from API
     console.log('Fetching fresh data from Pump API for token:', tokenAddress);
-
-    const searchData = await fetchFromPumpApi('/coins', {
-      searchTerm: tokenAddress,
-      limit: 50,
-      sort: 'market_cap',
-      order: 'DESC',
-      includeNsfw: false,
-      captchaToken
-    });
-
-    if (!Array.isArray(searchData)) {
-      console.error('Unexpected response format:', searchData);
-      throw new Error('API response is not an array');
-    }
-
-    console.log('Found', searchData.length, 'tokens in search results');
     
-    const matchingToken = searchData.find(item => 
-      item.mint?.toLowerCase() === tokenAddress.toLowerCase()
-    );
-    
-    if (!matchingToken) {
-      console.log('No matching token found in search results');
-      throw new Error('Token not found');
-    }
-
-    console.log('Found matching token:', matchingToken);
-    const coinData = mapPumpApiToCoinData(matchingToken);
-
-    // Update database with new data
-    const { error: upsertError } = await supabase
-      .from('coins')
-      .upsert({
-        ...coinData,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
+    try {
+      const searchData = await fetchFromPumpApi('/coins', {
+        searchTerm: tokenAddress,
+        limit: 50,
+        sort: 'market_cap',
+        order: 'DESC',
+        includeNsfw: false,
+        captchaToken
       });
 
-    if (upsertError) {
-      console.error('Error upserting data to Supabase:', upsertError);
-      throw upsertError;
+      if (!Array.isArray(searchData)) {
+        console.error('Unexpected response format:', searchData);
+        throw new Error('API response is not an array');
+      }
+
+      console.log('Found', searchData.length, 'tokens in search results');
+      
+      const matchingToken = searchData.find(item => 
+        item.mint?.toLowerCase() === tokenAddress.toLowerCase()
+      );
+      
+      if (!matchingToken) {
+        console.log('No matching token found in search results');
+        throw new Error('Token not found');
+      }
+
+      console.log('Found matching token:', matchingToken);
+      const coinData = mapPumpApiToCoinData(matchingToken);
+
+      // Update database with new data
+      const { error: upsertError } = await supabase
+        .from('coins')
+        .upsert({
+          ...coinData,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+
+      if (upsertError) {
+        console.error('Error upserting data to Supabase:', upsertError);
+        throw upsertError;
+      }
+
+      console.log('Successfully updated database with new coin data');
+
+      return new Response(
+        JSON.stringify(coinData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (apiError) {
+      console.error('API error:', apiError);
+      
+      // If we have existing data, return it as fallback
+      if (existingData) {
+        console.log('Returning existing data as fallback');
+        return new Response(
+          JSON.stringify(existingData),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw apiError;
     }
-
-    console.log('Successfully updated database with new coin data');
-
-    return new Response(
-      JSON.stringify(coinData),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error in get-coin function:', error);
