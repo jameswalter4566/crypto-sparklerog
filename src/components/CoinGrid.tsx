@@ -23,7 +23,7 @@ interface HistoricDataItem {
 
 interface CoinQueryResult {
   coin_id: string;
-  last_searched_at: string;
+  search_count: number;
   coins: {
     id: string;
     name: string;
@@ -47,7 +47,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         .from('coin_searches')
         .select(`
           coin_id,
-          last_searched_at,
+          search_count,
           coins (
             id,
             name,
@@ -61,7 +61,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
             usd_market_cap
           )
         `)
-        .order('last_searched_at', { ascending: false })
+        .order('search_count', { ascending: false })
         .limit(30);
 
       if (error) {
@@ -106,12 +106,12 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
         return {
           ...trend.coins,
-          lastSearchedAt: trend.last_searched_at,
+          searchCount: trend.search_count,
           priceHistory,
           marketCap: trend.coins.market_cap,
           usdMarketCap: trend.coins.usd_market_cap
         };
-      }).filter(Boolean);
+      }).filter(Boolean); // Remove any null values
     },
     gcTime: Infinity,
     staleTime: 30000,
@@ -147,7 +147,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
               change24h={validChange24h}
               imageUrl={coin.image_url || "/placeholder.svg"}
               mintAddress={coin.solana_addr || ""}
-              lastSearchedAt={coin.lastSearchedAt}
+              searchCount={coin.searchCount}
               priceHistory={coin.priceHistory}
               usdMarketCap={coin.usdMarketCap}
             />

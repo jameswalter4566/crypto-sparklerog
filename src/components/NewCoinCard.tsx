@@ -5,7 +5,6 @@ import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
-import { formatDistanceToNow } from "date-fns";
 
 interface NewCoinCardProps {
   id: string;
@@ -15,7 +14,7 @@ interface NewCoinCardProps {
   change24h: number | null;
   imageUrl?: string;
   mintAddress?: string;
-  lastSearchedAt?: string;
+  searchCount?: number;
   priceHistory?: Array<{ price: number; timestamp: string; }> | null;
   usdMarketCap?: number | null;
 }
@@ -28,7 +27,7 @@ export function NewCoinCard({
   change24h, 
   imageUrl, 
   mintAddress,
-  lastSearchedAt,
+  searchCount,
   priceHistory,
   usdMarketCap
 }: NewCoinCardProps) {
@@ -68,15 +67,15 @@ export function NewCoinCard({
   return (
     <Link to={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
-        {lastSearchedAt && (
+        {searchCount !== undefined && searchCount > 0 && (
           <div className="absolute top-2 right-2 z-10 flex flex-col items-center">
             <Badge 
               variant="secondary" 
               className="text-[12.5px] px-2 py-1 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
             >
-              {formatDistanceToNow(new Date(lastSearchedAt), { addSuffix: true })}
+              {searchCount}
             </Badge>
-            <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Last Searched</span>
+            <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
           </div>
         )}
         <CardHeader className="p-5 sm:p-6">
