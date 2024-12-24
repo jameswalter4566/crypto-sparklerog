@@ -33,13 +33,12 @@ export const TokenStats: React.FC<TokenStatsProps> = ({
       return 'N/A';
     }
 
-    // Format as USD currency with proper rounding
+    // Format as USD currency
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      notation: 'standard'
+      maximumFractionDigits: 2
     }).format(value);
   };
 
