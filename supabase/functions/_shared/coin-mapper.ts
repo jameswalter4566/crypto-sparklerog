@@ -12,19 +12,20 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
 
   // Calculate market cap using USD price and total supply
   const calculatedMarketCap = data.price_usd && data.total_supply 
-    ? parseFloat((data.price_usd * data.total_supply).toFixed(2))
+    ? data.price_usd * data.total_supply
     : null;
 
   // Convert SOL values to USD where applicable
   const solPrice = data.price || 0;
   const usdPrice = data.price_usd || 0;
-  const liquidityInUsd = data.virtual_sol_reserves ? parseFloat((data.virtual_sol_reserves * solPrice).toFixed(2)) : null;
+  const liquidityInUsd = data.virtual_sol_reserves ? data.virtual_sol_reserves * solPrice : null;
 
   console.log('Calculated values:', {
     calculatedMarketCap,
     usdPrice,
     solPrice,
-    liquidityInUsd
+    liquidityInUsd,
+    totalSupply: data.total_supply
   });
 
   return {

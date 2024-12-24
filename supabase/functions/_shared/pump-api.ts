@@ -72,7 +72,9 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
 
           console.log(`Token ${index} calculated values:`, {
             calculatedMarketCap,
-            liquidityInUsd
+            liquidityInUsd,
+            totalSupply: item.total_supply,
+            priceUsd: item.price_usd
           });
         });
       }
