@@ -11,6 +11,11 @@ interface CoinGridProps {
   title?: string;
 }
 
+interface PriceHistoryItem {
+  price: number;
+  timestamp: string;
+}
+
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   const { data: coins, isLoading } = useQuery({
     queryKey: ['trending-coins'],
@@ -42,11 +47,22 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
       console.log('Trending coins data:', trendingCoins);
 
-      return trendingCoins.map(trend => ({
-        ...trend.coins,
-        searchCount: trend.search_count,
-        priceHistory: trend.coins.historic_data
-      }));
+      return trendingCoins.map(trend => {
+        // Parse historic_data if it exists and is valid
+        let priceHistory: PriceHistoryItem[] | null = null;
+        if (trend.coins.historic_data && Array.isArray(trend.coins.historic_data)) {
+          priceHistory = trend.coins.historic_data.map(item => ({
+            price: typeof item.price === 'number' ? item.price : 0,
+            timestamp: typeof item.timestamp === 'string' ? item.timestamp : new Date().toISOString()
+          }));
+        }
+
+        return {
+          ...trend.coins,
+          searchCount: trend.search_count,
+          priceHistory
+        };
+      });
     },
     gcTime: Infinity,
     staleTime: 30000,
