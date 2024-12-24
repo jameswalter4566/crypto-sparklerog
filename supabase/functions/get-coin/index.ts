@@ -10,7 +10,35 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
   try {
-    // First try the search endpoint as it's more reliable
+    // First try to get existing data from database
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const { data: existingData, error: dbError } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('id', tokenAddress)
+      .single();
+
+    if (existingData) {
+      console.log('Found existing data in database:', existingData);
+      // If data is less than 5 minutes old, return it
+      const lastUpdate = new Date(existingData.updated_at || '');
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      
+      if (lastUpdate > fiveMinutesAgo) {
+        console.log('Using cached data from database');
+        return existingData;
+      }
+    }
+
+    // First try the search endpoint
     const searchUrl = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
     console.log('Trying search endpoint:', searchUrl);
     
@@ -21,7 +49,6 @@ async function fetchPumpFunData(tokenAddress: string) {
       const searchData = await searchResponse.json();
       console.log('Search API Response:', JSON.stringify(searchData, null, 2));
       
-      // If we got search results, find the matching token
       if (Array.isArray(searchData)) {
         const matchingToken = searchData.find(item => 
           item.mint?.toLowerCase() === tokenAddress.toLowerCase() ||
@@ -35,30 +62,53 @@ async function fetchPumpFunData(tokenAddress: string) {
       }
     }
 
-    // If search fails or no match found, try direct endpoint
-    const directUrl = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
-    console.log('Trying direct endpoint:', directUrl);
+    // If search fails, try direct endpoint with retries
+    const maxRetries = 3;
+    let lastError: Error | null = null;
     
-    const directResponse = await fetch(directUrl);
-    console.log('Direct endpoint response status:', directResponse.status);
-    
-    if (!directResponse.ok) {
-      const errorText = await directResponse.text();
-      console.error('API error response:', errorText);
-      throw new Error(`API error: ${directResponse.status}. Response: ${errorText}`);
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const directUrl = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
+        console.log(`Attempt ${attempt + 1}: Trying direct endpoint:`, directUrl);
+        
+        const directResponse = await fetch(directUrl);
+        console.log('Direct endpoint response status:', directResponse.status);
+        
+        if (!directResponse.ok) {
+          const errorText = await directResponse.text();
+          console.error('API error response:', errorText);
+          throw new Error(`API error: ${directResponse.status}. Response: ${errorText}`);
+        }
+
+        const directData = await directResponse.json();
+        console.log('Direct API Response:', JSON.stringify(directData, null, 2));
+        
+        if (!directData) {
+          throw new Error('No data received from API');
+        }
+
+        return mapPumpFunData(directData, tokenAddress);
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        lastError = error instanceof Error ? error : new Error('Unknown error occurred');
+        
+        if (attempt < maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
 
-    const directData = await directResponse.json();
-    console.log('Direct API Response:', JSON.stringify(directData, null, 2));
-    
-    if (!directData) {
-      throw new Error('No data received from API');
+    // If all attempts fail and we have existing data, return it as fallback
+    if (existingData) {
+      console.log('All API attempts failed, using existing data as fallback');
+      return existingData;
     }
 
-    return mapPumpFunData(directData, tokenAddress);
-
+    throw lastError || new Error('Failed to fetch data after all attempts');
   } catch (error) {
-    console.error('Error fetching from Pump.fun:', error);
+    console.error('Error in fetchPumpFunData:', error);
     throw error;
   }
 }
@@ -67,17 +117,14 @@ function mapPumpFunData(data: any, tokenAddress: string) {
   console.log('Mapping data for token:', tokenAddress);
   
   try {
-    // Enhanced validation
     if (!data || typeof data !== 'object') {
       throw new Error('Invalid data structure received from API');
     }
 
-    // Validate critical fields
     if (!data.name || !data.symbol) {
       console.warn('Missing critical fields in API response:', data);
     }
 
-    // Map the data with careful type checking and detailed logging
     const mappedData = {
       id: tokenAddress,
       name: data.name || 'Unknown Token',
@@ -106,10 +153,8 @@ function mapPumpFunData(data: any, tokenAddress: string) {
       announcement_url: null
     };
 
-    // Log mapped data for debugging
     console.log('Successfully mapped data:', JSON.stringify(mappedData, null, 2));
     return mappedData;
-
   } catch (err) {
     console.error('Error mapping data:', err);
     throw new Error(`Error mapping data: ${err.message}`);
@@ -117,7 +162,6 @@ function mapPumpFunData(data: any, tokenAddress: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -147,7 +191,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Upsert with better error handling
     const { error: upsertError } = await supabase
       .from('coins')
       .upsert(coinData, {
