@@ -54,15 +54,12 @@ export const PriceChart = ({ data }: PriceChartProps) => {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              stroke="#9945FF"
-              tick={{ fill: '#9945FF', fontSize: 12 }}
+              tick={false}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
-              stroke="#9945FF"
-              tick={{ fill: '#9945FF', fontSize: 12 }}
-              tickFormatter={(value) => `$${value.toFixed(2)}`}
+              tick={false}
             />
             <Tooltip 
               contentStyle={{
