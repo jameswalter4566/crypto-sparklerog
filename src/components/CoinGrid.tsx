@@ -39,6 +39,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         throw error;
       }
 
+      console.log('Trending coins data:', trendingCoins); // Debug log
+
       // Transform the data to match the expected CoinData format
       return trendingCoins.map(trend => ({
         ...trend.coins,
@@ -69,6 +71,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
 
+          console.log('Rendering coin with searchCount:', coin.searchCount); // Debug log
+
           return (
             <NewCoinCard
               key={coin.id}
@@ -79,6 +83,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
               change24h={validChange24h}
               imageUrl={coin.image_url || "/placeholder.svg"}
               mintAddress={coin.solana_addr || ""}
+              searchCount={coin.searchCount}
             />
           );
         })}
