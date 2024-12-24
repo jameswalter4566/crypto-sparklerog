@@ -149,26 +149,28 @@ const App = () => {
               <AppSidebar />
               <main className="flex-1 overflow-x-hidden">
                 <div className="fixed top-0 left-0 right-0 h-14 sm:h-16 md:h-20 bg-black/50 backdrop-blur-sm z-20">
-                  <div className="flex items-center h-full px-2 sm:px-4 gap-2 sm:gap-4">
-                    <img 
-                      src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
-                      alt="Logo" 
-                      className="h-12 sm:h-14 md:h-20 ml-2 sm:ml-4 md:ml-16 hidden md:block"
-                    />
-                    <img 
-                      src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
-                      alt="Logo" 
-                      className="h-10 sm:h-12 ml-2 sm:ml-4 md:hidden"
-                    />
-                    <div className="flex-1 max-w-2xl mx-auto">
+                  <div className="flex items-center justify-between h-full px-4 md:px-6">
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
+                        alt="Logo" 
+                        className="h-12 sm:h-14 md:h-20 hidden md:block"
+                      />
+                      <img 
+                        src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
+                        alt="Logo" 
+                        className="h-10 sm:h-12 md:hidden"
+                      />
+                    </div>
+                    <div className="fixed left-1/2 transform -translate-x-1/2 w-full max-w-xl px-4">
                       <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
+                    </div>
+                    <div className="z-30">
+                      <WalletConnect />
                     </div>
                   </div>
                 </div>
                 <div className="h-14 sm:h-16 md:h-20"></div>
-                <div className="z-30 relative">
-                  <WalletConnect />
-                </div>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/new-coins" element={<NewCoins />} />
