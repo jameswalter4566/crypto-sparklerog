@@ -74,7 +74,7 @@ const App = () => {
         description: "Please enter a mint address.",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
     setIsLoading(true);
@@ -117,13 +117,14 @@ const App = () => {
       // Update search count and show success message
       if (coinMetadata) {
         await updateSearchCount(coinMetadata.id);
-        window.location.href = `/coin/${coinMetadata.id}`;
         toast({
           title: "Success",
           description: `${coinMetadata.name} found successfully.`,
           variant: "default",
         });
+        return coinMetadata;
       }
+      return null;
     } catch (error) {
       console.error("Search error:", error);
       toast({
@@ -131,6 +132,7 @@ const App = () => {
         description: error instanceof Error ? error.message : "Failed to fetch token information.",
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsLoading(false);
     }
