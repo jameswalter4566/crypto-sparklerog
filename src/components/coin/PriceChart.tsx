@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CartesianGrid,
@@ -32,22 +31,38 @@ export const PriceChart = ({ data }: PriceChartProps) => {
                 <stop offset="95%" stopColor="#9945FF" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(153, 69, 255, 0.1)"
+            />
             <XAxis 
               dataKey="date"
               axisLine={false}
               tickLine={false}
+              stroke="#9945FF"
+              tick={{ fill: '#9945FF', fontSize: 12 }}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
+              stroke="#9945FF"
+              tick={{ fill: '#9945FF', fontSize: 12 }}
               tickFormatter={(value) => `$${value.toFixed(2)}`}
             />
-            <Tooltip />
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: '#1C1C1C',
+                border: '1px solid #9945FF',
+                borderRadius: '8px'
+              }}
+              labelStyle={{ color: '#9945FF' }}
+              itemStyle={{ color: '#9945FF' }}
+            />
             <Area 
               type="monotone" 
               dataKey="price" 
               stroke="#9945FF" 
+              strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorPrice)" 
             />
