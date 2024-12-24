@@ -4,6 +4,7 @@ import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
 
 interface NewCoinCardProps {
   id: string;
@@ -14,6 +15,7 @@ interface NewCoinCardProps {
   imageUrl?: string;
   mintAddress?: string;
   searchCount?: number;
+  priceHistory?: Array<{ price: number; timestamp: string; }> | null;
 }
 
 export function NewCoinCard({ 
@@ -24,7 +26,8 @@ export function NewCoinCard({
   change24h, 
   imageUrl, 
   mintAddress,
-  searchCount
+  searchCount,
+  priceHistory
 }: NewCoinCardProps) {
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
 
@@ -94,6 +97,7 @@ export function NewCoinCard({
             <div className={`text-lg sm:text-xl ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
             </div>
+            {priceHistory && <MiniPriceChart data={priceHistory} />}
           </div>
         </CardContent>
       </Card>

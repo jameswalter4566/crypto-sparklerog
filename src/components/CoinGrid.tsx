@@ -28,7 +28,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
             price,
             change_24h,
             image_url,
-            solana_addr
+            solana_addr,
+            historic_data
           )
         `)
         .order('search_count', { ascending: false })
@@ -43,7 +44,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
       return trendingCoins.map(trend => ({
         ...trend.coins,
-        searchCount: trend.search_count
+        searchCount: trend.search_count,
+        priceHistory: trend.coins.historic_data
       }));
     },
     gcTime: Infinity,
@@ -81,6 +83,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
               imageUrl={coin.image_url || "/placeholder.svg"}
               mintAddress={coin.solana_addr || ""}
               searchCount={coin.searchCount}
+              priceHistory={coin.priceHistory}
             />
           );
         })}
