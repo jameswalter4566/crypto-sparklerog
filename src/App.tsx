@@ -79,7 +79,6 @@ const App = () => {
 
     setIsLoading(true);
     try {
-      // Fetch existing coin from the database
       const { data: existingCoin, error: selectError } = await supabase
         .from("coins")
         .select("*")
@@ -93,7 +92,6 @@ const App = () => {
 
       let coinMetadata = existingCoin;
 
-      // If the coin does not exist, call the Edge Function to add it
       if (!coinMetadata) {
         const functionUrl = "https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin";
 
@@ -114,7 +112,6 @@ const App = () => {
         coinMetadata = result;
       }
 
-      // Update search count and show success message
       if (coinMetadata) {
         await updateSearchCount(coinMetadata.id);
         toast({
@@ -149,28 +146,26 @@ const App = () => {
               <AppSidebar />
               <main className="flex-1 overflow-x-hidden">
                 <div className="fixed top-0 left-0 right-0 h-14 sm:h-16 md:h-20 bg-black/50 backdrop-blur-sm z-20">
-                  <div className="flex items-center justify-between h-full px-4 md:px-6">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between h-full px-2 sm:px-4 md:px-6 gap-2 sm:gap-0">
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
                       <img 
                         src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
                         alt="Logo" 
-                        className="h-14 sm:h-16 md:h-23 hidden md:block" // Increased from h-12/h-14/h-20
+                        className="h-8 sm:h-12 md:h-16"
                       />
-                      <img 
-                        src="/u1251571754_Create_me_a_serious_looking_tech_themed_logo_for__dcc6bed4-3b70-4fc5-9619-86576ba3fc1f_3.png" 
-                        alt="Logo" 
-                        className="h-12 sm:h-14 md:hidden" // Increased from h-10/h-12
-                      />
+                      <div className="sm:hidden">
+                        <WalletConnect />
+                      </div>
                     </div>
-                    <div className="fixed left-1/2 transform -translate-x-1/2 w-full max-w-xl px-4">
+                    <div className="w-full sm:fixed sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:w-auto sm:max-w-xl">
                       <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
                     </div>
-                    <div className="z-30">
+                    <div className="hidden sm:block z-30">
                       <WalletConnect />
                     </div>
                   </div>
                 </div>
-                <div className="h-14 sm:h-16 md:h-20"></div>
+                <div className="h-24 sm:h-16 md:h-20"></div>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/new-coins" element={<NewCoins />} />

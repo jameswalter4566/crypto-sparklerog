@@ -21,10 +21,10 @@ const Index = () => {
   const [searchResults, setSearchResults] = useState<CoinMetadata[]>([]);
 
   return (
-    <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
+    <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
       <WelcomeDialog />
       {searchResults.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {searchResults.map((coin) => (
             <NewCoinCard
               key={coin.id}

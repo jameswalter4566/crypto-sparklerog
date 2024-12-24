@@ -51,7 +51,6 @@ export function NewCoinCard({
     }).format(value);
   };
 
-  // Use a default placeholder if imageUrl is undefined or empty
   const defaultImage = "/placeholder.svg";
   const imageSource = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
 
@@ -69,9 +68,9 @@ export function NewCoinCard({
             <span className="text-[9.5px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
           </div>
         )}
-        <CardHeader className="p-5 sm:p-6">
-          <div className="flex flex-col items-center gap-5">
-            <Avatar className="h-32 w-32 sm:h-48 sm:w-48">
+        <CardHeader className="p-3 sm:p-5">
+          <div className="flex flex-col items-center gap-3 sm:gap-5">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
               <AvatarImage 
                 src={imageSource}
                 alt={name || "Unknown Coin"}
@@ -84,23 +83,23 @@ export function NewCoinCard({
               />
               <AvatarFallback>{symbolFallback}</AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
               <VoiceChatCounter coinId={id} />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col items-center gap-4">
-            <CardTitle className="text-lg sm:text-xl">
-              <div className="truncate max-w-[180px] sm:max-w-[220px] text-center" title={name || "Unnamed Coin"}>
+        <CardContent className="p-3 sm:p-5">
+          <div className="flex flex-col items-center gap-2 sm:gap-4">
+            <CardTitle className="text-base sm:text-lg">
+              <div className="truncate max-w-[140px] sm:max-w-[180px] text-center" title={name || "Unnamed Coin"}>
                 {name || "Unnamed Coin"}
               </div>
             </CardTitle>
-            <span className="text-lg sm:text-xl text-gray-400 truncate max-w-[180px] sm:max-w-[220px]">{symbol || "N/A"}</span>
-            <div className="mt-1 text-xl sm:text-2xl font-medium truncate max-w-[180px] sm:max-w-[220px]">{formatPrice(price)}</div>
+            <span className="text-sm sm:text-lg text-gray-400 truncate max-w-[140px] sm:max-w-[180px]">{symbol || "N/A"}</span>
+            <div className="mt-1 text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px]">{formatPrice(price)}</div>
             {usdMarketCap && (
-              <div className="text-lg sm:text-xl text-gray-400">
+              <div className="text-sm sm:text-lg text-gray-400">
                 MC: {formatMarketCap(usdMarketCap)}
               </div>
             )}

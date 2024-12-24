@@ -55,8 +55,8 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
   };
 
   return (
-    <div className="relative w-full">
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full max-w-2xl mx-auto">
+    <div className="relative w-full max-w-xl mx-auto px-2 sm:px-4">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 w-full">
         <Input
           placeholder="Search by mint address..."
           value={mintAddress}
@@ -66,7 +66,7 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
         <Button 
           type="submit" 
           disabled={isLoading} 
-          className="rounded-full text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-6"
+          className="rounded-full text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-6 w-full sm:w-auto"
         >
           <Search className="h-4 w-4 mr-2" />
           {isLoading ? "Searching..." : "Search"}
@@ -75,11 +75,11 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
 
       {showPreview && previewCoin && (
         <Card 
-          className="absolute top-full mt-2 w-full max-w-2xl z-50 bg-card border-2 border-primary/20 cursor-pointer hover:bg-accent/50 transition-colors"
+          className="absolute top-full mt-2 w-full z-50 bg-card border-2 border-primary/20 cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={handleCoinSelect}
         >
-          <div className="p-4 flex items-center gap-4">
-            <Avatar className="h-12 w-12">
+          <div className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
               <AvatarImage 
                 src={previewCoin.image_url || "/placeholder.svg"}
                 alt={previewCoin.name}
@@ -88,12 +88,12 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
                 {previewCoin.symbol?.slice(0, 2).toUpperCase() || "??"}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg">{previewCoin.name}</h3>
-              <p className="text-muted-foreground">{previewCoin.symbol}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base sm:text-lg truncate">{previewCoin.name}</h3>
+              <p className="text-muted-foreground text-sm truncate">{previewCoin.symbol}</p>
             </div>
             <div className="text-right">
-              <p className="font-medium">{formatPrice(previewCoin.price)}</p>
+              <p className="font-medium text-sm sm:text-base">{formatPrice(previewCoin.price)}</p>
             </div>
           </div>
         </Card>
