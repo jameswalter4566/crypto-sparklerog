@@ -52,6 +52,9 @@ const NewCoins = () => {
     },
     retry: 1,
     staleTime: 30000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    cacheTime: Infinity
   });
 
   if (error) {
