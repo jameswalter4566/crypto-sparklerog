@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyAddressButton } from "@/components/coin/CopyAddressButton";
 import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface NewCoinCardProps {
   id: string;
@@ -12,6 +13,7 @@ interface NewCoinCardProps {
   change24h: number | null;
   imageUrl?: string;
   mintAddress?: string;
+  searchCount?: number;
 }
 
 export function NewCoinCard({ 
@@ -21,7 +23,8 @@ export function NewCoinCard({
   price, 
   change24h, 
   imageUrl, 
-  mintAddress 
+  mintAddress,
+  searchCount
 }: NewCoinCardProps) {
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
 
@@ -44,11 +47,17 @@ export function NewCoinCard({
   const defaultImage = "/placeholder.svg";
   const imageSource = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
 
-  console.log('Rendering coin card with image:', imageSource); // Debug log
-
   return (
     <Link to={`/coin/${id}`} className="block">
-      <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border">
+      <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
+        {searchCount !== undefined && searchCount > 0 && (
+          <Badge 
+            variant="secondary" 
+            className="absolute top-2 right-2 z-10"
+          >
+            {searchCount} searches
+          </Badge>
+        )}
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
             <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
@@ -57,7 +66,7 @@ export function NewCoinCard({
                 alt={name || "Unknown Coin"}
                 className="object-cover"
                 onError={(e) => {
-                  console.log('Image failed to load, using fallback'); // Debug log
+                  console.log('Image failed to load, using fallback');
                   const img = e.target as HTMLImageElement;
                   img.src = defaultImage;
                 }}
