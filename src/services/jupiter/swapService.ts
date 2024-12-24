@@ -1,7 +1,9 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { toast } from 'sonner';
+
+const JUPITER_API_BASE = 'https://quote-api.jup.ag/v6';
 
 export const fetchPriceQuote = async (tokenAddress: string, inputAmount: string) => {
+  console.log('Fetching price quote for token:', tokenAddress, 'amount:', inputAmount);
   const response = await fetch(`https://api.jup.ag/price/v2?ids=${tokenAddress}&vsToken=So11111111111111111111111111111111111111112`);
   if (!response.ok) throw new Error('Failed to fetch price quote');
   const data = await response.json();
@@ -9,10 +11,17 @@ export const fetchPriceQuote = async (tokenAddress: string, inputAmount: string)
 };
 
 export const executeSwap = async (tokenAddress: string, amount: string, userPublicKey: string) => {
+  console.log('Executing swap for token:', tokenAddress, 'amount:', amount);
   // Get quote from Jupiter
-  const quoteResponse = await fetch(
-    `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=${Number(amount) * LAMPORTS_PER_SOL}&slippageBps=50`
-  );
+  const quoteUrl = `${JUPITER_API_BASE}/quote`;
+  const quoteParams = new URLSearchParams({
+    inputMint: 'So11111111111111111111111111111111111111112',
+    outputMint: tokenAddress,
+    amount: (Number(amount) * LAMPORTS_PER_SOL).toString(),
+    slippageBps: '50'
+  });
+
+  const quoteResponse = await fetch(`${quoteUrl}?${quoteParams}`);
   
   if (!quoteResponse.ok) {
     const errorData = await quoteResponse.json();
@@ -28,7 +37,7 @@ export const executeSwap = async (tokenAddress: string, amount: string, userPubl
     wrapUnwrapSOL: true,
   };
 
-  const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+  const swapResponse = await fetch(`${JUPITER_API_BASE}/swap`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(swapRequestBody),
@@ -43,10 +52,17 @@ export const executeSwap = async (tokenAddress: string, amount: string, userPubl
 };
 
 export const executeSell = async (tokenAddress: string, amount: string, userPublicKey: string) => {
+  console.log('Executing sell for token:', tokenAddress, 'amount:', amount);
   // Get quote from Jupiter for selling tokens back to SOL
-  const quoteResponse = await fetch(
-    `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=${Number(amount) * LAMPORTS_PER_SOL}&slippageBps=50`
-  );
+  const quoteUrl = `${JUPITER_API_BASE}/quote`;
+  const quoteParams = new URLSearchParams({
+    inputMint: tokenAddress,
+    outputMint: 'So11111111111111111111111111111111111111112',
+    amount: (Number(amount) * LAMPORTS_PER_SOL).toString(),
+    slippageBps: '50'
+  });
+
+  const quoteResponse = await fetch(`${quoteUrl}?${quoteParams}`);
   
   if (!quoteResponse.ok) {
     const errorData = await quoteResponse.json();
@@ -62,7 +78,7 @@ export const executeSell = async (tokenAddress: string, amount: string, userPubl
     wrapUnwrapSOL: true,
   };
 
-  const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+  const swapResponse = await fetch(`${JUPITER_API_BASE}/swap`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(swapRequestBody),
