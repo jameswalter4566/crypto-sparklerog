@@ -41,14 +41,25 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-gray-400">Market Cap (SOL)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xl font-bold">
+            {formatValue(marketCap)}
+          </p>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-gray-400">Market Cap (USD)</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            {formatValue(usdMarketCap || marketCap)}
+            {formatValue(usdMarketCap)}
           </p>
         </CardContent>
       </Card>
