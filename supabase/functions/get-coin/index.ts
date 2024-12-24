@@ -82,11 +82,7 @@ serve(async (req) => {
         throw new Error('Token not found');
       }
 
-      console.log('Raw Pump.fun API Response:', matchingToken);
-      console.log('USD Market Cap from API:', matchingToken.usd_market_cap);
-
       const coinData = mapPumpApiToCoinData(matchingToken);
-      console.log('Mapped coin data before upsert:', coinData);
 
       // Update database with new data
       const { error: upsertError } = await supabase
@@ -114,10 +110,8 @@ serve(async (req) => {
       if (verifyError) {
         console.error('Error verifying stored data:', verifyError);
       } else {
-        console.log('Verified stored data:', verifyData);
+        console.log('Verified stored data:', JSON.stringify(verifyData, null, 2));
       }
-
-      console.log('Successfully updated database with new coin data');
 
       return new Response(
         JSON.stringify(coinData),
@@ -127,7 +121,6 @@ serve(async (req) => {
     } catch (apiError) {
       console.error('API error:', apiError);
       
-      // If we have existing data, return it as fallback
       if (existingData) {
         console.log('Returning existing data as fallback');
         return new Response(
