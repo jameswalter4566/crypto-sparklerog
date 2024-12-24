@@ -15,27 +15,35 @@ interface CoinMetadata {
   updated_at: string;
   price: number | null;
   change_24h: number | null;
-  announcement_url?: string[] | null;
-  blockchain_site?: string[] | null;
-  chat_url?: string[] | null;
-  circulating_supply?: number | null;
-  coin_id?: string | null;
-  decimals?: number | null;
-  historic_data?: any | null;
-  homepage?: string | null;
-  liquidity?: number | null;
-  market_cap?: number | null;
-  non_circulating_supply?: number | null;
-  official_forum_url?: string[] | null;
   solana_addr?: string | null;
-  twitter_screen_name?: string | null;
-  volume_24h?: number | null;
 }
 
 const CoinSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<CoinMetadata[]>([]);
   const { toast } = useToast();
+
+  const updateSearchCount = async (coinId: string) => {
+    const { error } = await supabase
+      .from('coin_searches')
+      .upsert(
+        { 
+          coin_id: coinId,
+          last_searched_at: new Date().toISOString(),
+          search_count: 1
+        },
+        {
+          onConflict: 'coin_id',
+          ignoreDuplicates: false
+        }
+      )
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating search count:', error);
+    }
+  };
 
   const handleSearch = async (mintAddress: string) => {
     if (!mintAddress) {
@@ -97,6 +105,9 @@ const CoinSearch = () => {
 
       // Add the new coin to the state
       if (coinMetadata) {
+        // Update search count
+        await updateSearchCount(coinMetadata.id);
+        
         setCoins((prevCoins) => [...prevCoins, coinMetadata as CoinMetadata]);
         toast({
           title: "Success",

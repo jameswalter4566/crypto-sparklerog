@@ -9,6 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      coin_searches: {
+        Row: {
+          coin_id: string
+          id: string
+          last_searched_at: string | null
+          search_count: number | null
+        }
+        Insert: {
+          coin_id: string
+          id?: string
+          last_searched_at?: string | null
+          search_count?: number | null
+        }
+        Update: {
+          coin_id?: string
+          id?: string
+          last_searched_at?: string | null
+          search_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_searches_coin_id_fkey"
+            columns: ["coin_id"]
+            isOneToOne: true
+            referencedRelation: "coins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coins: {
         Row: {
           announcement_url: string[] | null

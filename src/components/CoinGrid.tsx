@@ -2,8 +2,8 @@ import { NewCoinCard } from "./NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { useNatsUpdates } from "@/hooks/useNatsUpdates";
-import { mockCoins } from "@/data/mockCoins";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CoinGridProps {
   coins?: CoinData[];
@@ -11,8 +11,43 @@ interface CoinGridProps {
   title?: string;
 }
 
-export function CoinGrid({ coins: initialCoins, isLoading, title = "Trending Coins" }: CoinGridProps) {
-  const coins = useNatsUpdates(initialCoins || mockCoins);
+export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
+  const { data: coins, isLoading } = useQuery({
+    queryKey: ['trending-coins'],
+    queryFn: async () => {
+      console.log('Fetching trending coins');
+      const { data: trendingCoins, error } = await supabase
+        .from('coin_searches')
+        .select(`
+          coin_id,
+          search_count,
+          coins (
+            id,
+            name,
+            symbol,
+            price,
+            change_24h,
+            image_url,
+            solana_addr
+          )
+        `)
+        .order('search_count', { ascending: false })
+        .limit(12);
+
+      if (error) {
+        console.error('Error fetching trending coins:', error);
+        throw error;
+      }
+
+      // Transform the data to match the expected CoinData format
+      return trendingCoins.map(trend => ({
+        ...trend.coins,
+        searchCount: trend.search_count
+      }));
+    },
+    gcTime: Infinity,
+    staleTime: 30000, // Refresh data every 30 seconds
+  });
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -30,7 +65,7 @@ export function CoinGrid({ coins: initialCoins, isLoading, title = "Trending Coi
         </Button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
-        {coins.map((coin) => {
+        {coins?.map((coin) => {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
 
@@ -42,8 +77,8 @@ export function CoinGrid({ coins: initialCoins, isLoading, title = "Trending Coi
               symbol={coin.symbol || "N/A"}
               price={validPrice}
               change24h={validChange24h}
-              imageUrl={coin.imageUrl || "/placeholder.svg"}
-              mintAddress={coin.mintAddress || ""}
+              imageUrl={coin.image_url || "/placeholder.svg"}
+              mintAddress={coin.solana_addr || ""}
             />
           );
         })}
