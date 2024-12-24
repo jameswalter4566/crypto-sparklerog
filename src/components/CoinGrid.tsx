@@ -69,7 +69,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
       console.log('Trending coins data:', trendingCoins);
 
-      return (trendingCoins as CoinQueryResult[]).map(trend => {
+      return (trendingCoins as unknown as CoinQueryResult[]).map(trend => {
         if (!trend.coins) {
           console.error('Missing coins data for trend:', trend);
           return null;

@@ -64,6 +64,7 @@ export type Database = {
           total_supply: number | null
           twitter_screen_name: string | null
           updated_at: string | null
+          usd_market_cap: number | null
           volume_24h: number | null
         }
         Insert: {
@@ -91,6 +92,7 @@ export type Database = {
           total_supply?: number | null
           twitter_screen_name?: string | null
           updated_at?: string | null
+          usd_market_cap?: number | null
           volume_24h?: number | null
         }
         Update: {
@@ -118,6 +120,7 @@ export type Database = {
           total_supply?: number | null
           twitter_screen_name?: string | null
           updated_at?: string | null
+          usd_market_cap?: number | null
           volume_24h?: number | null
         }
         Relationships: []
