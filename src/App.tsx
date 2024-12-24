@@ -42,6 +42,7 @@ const App = () => (
               </div>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/new-coins" element={<div className="p-4 sm:p-6">New Coins Coming Soon</div>} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />

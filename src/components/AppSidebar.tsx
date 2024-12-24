@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Coins, Trophy, Search, Rocket, Building } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Building, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -16,6 +16,11 @@ const menuItems = [
     title: "Trending Coins",
     icon: Coins,
     path: "/",
+  },
+  {
+    title: "New Coins",
+    icon: Star,
+    path: "/new-coins",
   },
   {
     title: "Coin Search",
