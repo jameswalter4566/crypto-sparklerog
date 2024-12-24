@@ -7,7 +7,7 @@
 import { PumpApiResponse, CoinData } from './types.ts';
 
 export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
-  // Log some raw data
+  // Detailed logging of incoming data
   console.log('Raw API data received:', {
     mint: data.mint,
     name: data.name,
@@ -17,19 +17,14 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     virtual_token_reserves: data.virtual_token_reserves
   });
 
-  // Safely parse numeric fields
-  const safeMarketCap = typeof data.market_cap === 'number' ? data.market_cap : null;
-  const safeUsdMarketCap = typeof data.usd_market_cap === 'number' ? data.usd_market_cap : null;
-
-  // Here you can also do other calculations, e.g. priceInSol if you want
-  // For example:
-  // let priceInSol: number | null = null;
-  // if (data.virtual_sol_reserves && data.virtual_token_reserves) {
-  //   const solAmount = data.virtual_sol_reserves / 1e9; 
-  //   const tokenAmount = data.virtual_token_reserves / 1e9; 
-  //   priceInSol = solAmount / tokenAmount;
-  //   console.log('Calculated price in SOL:', priceInSol);
-  // }
+  // Safely parse numeric fields with explicit type checking
+  const safeMarketCap = typeof data.market_cap === 'number' && !isNaN(data.market_cap) 
+    ? data.market_cap 
+    : null;
+    
+  const safeUsdMarketCap = typeof data.usd_market_cap === 'number' && !isNaN(data.usd_market_cap)
+    ? data.usd_market_cap
+    : null;
 
   const mappedData: CoinData = {
     // The unique identifier
@@ -65,20 +60,18 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     username: data.username || null,
     profile_image: data.profile_image || null,
 
-    // Market caps
+    // Market caps - using our safely parsed values
     market_cap: safeMarketCap,
     usd_market_cap: safeUsdMarketCap,
 
-    // If you need price or other fields:
+    // Additional fields with proper null handling
     price: null,
     change_24h: null,
     volume_24h: null,
-    liquidity: null, // If you want to store liquidity from virtual_sol_reserves, you can do so
+    liquidity: null,
     circulating_supply: null,
     decimals: null,
-
-    // Additional link fields
-    homepage: null, // or set data.website if that’s your preference
+    homepage: data.website || null,
     blockchain_site: [],
     chat_url: data.telegram ? [data.telegram] : [],
     coingecko_id: null,
@@ -94,6 +87,12 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     historic_data: null
   };
 
-  console.log('Final mapped coin data:', mappedData);
+  // Log the final mapped data for debugging
+  console.log('Final mapped coin data:', {
+    id: mappedData.id,
+    market_cap: mappedData.market_cap,
+    usd_market_cap: mappedData.usd_market_cap
+  });
+
   return mappedData;
 }

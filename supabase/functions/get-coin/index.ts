@@ -19,62 +19,70 @@ serve(async (req: Request) => {
 
   try {
     const url = new URL(req.url);
-
-    // 1) Get the 'id' param, which is the token address (mint)
     const tokenAddress = url.searchParams.get('id');
+    
     if (!tokenAddress) {
-      return new Response(JSON.stringify({ error: 'No token id provided' }), {
-        status: 400,
-        headers: corsHeaders
-      });
+      console.error('No token id provided');
+      return new Response(
+        JSON.stringify({ error: 'No token id provided' }), 
+        { status: 400, headers: corsHeaders }
+      );
     }
 
-    // 2) Potentially get a captcha token or other query params if needed
-    const captchaToken = url.searchParams.get('captchaToken') || '';
-
-    // 3) Fetch coins from Pump.fun
-    console.log('Fetching from Pump.fun URL: https://frontend-api-v2.pump.fun/coins');
+    console.log(`Fetching data for token: ${tokenAddress}`);
+    
     const searchData = await fetchFromPumpApi('/coins', {
       searchTerm: tokenAddress,
       limit: 50,
       sort: 'market_cap',
       order: 'DESC',
-      includeNsfw: false,
-      captchaToken
+      includeNsfw: false
     });
 
     if (!searchData || !Array.isArray(searchData)) {
-      return new Response(JSON.stringify({ error: 'Invalid response from Pump.fun' }), {
-        status: 500,
-        headers: corsHeaders
-      });
+      console.error('Invalid response from Pump.fun:', searchData);
+      return new Response(
+        JSON.stringify({ error: 'Invalid response from Pump.fun' }), 
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    // 4) Find the matching token
     const matchingToken = searchData.find(
       (item) => item.mint?.toLowerCase() === tokenAddress.toLowerCase()
     );
 
     if (!matchingToken) {
-      return new Response(JSON.stringify({ error: 'Token not found on Pump.fun' }), {
-        status: 404,
-        headers: corsHeaders
-      });
+      console.error('Token not found on Pump.fun');
+      return new Response(
+        JSON.stringify({ error: 'Token not found on Pump.fun' }), 
+        { status: 404, headers: corsHeaders }
+      );
     }
 
-    // 5) Map the raw Pump.fun data to your CoinData structure
+    console.log('Found matching token:', {
+      mint: matchingToken.mint,
+      market_cap: matchingToken.market_cap,
+      usd_market_cap: matchingToken.usd_market_cap
+    });
+
     const mappedData = mapPumpApiToCoinData(matchingToken);
 
-    // 6) Return final mapped coin data
-    return new Response(JSON.stringify(mappedData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // Add cache control headers to prevent caching
+    const responseHeaders = {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    };
+
+    return new Response(JSON.stringify(mappedData), { headers: responseHeaders });
 
   } catch (error) {
     console.error('Error in get-coin function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: corsHeaders
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      { status: 500, headers: corsHeaders }
+    );
   }
 });
