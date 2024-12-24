@@ -27,6 +27,7 @@ export const SwapInterface = ({ defaultTokenAddress }: SwapInterfaceProps) => {
   const handleSellPercentage = (percentage: number) => {
     if (tokenBalance) {
       const sellAmount = (tokenBalance * percentage).toString();
+      console.log(`Setting sell amount to ${percentage * 100}% of ${tokenBalance}: ${sellAmount}`);
       handleAmountChange(sellAmount);
     }
   };
