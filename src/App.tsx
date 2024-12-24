@@ -151,7 +151,7 @@ const App = () => {
                       <img 
                         src="/u1251571754_httpss.mj.runNz6izZD6Xoc_Create_me_a_four_letter__08879d3a-1b7c-44e1-aae1-8d48bb2ee55a_1.png" 
                         alt="Logo" 
-                        className="h-8 sm:h-12 md:h-16"
+                        className="h-12 sm:h-16 md:h-24" // Increased size by approximately 50%
                       />
                       <div className="sm:hidden">
                         <WalletConnect />

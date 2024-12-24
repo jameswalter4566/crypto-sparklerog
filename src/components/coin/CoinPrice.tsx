@@ -30,7 +30,7 @@ export function CoinPrice({ initialPrice }: CoinPriceProps) {
   };
 
   return (
-    <span className="text-lg sm:text-xl font-bold text-center sm:text-left">
+    <span className="text-lg sm:text-xl font-bold text-center sm:text-left text-primary">
       {formatPrice(currentPrice)}
     </span>
   );
