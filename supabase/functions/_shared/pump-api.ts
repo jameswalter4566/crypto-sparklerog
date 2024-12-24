@@ -15,10 +15,9 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
 
   const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   
-  console.log('Fetching from Pump API:', url);
+  console.log('Making request to:', url);
   
   try {
-    console.log('Making request to:', url);
     const response = await fetch(url, {
       headers: {
         'Accept': '*/*',
@@ -26,9 +25,6 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
         'Accept-Language': 'en-US,en;q=0.9',
         'Origin': 'https://pump.fun',
         'Referer': 'https://pump.fun/',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-site',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       }
     });
@@ -38,7 +34,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Pump API error response:', errorText);
+      console.error('API error response:', errorText);
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
@@ -50,30 +46,24 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     const contentEncoding = response.headers.get('content-encoding');
     console.log('Content-Encoding:', contentEncoding);
 
-    // Read the response as an ArrayBuffer first
-    const buffer = await response.arrayBuffer();
-    
-    // If the response is empty, throw an error
-    if (buffer.byteLength === 0) {
+    // Read the response as text first to see raw data
+    const rawText = await response.text();
+    console.log('Raw response text:', rawText);
+    console.log('Raw response length:', rawText.length);
+    console.log('First 500 characters:', rawText.substring(0, 500));
+
+    if (!rawText.trim()) {
       throw new Error('Empty response from API');
     }
 
-    // Convert ArrayBuffer to text
-    const decoder = new TextDecoder();
-    const text = decoder.decode(buffer);
-    console.log('Decoded response text:', text);
-
-    // If we got an empty response after decoding, throw an error
-    if (!text.trim()) {
-      throw new Error('Empty response from API after decoding');
-    }
-
     try {
-      return JSON.parse(text);
+      const parsedData = JSON.parse(rawText);
+      console.log('Successfully parsed JSON data:', parsedData);
+      return parsedData;
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      console.error('Raw text that failed to parse:', text);
-      throw new Error(`Invalid JSON response: ${text.slice(0, 200)}...`);
+      console.error('Failed to parse text:', rawText);
+      throw new Error(`Invalid JSON response: ${rawText.slice(0, 200)}...`);
     }
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
