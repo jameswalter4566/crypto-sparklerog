@@ -47,7 +47,7 @@ export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: To
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            {usdMarketCap ? formatValue(usdMarketCap) : formatValue(marketCap)}
+            {formatValue(usdMarketCap || marketCap)}
           </p>
         </CardContent>
       </Card>
