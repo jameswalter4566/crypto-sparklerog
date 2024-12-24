@@ -27,20 +27,22 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       }
     });
 
+    const responseText = await response.text();
+    console.log('Raw API response:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Pump API error response:', errorText);
-      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
+      console.error('Pump API error response:', responseText);
+      throw new Error(`API error: ${response.status}. Response: ${responseText}`);
     }
 
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Unexpected content type:', contentType, 'Response:', text);
-      throw new Error('API did not return JSON');
+    // Try to parse the response as JSON
+    try {
+      const jsonData = JSON.parse(responseText);
+      return jsonData;
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error(`Invalid JSON response: ${responseText.slice(0, 200)}...`);
     }
-
-    return response;
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
     throw error;

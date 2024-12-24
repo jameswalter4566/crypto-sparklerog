@@ -62,7 +62,7 @@ serve(async (req) => {
     // Try search endpoint with captcha token
     console.log('Fetching fresh data from Pump API for token:', tokenAddress);
 
-    const searchResponse = await fetchFromPumpApi('/coins', {
+    const searchData = await fetchFromPumpApi('/coins', {
       searchTerm: tokenAddress,
       limit: 50,
       sort: 'market_cap',
@@ -70,17 +70,6 @@ serve(async (req) => {
       includeNsfw: false,
       captchaToken
     });
-
-    const responseText = await searchResponse.text();
-    console.log('Raw API response:', responseText);
-
-    let searchData;
-    try {
-      searchData = JSON.parse(responseText);
-    } catch (error) {
-      console.error('JSON parse error:', error);
-      throw new Error(`Invalid JSON response: ${responseText.slice(0, 200)}...`);
-    }
 
     if (!Array.isArray(searchData)) {
       console.error('Unexpected response format:', searchData);
