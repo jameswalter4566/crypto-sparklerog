@@ -25,8 +25,11 @@ export const TokenStats = ({ marketCap, volume24h, liquidity, usdMarketCap }: To
     return `$${value.toLocaleString()}`;
   };
 
-  console.log('Market Cap value:', marketCap); // Debug log
-  console.log('USD Market Cap value:', usdMarketCap); // Debug log
+  // Add detailed logging of the raw values
+  console.log('Raw Market Cap:', marketCap);
+  console.log('Raw USD Market Cap:', usdMarketCap);
+  console.log('Raw Volume 24h:', volume24h);
+  console.log('Raw Liquidity:', liquidity);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
