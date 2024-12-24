@@ -10,7 +10,6 @@ export interface CoinData {
   total_supply: number | null;
   circulating_supply: number | null;
   non_circulating_supply: number | null;
-  coingecko_id: string | null;
   description: string | null;
   decimals: number | null;
   image_url: string | null;
@@ -19,12 +18,6 @@ export interface CoinData {
     price: number;
     timestamp: string;
   }> | null;
-  homepage: string | null;
-  blockchain_site: string[] | null;
-  official_forum_url: string[] | null;
-  chat_url: string[] | null;
-  announcement_url: string[] | null;
-  twitter_screen_name: string | null;
 }
 
 export interface PumpApiResponse {
@@ -42,9 +35,6 @@ export interface PumpApiResponse {
   description: string;
   decimals: number;
   image_uri: string;
-  website: string;
-  twitter: string;
-  telegram: string;
   price_history: Array<{
     price: number;
     timestamp: string;

@@ -17,6 +17,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const tokenAddress = url.searchParams.get('id');
+    const captchaToken = url.searchParams.get('captchaToken');
 
     if (!tokenAddress) {
       throw new Error('Token ID is required');
@@ -51,13 +52,14 @@ serve(async (req) => {
       }
     }
 
-    // Try search endpoint first
+    // Try search endpoint with captcha token
     const searchResponse = await fetchFromPumpApi('/coins', {
       searchTerm: tokenAddress,
       limit: 50,
       sort: 'market_cap',
       order: 'DESC',
-      includeNsfw: false
+      includeNsfw: false,
+      captchaToken
     });
 
     const searchData = await searchResponse.json();
@@ -83,7 +85,10 @@ serve(async (req) => {
     // Update database with new data
     const { error: upsertError } = await supabase
       .from('coins')
-      .upsert(coinData, {
+      .upsert({
+        ...coinData,
+        updated_at: new Date().toISOString()
+      }, {
         onConflict: 'id',
         ignoreDuplicates: false
       });

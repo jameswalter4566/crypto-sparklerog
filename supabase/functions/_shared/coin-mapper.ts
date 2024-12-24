@@ -17,13 +17,6 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     decimals: data.decimals,
     image_url: data.image_uri,
     solana_addr: data.mint,
-    historic_data: data.price_history,
-    homepage: data.website,
-    twitter_screen_name: data.twitter,
-    chat_url: data.telegram ? [data.telegram] : null,
-    coingecko_id: null,
-    blockchain_site: null,
-    official_forum_url: null,
-    announcement_url: null
+    historic_data: data.price_history
   };
 }
