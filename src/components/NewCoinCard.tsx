@@ -51,12 +51,15 @@ export function NewCoinCard({
     <Link to={`/coin/${id}`} className="block">
       <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
         {searchCount !== undefined && searchCount > 0 && (
-          <Badge 
-            variant="secondary" 
-            className="absolute top-1 right-1 z-10 text-[10px] px-1.5 py-0.5 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
-          >
-            {searchCount}
-          </Badge>
+          <div className="absolute top-1 right-1 z-10 flex flex-col items-center">
+            <Badge 
+              variant="secondary" 
+              className="text-[11.5px] px-2 py-1 bg-yellow-500/90 hover:bg-yellow-500/90 text-black font-semibold"
+            >
+              {searchCount}
+            </Badge>
+            <span className="text-[8px] text-yellow-500/90 mt-0.5 font-medium">Searches</span>
+          </div>
         )}
         <CardHeader className="p-2 sm:p-3">
           <div className="flex flex-col items-center gap-2">
