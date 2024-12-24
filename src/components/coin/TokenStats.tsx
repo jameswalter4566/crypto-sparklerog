@@ -33,7 +33,6 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
     return formatter.format(value);
   };
 
-  // Add detailed logging of the raw values
   console.log('TokenStats - Raw values:', {
     marketCap,
     usdMarketCap,

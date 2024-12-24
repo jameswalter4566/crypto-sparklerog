@@ -37,7 +37,7 @@ const CoinProfile = () => {
       }
 
       const result = await response.json();
-      console.log('Received coin data:', result);
+      console.log('Received coin data from API:', result);
 
       if (result.error) {
         throw new Error(result.error);
@@ -68,10 +68,11 @@ const CoinProfile = () => {
           chat: result.chat_url,
           announcement: result.announcement_url
         },
-        usd_market_cap: result.usd_market_cap || null
+        market_cap: result.market_cap,
+        usd_market_cap: result.usd_market_cap
       };
 
-      console.log('Mapped coin data:', coinData);
+      console.log('Mapped coin data for UI:', coinData);
       setCoin(coinData);
       
       if (isRefresh) {
@@ -123,8 +124,8 @@ const CoinProfile = () => {
     );
   }
 
-  // Log the data being passed to TokenStats
   console.log('Data being passed to TokenStats:', {
+    marketCap: coin.market_cap,
     usdMarketCap: coin.usd_market_cap,
     volume24h: coin.volume_24h,
     liquidity: coin.liquidity
@@ -147,6 +148,7 @@ const CoinProfile = () => {
       />
       
       <TokenStats
+        marketCap={coin.market_cap}
         usdMarketCap={coin.usd_market_cap}
         volume24h={coin.volume_24h}
         liquidity={coin.liquidity}

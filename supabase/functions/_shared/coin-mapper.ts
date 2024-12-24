@@ -26,11 +26,11 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
 
   console.log('Calculated liquidity in SOL:', liquidityInSol);
 
-  // Ensure market cap is a number and not null
+  // Ensure market cap values are numbers and not null
   const marketCap = typeof data.market_cap === 'number' ? data.market_cap : null;
   const usdMarketCap = typeof data.usd_market_cap === 'number' ? data.usd_market_cap : null;
 
-  console.log('Market caps:', {
+  console.log('Market caps before mapping:', {
     marketCap,
     usdMarketCap
   });
@@ -41,7 +41,7 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     symbol: data.symbol,
     price: priceInSol,
     change_24h: null, // We'll need historic data to calculate this
-    market_cap: marketCap, // Regular market cap in SOL
+    market_cap: marketCap,
     volume_24h: null, // Not provided in current API response
     liquidity: liquidityInSol,
     total_supply: data.total_supply ? data.total_supply / Math.pow(10, 9) : null,
@@ -54,10 +54,10 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     chat_url: data.telegram ? [data.telegram] : null,
     announcement_url: null,
     twitter_screen_name: data.twitter?.replace('https://x.com/', '') || null,
-    historic_data: null, // We'll need to implement this separately
-    usd_market_cap: usdMarketCap // USD market cap
+    historic_data: null,
+    usd_market_cap: usdMarketCap
   };
 
-  console.log('Mapped coin data:', mappedData);
+  console.log('Final mapped coin data:', mappedData);
   return mappedData;
 }
