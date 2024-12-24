@@ -2,7 +2,7 @@ import { NewCoinCard } from "./NewCoinCard";
 import { CoinData } from "@/data/mockCoins";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { useState } from "react";
+import { useNatsUpdates } from "@/hooks/useNatsUpdates";
 import { mockCoins } from "@/data/mockCoins";
 
 interface CoinGridProps {
@@ -11,7 +11,7 @@ interface CoinGridProps {
 }
 
 export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
-  const [coins] = useState(initialCoins || mockCoins);
+  const coins = useNatsUpdates(initialCoins || mockCoins);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -30,7 +30,6 @@ export function CoinGrid({ coins: initialCoins, isLoading }: CoinGridProps) {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
         {coins.map((coin) => {
-          // Ensure data passed to NewCoinCard is valid
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
 
