@@ -16,7 +16,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
   const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   
   console.log('Making request to:', url);
-  console.log('Request params:', params);
+  console.log('Request params:', JSON.stringify(params, null, 2));
   
   try {
     const response = await fetch(url, {
@@ -51,7 +51,6 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     const rawText = await response.text();
     console.log('Complete raw response:', rawText);
     console.log('Response length:', rawText.length);
-    console.log('Response headers:', response.headers);
 
     if (!rawText.trim()) {
       throw new Error('Empty response from API');
@@ -59,7 +58,7 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
 
     try {
       const parsedData = JSON.parse(rawText);
-      console.log('Successfully parsed JSON data:', parsedData);
+      console.log('Successfully parsed response data:', JSON.stringify(parsedData, null, 2));
       return parsedData;
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
