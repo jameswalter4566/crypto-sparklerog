@@ -40,6 +40,17 @@ interface CoinQueryResult {
   } | null;
 }
 
+interface RealtimePayload {
+  new: {
+    id: string;
+    name: string;
+    symbol: string;
+    price: number | null;
+    change_24h: number | null;
+    image_url: string | null;
+  };
+}
+
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   const { toast } = useToast();
 
@@ -131,7 +142,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           schema: 'public',
           table: 'coins'
         },
-        async (payload) => {
+        async (payload: RealtimePayload) => {
           console.log('Received real-time update:', payload);
           
           // Refetch data when we receive an update
