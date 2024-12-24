@@ -21,6 +21,7 @@ async function fetchPumpFunData(tokenAddress: string) {
     });
     
     console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -28,54 +29,40 @@ async function fetchPumpFunData(tokenAddress: string) {
       throw new Error(`API error: ${response.status}. Response: ${errorText}`);
     }
 
-    const responseText = await response.text();
-    console.log('Raw response text:', responseText);
+    const rawData = await response.json();
+    console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
 
-    if (!responseText) {
-      throw new Error('Empty response from API');
-    }
-
-    let rawData;
-    try {
-      rawData = JSON.parse(responseText);
-      console.log('Parsed data:', JSON.stringify(rawData, null, 2));
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
-    }
-
-    // Validate essential fields
     if (!rawData || typeof rawData !== 'object') {
       console.error('Invalid response format:', rawData);
       throw new Error('Invalid response format: not an object');
     }
 
-    // Map all available data points to our schema
+    // Map API data to our schema with explicit type checking
     const mappedData = {
       id: tokenAddress,
       name: rawData.name || 'Unknown Token',
       symbol: rawData.symbol || '???',
+      image_url: rawData.image_uri || rawData.image || null,
       price: typeof rawData.price === 'number' ? rawData.price : null,
-      market_cap: typeof rawData.marketCap === 'number' ? rawData.marketCap : null,
-      volume_24h: typeof rawData.volume24h === 'number' ? rawData.volume24h : null,
-      total_supply: typeof rawData.totalSupply === 'number' ? rawData.totalSupply : null,
-      image_url: rawData.image || null,
+      market_cap: typeof rawData.market_cap === 'number' ? rawData.market_cap : null,
+      volume_24h: typeof rawData.volume_24h === 'number' ? rawData.volume_24h : null,
+      liquidity: typeof rawData.virtual_sol_reserves === 'number' ? rawData.virtual_sol_reserves : null,
+      total_supply: typeof rawData.total_supply === 'number' ? rawData.total_supply : null,
+      circulating_supply: typeof rawData.circulating_supply === 'number' ? rawData.circulating_supply : null,
+      updated_at: new Date().toISOString(),
       solana_addr: tokenAddress,
       description: rawData.description || null,
       decimals: typeof rawData.decimals === 'number' ? rawData.decimals : null,
-      updated_at: new Date().toISOString(),
-      liquidity: typeof rawData.liquidity === 'number' ? rawData.liquidity : null,
-      change_24h: typeof rawData.priceChange24h === 'number' ? rawData.priceChange24h : null,
-      circulating_supply: typeof rawData.circulatingSupply === 'number' ? rawData.circulatingSupply : null,
-      non_circulating_supply: typeof rawData.nonCirculatingSupply === 'number' ? rawData.nonCirculatingSupply : null,
-      historic_data: Array.isArray(rawData.historicData) ? rawData.historicData : null,
+      historic_data: Array.isArray(rawData.price_history) ? rawData.price_history : null,
       homepage: rawData.website || null,
-      blockchain_site: Array.isArray(rawData.blockchainSites) ? rawData.blockchainSites : null,
-      chat_url: Array.isArray(rawData.chatUrls) ? rawData.chatUrls : null,
-      announcement_url: Array.isArray(rawData.announcementUrls) ? rawData.announcementUrls : null,
+      blockchain_site: [rawData.explorer_url].filter(Boolean),
+      chat_url: [rawData.telegram].filter(Boolean),
       twitter_screen_name: rawData.twitter || null,
-      coingecko_id: rawData.coingeckoId || null,
-      coin_id: rawData.coinId || null,
+      coingecko_id: null,
+      non_circulating_supply: null,
+      announcement_url: null,
+      official_forum_url: null,
+      change_24h: typeof rawData.price_change_24h === 'number' ? rawData.price_change_24h : null,
     };
 
     console.log('Mapped data:', JSON.stringify(mappedData, null, 2));

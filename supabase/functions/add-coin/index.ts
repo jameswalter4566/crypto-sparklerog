@@ -7,8 +7,33 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+async function fetchPumpFunData(solanaAddr: string) {
+  const url = `https://frontend-api-v2.pump.fun/coins/${solanaAddr}`;
+  console.log('Fetching from Pump.fun URL:', url);
+
+  const response = await fetch(url, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+
+  console.log('Pump.fun API Response Status:', response.status);
+  console.log('Pump.fun API Response Headers:', Object.fromEntries(response.headers.entries()));
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Pump.fun API Error Response:', errorText);
+    throw new Error(`Pump.fun API returned status ${response.status}`);
+  }
+
+  const rawData = await response.json();
+  console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
+
+  return rawData;
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -24,13 +49,12 @@ serve(async (req) => {
       throw new Error('Solana address is required');
     }
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if coin already exists
+    // Check existing coin
     const { data: existingCoin } = await supabaseClient
       .from('coins')
       .select('*')
@@ -38,47 +62,71 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingCoin) {
-      console.log('Coin already exists:', existingCoin);
+      console.log('Found existing coin:', existingCoin);
+      // Fetch fresh data to update existing record
+      const pumpData = await fetchPumpFunData(solana_addr);
+      
+      if (!pumpData) {
+        return new Response(
+          JSON.stringify(existingCoin),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Update existing coin with new data
+      const updatedData = {
+        ...existingCoin,
+        price: pumpData.price ?? existingCoin.price,
+        market_cap: pumpData.market_cap ?? existingCoin.market_cap,
+        volume_24h: pumpData.volume_24h ?? existingCoin.volume_24h,
+        liquidity: pumpData.virtual_sol_reserves ?? existingCoin.liquidity,
+        change_24h: pumpData.price_change_24h ?? existingCoin.change_24h,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: updatedCoin, error: updateError } = await supabaseClient
+        .from('coins')
+        .update(updatedData)
+        .eq('id', solana_addr)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating coin:', updateError);
+        throw new Error('Failed to update coin data');
+      }
+
       return new Response(
-        JSON.stringify(existingCoin),
+        JSON.stringify(updatedCoin),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch data from Pump.fun API
-    console.log('Fetching data from Pump.fun API...');
-    const pumpResponse = await fetch(`https://frontend-api-v2.pump.fun/coins/${solana_addr}`);
-    
-    if (!pumpResponse.ok) {
-      console.error('Error from Pump.fun API:', await pumpResponse.text());
-      throw new Error(`Pump.fun API returned status ${pumpResponse.status}`);
-    }
-
-    const pumpData = await pumpResponse.json();
-    console.log('Received data from Pump.fun:', pumpData);
+    // Fetch new coin data
+    const pumpData = await fetchPumpFunData(solana_addr);
 
     if (!pumpData || !pumpData.mint) {
       throw new Error('Invalid response from Pump.fun API');
     }
 
-    // Transform and prepare data for insertion
+    // Map API data to our schema
     const coinData = {
       id: solana_addr,
       name: pumpData.name || 'Unknown Token',
       symbol: pumpData.symbol || 'UNKNOWN',
-      image_url: pumpData.image_uri || null,
-      price: pumpData.price || null,
-      change_24h: pumpData.price_change_24h || null,
-      market_cap: pumpData.market_cap || null,
-      volume_24h: pumpData.volume_24h || null,
-      liquidity: pumpData.virtual_sol_reserves || null,
-      total_supply: pumpData.total_supply || null,
-      circulating_supply: pumpData.circulating_supply || null,
+      image_url: pumpData.image_uri || pumpData.image || null,
+      price: typeof pumpData.price === 'number' ? pumpData.price : null,
+      change_24h: typeof pumpData.price_change_24h === 'number' ? pumpData.price_change_24h : null,
+      market_cap: typeof pumpData.market_cap === 'number' ? pumpData.market_cap : null,
+      volume_24h: typeof pumpData.volume_24h === 'number' ? pumpData.volume_24h : null,
+      liquidity: typeof pumpData.virtual_sol_reserves === 'number' ? pumpData.virtual_sol_reserves : null,
+      total_supply: typeof pumpData.total_supply === 'number' ? pumpData.total_supply : null,
+      circulating_supply: typeof pumpData.circulating_supply === 'number' ? pumpData.circulating_supply : null,
       updated_at: new Date().toISOString(),
       solana_addr: solana_addr,
       description: pumpData.description || null,
-      decimals: pumpData.decimals || null,
-      historic_data: pumpData.price_history || null,
+      decimals: typeof pumpData.decimals === 'number' ? pumpData.decimals : null,
+      historic_data: Array.isArray(pumpData.price_history) ? pumpData.price_history : null,
       homepage: pumpData.website || null,
       blockchain_site: [pumpData.explorer_url].filter(Boolean),
       chat_url: [pumpData.telegram].filter(Boolean),
@@ -89,7 +137,9 @@ serve(async (req) => {
       official_forum_url: null
     };
 
-    // Insert the new coin data
+    console.log('Mapped coin data:', JSON.stringify(coinData, null, 2));
+
+    // Insert new coin
     const { data, error: insertError } = await supabaseClient
       .from('coins')
       .insert(coinData)
