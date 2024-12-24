@@ -10,8 +10,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Coins, Trophy, Search, Rocket, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { LucideIcon } from "lucide-react";
 
-const menuItems = [
+type MenuItem = {
+  title: string;
+  icon: LucideIcon;
+  path: string;
+};
+
+const menuItems: MenuItem[] = [
   {
     title: "Trending Coins",
     icon: Coins,
@@ -42,12 +49,8 @@ const menuItems = [
 export function AppSidebar() {
   const navigate = useNavigate();
 
-  const handleNavigation = (path: string, external: boolean = false) => {
-    if (external) {
-      window.open(path, "_blank");
-    } else {
-      navigate(path);
-    }
+  const handleNavigation = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -61,7 +64,7 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
-                    onClick={() => handleNavigation(item.path, item.external)}
+                    onClick={() => handleNavigation(item.path)}
                     className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse cursor-pointer"
                   >
                     <item.icon className="h-4 w-4" />
