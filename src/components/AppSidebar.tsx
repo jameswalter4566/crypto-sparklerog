@@ -65,7 +65,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     onClick={() => handleNavigation(item.path)}
-                    className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 hover:text-primary hover:animate-glow-pulse cursor-pointer"
+                    className="flex items-center gap-2 font-menu font-bold tracking-wide uppercase text-sm transition-all duration-300 bg-opacity-10 bg-primary hover:text-white cursor-pointer shadow-[0_0_15px_rgba(153,69,255,0.3)] hover:shadow-[0_0_25px_rgba(153,69,255,0.5)]"
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
