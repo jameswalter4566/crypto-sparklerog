@@ -39,7 +39,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
             change_24h,
             image_url,
             solana_addr,
-            historic_data
+            historic_data,
+            usd_market_cap
           )
         `)
         .order('search_count', { ascending: false })
@@ -84,7 +85,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         return {
           ...trend.coins,
           searchCount: trend.search_count,
-          priceHistory
+          priceHistory,
+          usdMarketCap: trend.coins.usd_market_cap
         };
       });
     },
@@ -124,6 +126,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
               mintAddress={coin.solana_addr || ""}
               searchCount={coin.searchCount}
               priceHistory={coin.priceHistory}
+              usdMarketCap={coin.usdMarketCap}
             />
           );
         })}

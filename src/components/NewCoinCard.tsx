@@ -16,6 +16,7 @@ interface NewCoinCardProps {
   mintAddress?: string;
   searchCount?: number;
   priceHistory?: Array<{ price: number; timestamp: string; }> | null;
+  usdMarketCap?: number | null;
 }
 
 export function NewCoinCard({ 
@@ -27,7 +28,8 @@ export function NewCoinCard({
   imageUrl, 
   mintAddress,
   searchCount,
-  priceHistory
+  priceHistory,
+  usdMarketCap
 }: NewCoinCardProps) {
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
 
@@ -44,6 +46,18 @@ export function NewCoinCard({
     }
     const sign = value >= 0 ? "+" : "";
     return `${sign}${value.toFixed(2)}%`;
+  };
+
+  const formatMarketCap = (value: number | null) => {
+    if (value === null || isNaN(value)) {
+      return "N/A";
+    }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   };
 
   // Use a default placeholder if imageUrl is undefined or empty
@@ -97,6 +111,11 @@ export function NewCoinCard({
             <div className={`text-lg sm:text-xl ${change24h && change24h >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatChange(change24h)}
             </div>
+            {usdMarketCap && (
+              <div className="text-lg sm:text-xl text-gray-400">
+                MC: {formatMarketCap(usdMarketCap)}
+              </div>
+            )}
             {priceHistory && <MiniPriceChart data={priceHistory} />}
           </div>
         </CardContent>

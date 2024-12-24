@@ -53,7 +53,6 @@ const CoinProfile = () => {
         description: result.description,
         token_standard: 'SPL', // Solana tokens are SPL standard
         decimals: result.decimals,
-        market_cap: result.market_cap,
         volume_24h: result.volume_24h,
         liquidity: result.liquidity,
         solana_addr: result.solana_addr || id,
@@ -69,7 +68,7 @@ const CoinProfile = () => {
           chat: result.chat_url,
           announcement: result.announcement_url
         },
-        usd_market_cap: result.usd_market_cap || null // Added USD market cap
+        usd_market_cap: result.usd_market_cap || null
       };
 
       setCoin(coinData);
@@ -140,10 +139,9 @@ const CoinProfile = () => {
       />
       
       <TokenStats
-        marketCap={coin.market_cap}
         volume24h={coin.volume_24h}
         liquidity={coin.liquidity}
-        usdMarketCap={coin.usd_market_cap} // Pass the USD market cap
+        usdMarketCap={coin.usd_market_cap}
       />
 
       <TokenSupply
