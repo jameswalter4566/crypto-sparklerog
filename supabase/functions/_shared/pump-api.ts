@@ -5,13 +5,13 @@ const PUMP_API_BASE_URL = 'https://frontend-api-v2.pump.fun';
 export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParams) {
   const queryParams = new URLSearchParams();
   
+  // Add required search parameters
   if (params.searchTerm) queryParams.set('searchTerm', params.searchTerm);
-  if (params.limit) queryParams.set('limit', params.limit.toString());
-  if (params.offset) queryParams.set('offset', params.offset.toString());
-  if (params.sort) queryParams.set('sort', params.sort);
-  if (params.order) queryParams.set('order', params.order);
-  if (params.includeNsfw !== undefined) queryParams.set('includeNsfw', params.includeNsfw.toString());
-  if (params.captchaToken) queryParams.set('captchaToken', params.captchaToken);
+  queryParams.set('limit', (params.limit || 50).toString());
+  queryParams.set('offset', (params.offset || 0).toString());
+  queryParams.set('sort', params.sort || 'market_cap');
+  queryParams.set('order', params.order || 'DESC');
+  queryParams.set('includeNsfw', (params.includeNsfw || false).toString());
 
   const url = `${PUMP_API_BASE_URL}${endpoint}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   
@@ -36,41 +36,22 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
     }
 
     const data = await response.json();
-    
-    if (Array.isArray(data)) {
-      data.forEach((item, index) => {
-        console.log(`Token ${index} detailed info:`, {
-          mint: item.mint,
-          name: item.name,
-          symbol: item.symbol,
-          usd_market_cap: item.usd_market_cap,
-          virtual_sol_reserves: item.virtual_sol_reserves,
-          virtual_token_reserves: item.virtual_token_reserves,
-          total_supply: item.total_supply
-        });
-
-        // Log derived values
-        const solInUsd = 0.6; // Current approximate SOL price
-        const liquidityInUsd = item.virtual_sol_reserves 
-          ? (item.virtual_sol_reserves / 1e9) * solInUsd 
-          : null;
-        const priceInUsd = item.usd_market_cap && item.total_supply
-          ? item.usd_market_cap / (item.total_supply / 1e9)
-          : null;
-
-        console.log(`Token ${index} calculated values:`, {
-          priceInUsd,
-          marketCapUsd: item.usd_market_cap,
-          liquidityInUsd,
-          totalSupply: item.total_supply / 1e9,
-          virtualSolReserves: item.virtual_sol_reserves / 1e9
-        });
-      });
-    }
+    console.log('API Response:', data);
     
     return data;
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
     throw error;
   }
+}
+
+// Function to fetch a specific coin by mint address
+export async function fetchCoinByMint(mintAddress: string) {
+  return fetchFromPumpApi('/coins', {
+    searchTerm: mintAddress,
+    limit: 1,
+    sort: 'market_cap',
+    order: 'DESC',
+    includeNsfw: false
+  });
 }
