@@ -10,6 +10,7 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
   try {
+    // First try to fetch specific coin data
     const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
     console.log('Fetching from URL:', url);
 
@@ -23,23 +24,50 @@ async function fetchPumpFunData(tokenAddress: string) {
     console.log('Response status:', response.status);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API error response:', errorText);
-      throw new Error(`API error: ${response.status}. Response: ${errorText}`);
+      // If specific coin fetch fails, try the search endpoint
+      const searchUrl = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
+      console.log('Trying search endpoint:', searchUrl);
+      
+      const searchResponse = await fetch(searchUrl);
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.error('Both endpoints failed. Search API error response:', errorText);
+        throw new Error(`API error: ${searchResponse.status}. Response: ${errorText}`);
+      }
+
+      const searchData = await searchResponse.json();
+      console.log('Search API Response:', JSON.stringify(searchData, null, 2));
+      
+      // If we got an array, take the first matching item
+      const data = Array.isArray(searchData) ? searchData.find(item => item.mint === tokenAddress) : searchData;
+      
+      if (!data) {
+        throw new Error('Token not found in search results');
+      }
+      
+      return mapPumpFunData(data, tokenAddress);
     }
 
-    const rawData = await response.json();
-    console.log('Raw Pump.fun API Response:', JSON.stringify(rawData, null, 2));
+    const data = await response.json();
+    console.log('Direct API Response:', JSON.stringify(data, null, 2));
+    return mapPumpFunData(data, tokenAddress);
 
-    // Check if rawData is an array and get the first item if it is
-    const data = Array.isArray(rawData) ? rawData[0] : rawData;
-    
-    if (!data || !data.mint) {
-      console.error('Invalid data structure received:', data);
+  } catch (error) {
+    console.error('Error fetching from Pump.fun:', error);
+    throw error;
+  }
+}
+
+function mapPumpFunData(data: any, tokenAddress: string) {
+  console.log('Mapping data for token:', tokenAddress);
+  
+  try {
+    // Enhanced validation
+    if (!data || typeof data !== 'object') {
       throw new Error('Invalid data structure received from API');
     }
 
-    // Enhanced mapping with fallbacks and type checking
+    // Map the data with careful type checking
     const mappedData = {
       id: tokenAddress,
       name: data.name || 'Unknown Token',
@@ -60,8 +88,8 @@ async function fetchPumpFunData(tokenAddress: string) {
       decimals: typeof data.decimals === 'number' ? data.decimals : null,
       historic_data: Array.isArray(data.price_history) ? data.price_history : null,
       homepage: data.website || null,
-      blockchain_site: [data.explorer_url].filter(Boolean),
-      chat_url: [data.telegram].filter(Boolean),
+      blockchain_site: Array.isArray(data.explorer_url) ? data.explorer_url : (data.explorer_url ? [data.explorer_url] : null),
+      chat_url: Array.isArray(data.telegram) ? data.telegram : (data.telegram ? [data.telegram] : null),
       twitter_screen_name: data.twitter || null,
       coingecko_id: null,
       coin_id: data.mint || null,
@@ -69,12 +97,12 @@ async function fetchPumpFunData(tokenAddress: string) {
       announcement_url: null
     };
 
-    console.log('Mapped data:', JSON.stringify(mappedData, null, 2));
+    console.log('Successfully mapped data:', JSON.stringify(mappedData, null, 2));
     return mappedData;
 
-  } catch (error) {
-    console.error('Error fetching from Pump.fun:', error);
-    throw error;
+  } catch (err) {
+    console.error('Error mapping data:', err);
+    throw new Error(`Error mapping data: ${err.message}`);
   }
 }
 
@@ -137,7 +165,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in get-coin function:', error);
     
-    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
