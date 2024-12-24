@@ -38,8 +38,9 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
     setIsRefreshing(false);
   };
 
-  // Log the values being passed to TokenStats
+  // Log the values being passed to TokenStats for debugging
   console.log('TokenDetails - Values being passed to TokenStats:', {
+    marketCap: coinData.marketCap,
     usdMarketCap: coinData.usdMarketCap,
     volume24h: coinData.volume24h,
     liquidity: coinData.liquidity
@@ -62,6 +63,7 @@ export const TokenDetails = ({ coinData, onClick }: TokenDetailsProps) => {
       />
 
       <TokenStats
+        marketCap={coinData.marketCap}
         usdMarketCap={coinData.usdMarketCap}
         volume24h={coinData.volume24h}
         liquidity={coinData.liquidity}

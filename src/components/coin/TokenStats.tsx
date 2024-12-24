@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TokenStatsProps {
-  marketCap?: number | null; // Made optional
+  marketCap?: number | null;
+  usdMarketCap?: number | null;
   volume24h: number | null;
   liquidity: number | null;
-  usdMarketCap?: number | null;
 }
 
-export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsProps) => {
+export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: TokenStatsProps) => {
   const formatValue = (value: number | null): string => {
     if (value === null || isNaN(value)) {
       return "N/A";
@@ -34,9 +34,12 @@ export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsPro
   };
 
   // Add detailed logging of the raw values
-  console.log('Raw USD Market Cap:', usdMarketCap);
-  console.log('Raw Volume 24h:', volume24h);
-  console.log('Raw Liquidity:', liquidity);
+  console.log('TokenStats - Raw values:', {
+    marketCap,
+    usdMarketCap,
+    volume24h,
+    liquidity
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -46,7 +49,7 @@ export const TokenStats = ({ usdMarketCap, volume24h, liquidity }: TokenStatsPro
         </CardHeader>
         <CardContent>
           <p className="text-xl font-bold">
-            {formatValue(usdMarketCap)}
+            {formatValue(usdMarketCap || marketCap)}
           </p>
         </CardContent>
       </Card>
