@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { isValidSolanaAddress } from '@/utils/solana';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 const connection = new Connection(
   'https://rpc.helius.xyz/?api-key=726140d8-6b0d-4719-8702-682d81e94a37'
@@ -24,7 +23,8 @@ export const useTokenBalance = (
         if (!solana?.isPhantom) return;
 
         const response = await solana.connect({ onlyIfTrusted: true });
-        const userPublicKey = response.publicKey;
+        // Convert the response public key to a proper Solana PublicKey instance
+        const userPublicKey = new PublicKey(response.publicKey.toString());
         
         const tokenMint = new PublicKey(tokenAddress);
         const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
