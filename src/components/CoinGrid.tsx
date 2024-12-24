@@ -41,16 +41,16 @@ interface CoinQueryResult {
   } | null;
 }
 
-interface RealtimePayload {
-  new: {
-    id: string;
-    name: string;
-    symbol: string;
-    price: number | null;
-    change_24h: number | null;
-    image_url: string | null;
-  };
+interface RealtimeCoin {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number | null;
+  change_24h: number | null;
+  image_url: string | null;
 }
+
+type RealtimePayload = RealtimePostgresChangesPayload<RealtimeCoin>;
 
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   const { toast } = useToast();
@@ -143,17 +143,19 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           schema: 'public',
           table: 'coins'
         },
-        async (payload: RealtimePostgresChangesPayload<RealtimePayload['new']>) => {
+        (payload: RealtimePayload) => {
           console.log('Received real-time update:', payload);
           
           // Refetch data when we receive an update
-          await refetch();
+          refetch();
           
-          // Show toast notification
-          toast({
-            title: "Price Update",
-            description: `${payload.new.name || 'A coin'}'s data has been updated.`,
-          });
+          // Show toast notification with proper type checking
+          if (payload.new && 'name' in payload.new) {
+            toast({
+              title: "Price Update",
+              description: `${payload.new.name}'s data has been updated.`,
+            });
+          }
         }
       )
       .subscribe();
