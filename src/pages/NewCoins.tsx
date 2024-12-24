@@ -12,50 +12,44 @@ const NewCoins = () => {
     queryFn: async () => {
       console.log('Fetching new coins...');
       try {
-        // Get the 30 most recently updated coins
-        const { data, error } = await supabase
-          .from('coins')
-          .select('*')
-          .order('updated_at', { ascending: false })
+        // Get coins ordered by their last search timestamp
+        const { data: searchData, error: searchError } = await supabase
+          .from('coin_searches')
+          .select(`
+            coin_id,
+            last_searched_at,
+            coins (*)
+          `)
+          .order('last_searched_at', { ascending: false })
           .limit(30);
 
-        if (error) {
-          console.error('Error fetching new coins:', error);
+        if (searchError) {
+          console.error('Error fetching new coins:', searchError);
           toast({
             title: "Error",
             description: "Failed to load new coins. Please try again.",
             variant: "destructive",
           });
-          throw error;
+          throw searchError;
         }
 
-        if (!data) {
+        if (!searchData) {
           console.log('No coins data returned');
           return [];
         }
 
-        // Clean up old coins if we have more than 30
-        if (data.length === 30) {
-          const oldestCoin = data[data.length - 1];
-          const { error: cleanupError } = await supabase
-            .from('coins')
-            .delete()
-            .lt('updated_at', oldestCoin.updated_at);
-
-          if (cleanupError) {
-            console.error('Error cleaning up old coins:', cleanupError);
-          }
-        }
-
-        const mappedCoins: CoinData[] = data.map(coin => ({
-          id: coin.id,
-          name: coin.name,
-          symbol: coin.symbol,
-          price: coin.price,
-          change_24h: coin.change_24h,
-          imageUrl: coin.image_url || "/placeholder.svg",
-          mintAddress: coin.solana_addr
-        }));
+        // Map the data to match CoinData structure
+        const mappedCoins: CoinData[] = searchData
+          .filter(item => item.coins) // Filter out any null coins
+          .map(item => ({
+            id: item.coins!.id,
+            name: item.coins!.name,
+            symbol: item.coins!.symbol,
+            price: item.coins!.price,
+            change_24h: item.coins!.change_24h,
+            imageUrl: item.coins!.image_url || "/placeholder.svg",
+            mintAddress: item.coins!.solana_addr
+          }));
 
         console.log('Successfully fetched coins:', mappedCoins);
         return mappedCoins;
