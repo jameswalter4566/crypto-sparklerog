@@ -46,16 +46,33 @@ export async function fetchFromPumpApi(endpoint: string, params: CoinSearchParam
       const parsedData = JSON.parse(rawText);
       console.log('Parsed API Response:', JSON.stringify(parsedData, null, 2));
       
-      // Log specific fields we're interested in
+      // Log detailed token information
       if (Array.isArray(parsedData)) {
         parsedData.forEach((item, index) => {
-          console.log(`Token ${index} details:`, {
+          console.log(`Token ${index} detailed info:`, {
             mint: item.mint,
+            name: item.name,
+            symbol: item.symbol,
             price: item.price,
             price_usd: item.price_usd,
             total_supply: item.total_supply,
             market_cap: item.market_cap,
-            virtual_sol_reserves: item.virtual_sol_reserves
+            virtual_sol_reserves: item.virtual_sol_reserves,
+            circulating_supply: item.circulating_supply,
+            non_circulating_supply: item.non_circulating_supply
+          });
+
+          // Calculate and log derived values
+          const calculatedMarketCap = item.price_usd && item.total_supply 
+            ? item.price_usd * item.total_supply 
+            : null;
+          const liquidityInUsd = item.virtual_sol_reserves && item.price 
+            ? item.virtual_sol_reserves * item.price 
+            : null;
+
+          console.log(`Token ${index} calculated values:`, {
+            calculatedMarketCap,
+            liquidityInUsd
           });
         });
       }

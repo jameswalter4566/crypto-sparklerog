@@ -10,23 +10,32 @@ export function mapPumpApiToCoinData(data: PumpApiResponse): CoinData {
     virtual_sol_reserves: data.virtual_sol_reserves
   });
 
-  // Calculate market cap if we have both price and total supply
+  // Calculate market cap using USD price and total supply
   const calculatedMarketCap = data.price_usd && data.total_supply 
-    ? data.price_usd * data.total_supply 
+    ? parseFloat((data.price_usd * data.total_supply).toFixed(2))
     : null;
 
-  console.log('Calculated market cap:', calculatedMarketCap);
-  console.log('API provided market cap:', data.market_cap);
+  // Convert SOL values to USD where applicable
+  const solPrice = data.price || 0;
+  const usdPrice = data.price_usd || 0;
+  const liquidityInUsd = data.virtual_sol_reserves ? parseFloat((data.virtual_sol_reserves * solPrice).toFixed(2)) : null;
+
+  console.log('Calculated values:', {
+    calculatedMarketCap,
+    usdPrice,
+    solPrice,
+    liquidityInUsd
+  });
 
   return {
     id: data.mint,
     name: data.name,
     symbol: data.symbol,
-    price: data.price_usd || data.price, // Prefer USD price if available
+    price: usdPrice,
     change_24h: data.price_change_24h,
-    market_cap: calculatedMarketCap || data.market_cap || null,
+    market_cap: calculatedMarketCap,
     volume_24h: data.volume_24h,
-    liquidity: data.virtual_sol_reserves,
+    liquidity: liquidityInUsd,
     total_supply: data.total_supply,
     circulating_supply: data.circulating_supply,
     non_circulating_supply: data.non_circulating_supply,
