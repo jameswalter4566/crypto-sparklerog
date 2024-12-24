@@ -10,47 +10,52 @@ async function fetchPumpFunData(tokenAddress: string) {
   console.log('Fetching data from Pump.fun for token:', tokenAddress);
 
   try {
-    // First try to fetch specific coin data
-    const url = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
-    console.log('Fetching from URL:', url);
-
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+    // First try the search endpoint as it's more reliable
+    const searchUrl = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
+    console.log('Trying search endpoint:', searchUrl);
     
-    console.log('Response status:', response.status);
+    const searchResponse = await fetch(searchUrl);
+    console.log('Search endpoint response status:', searchResponse.status);
     
-    if (!response.ok) {
-      // If specific coin fetch fails, try the search endpoint
-      const searchUrl = `https://frontend-api-v2.pump.fun/coins?searchTerm=${tokenAddress}`;
-      console.log('Trying search endpoint:', searchUrl);
-      
-      const searchResponse = await fetch(searchUrl);
-      if (!searchResponse.ok) {
-        const errorText = await searchResponse.text();
-        console.error('Both endpoints failed. Search API error response:', errorText);
-        throw new Error(`API error: ${searchResponse.status}. Response: ${errorText}`);
-      }
-
+    if (searchResponse.ok) {
       const searchData = await searchResponse.json();
       console.log('Search API Response:', JSON.stringify(searchData, null, 2));
       
-      // If we got an array, take the first matching item
-      const data = Array.isArray(searchData) ? searchData.find(item => item.mint === tokenAddress) : searchData;
-      
-      if (!data) {
-        throw new Error('Token not found in search results');
+      // If we got search results, find the matching token
+      if (Array.isArray(searchData)) {
+        const matchingToken = searchData.find(item => 
+          item.mint?.toLowerCase() === tokenAddress.toLowerCase() ||
+          item.address?.toLowerCase() === tokenAddress.toLowerCase()
+        );
+        
+        if (matchingToken) {
+          console.log('Found matching token in search results:', matchingToken);
+          return mapPumpFunData(matchingToken, tokenAddress);
+        }
       }
-      
-      return mapPumpFunData(data, tokenAddress);
     }
 
-    const data = await response.json();
-    console.log('Direct API Response:', JSON.stringify(data, null, 2));
-    return mapPumpFunData(data, tokenAddress);
+    // If search fails or no match found, try direct endpoint
+    const directUrl = `https://frontend-api-v2.pump.fun/coins/${tokenAddress}`;
+    console.log('Trying direct endpoint:', directUrl);
+    
+    const directResponse = await fetch(directUrl);
+    console.log('Direct endpoint response status:', directResponse.status);
+    
+    if (!directResponse.ok) {
+      const errorText = await directResponse.text();
+      console.error('API error response:', errorText);
+      throw new Error(`API error: ${directResponse.status}. Response: ${errorText}`);
+    }
+
+    const directData = await directResponse.json();
+    console.log('Direct API Response:', JSON.stringify(directData, null, 2));
+    
+    if (!directData) {
+      throw new Error('No data received from API');
+    }
+
+    return mapPumpFunData(directData, tokenAddress);
 
   } catch (error) {
     console.error('Error fetching from Pump.fun:', error);
@@ -67,20 +72,24 @@ function mapPumpFunData(data: any, tokenAddress: string) {
       throw new Error('Invalid data structure received from API');
     }
 
-    // Map the data with careful type checking
+    // Validate critical fields
+    if (!data.name || !data.symbol) {
+      console.warn('Missing critical fields in API response:', data);
+    }
+
+    // Map the data with careful type checking and detailed logging
     const mappedData = {
       id: tokenAddress,
       name: data.name || 'Unknown Token',
       symbol: data.symbol || '???',
       image_url: data.image_uri || data.image || null,
-      price: typeof data.price === 'number' ? data.price : null,
-      change_24h: typeof data.price_change_24h === 'number' ? data.price_change_24h : null,
-      market_cap: typeof data.market_cap === 'number' ? data.market_cap : null,
-      usd_market_cap: typeof data.usd_market_cap === 'number' ? data.usd_market_cap : null,
-      volume_24h: typeof data.volume_24h === 'number' ? data.volume_24h : null,
-      liquidity: typeof data.virtual_sol_reserves === 'number' ? data.virtual_sol_reserves : null,
-      total_supply: typeof data.total_supply === 'number' ? data.total_supply : null,
-      circulating_supply: typeof data.circulating_supply === 'number' ? data.circulating_supply : null,
+      price: typeof data.price === 'number' && !isNaN(data.price) ? data.price : null,
+      change_24h: typeof data.price_change_24h === 'number' && !isNaN(data.price_change_24h) ? data.price_change_24h : null,
+      market_cap: typeof data.market_cap === 'number' && !isNaN(data.market_cap) ? data.market_cap : null,
+      volume_24h: typeof data.volume_24h === 'number' && !isNaN(data.volume_24h) ? data.volume_24h : null,
+      liquidity: typeof data.virtual_sol_reserves === 'number' && !isNaN(data.virtual_sol_reserves) ? data.virtual_sol_reserves : null,
+      total_supply: typeof data.total_supply === 'number' && !isNaN(data.total_supply) ? data.total_supply : null,
+      circulating_supply: typeof data.circulating_supply === 'number' && !isNaN(data.circulating_supply) ? data.circulating_supply : null,
       non_circulating_supply: typeof data.non_circulating_supply === 'number' ? data.non_circulating_supply : null,
       updated_at: new Date().toISOString(),
       solana_addr: tokenAddress,
@@ -97,6 +106,7 @@ function mapPumpFunData(data: any, tokenAddress: string) {
       announcement_url: null
     };
 
+    // Log mapped data for debugging
     console.log('Successfully mapped data:', JSON.stringify(mappedData, null, 2));
     return mappedData;
 
