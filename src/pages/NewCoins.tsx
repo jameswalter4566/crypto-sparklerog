@@ -10,7 +10,8 @@ const NewCoins = () => {
       const { data, error } = await supabase
         .from('coins')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(100);
 
       if (error) {
         console.error('Error fetching new coins:', error);
