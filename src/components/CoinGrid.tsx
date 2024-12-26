@@ -129,15 +129,17 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         };
       }).filter(Boolean);
     },
+    refetchInterval: 5000, // Refetch every 5 seconds
     gcTime: Infinity,
-    staleTime: 30000,
+    staleTime: 0, // Consider data stale immediately to enable refetching
   });
 
   // Set up real-time subscription
   useEffect(() => {
+    console.log('Setting up real-time subscription');
     const channel = supabase.channel('coin_updates')
       .on(
-        'postgres_changes' as const,
+        'postgres_changes',
         {
           event: '*',
           schema: 'public',
@@ -153,7 +155,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
           if (payload.new && 'name' in payload.new) {
             toast({
               title: "Price Update",
-              description: `${payload.new.name}'s data has been updated.`,
+              description: `${payload.new.name}'s price has been updated.`,
             });
           }
         }
@@ -162,6 +164,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
 
     // Cleanup subscription on unmount
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [refetch, toast]);
