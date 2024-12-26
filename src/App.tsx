@@ -3,10 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { WalletConnect } from "@/components/WalletConnect";
-import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { useNavigate } from "react-router-dom";
-import { Coins, Trophy, Search, Rocket, Star, Navigation } from "lucide-react";
+import { Header } from "@/components/layout/Header";
 import Index from "./pages/Index";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
@@ -16,7 +13,6 @@ import NewCoins from "./pages/NewCoins";
 import { useToast } from "./hooks/use-toast";
 import { supabase } from "./integrations/supabase/client";
 import { useState } from "react";
-import { Button } from "./components/ui/button";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,51 +24,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  console.log("App component rendered");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const menuItems = [
-    {
-      title: "NODE",
-      icon: Navigation,
-      path: "https://nodecompany.fun",
-      external: true,
-    },
-    {
-      title: "Trending",
-      icon: Coins,
-      path: "/",
-    },
-    {
-      title: "New",
-      icon: Star,
-      path: "/new-coins",
-    },
-    {
-      title: "Search",
-      icon: Search,
-      path: "/search",
-    },
-    {
-      title: "Launch",
-      icon: Rocket,
-      path: "/launch",
-    },
-    {
-      title: "Leaderboard",
-      icon: Trophy,
-      path: "/leaderboard",
-    },
-  ];
-
-  const handleNavigation = (path: string, external?: boolean) => {
-    if (external) {
-      window.open(path, '_blank');
-    } else {
-      navigate(path);
-    }
-  };
 
   const updateSearchCount = async (coinId: string) => {
     console.log('Updating search count for coin:', coinId);
@@ -187,37 +141,7 @@ const App = () => {
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">
             <main className="flex-1 overflow-x-hidden">
-              <div className="fixed top-0 left-0 right-0 h-24 bg-black/50 backdrop-blur-sm z-20">
-                <div className="flex flex-col gap-4 h-full px-4 py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <img 
-                        src="/u1251571754_httpss.mj.runNz6izZD6Xoc_Create_me_a_four_letter__08879d3a-1b7c-44e1-aae1-8d48bb2ee55a_1.png" 
-                        alt="Logo" 
-                        className="h-16"
-                      />
-                      <div className="flex items-center gap-2">
-                        {menuItems.map((item) => (
-                          <Button
-                            key={item.title}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleNavigation(item.path, item.external)}
-                            className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
-                          >
-                            <item.icon className="h-4 w-4" />
-                            <span className="hidden sm:inline">{item.title}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    <WalletConnect />
-                  </div>
-                  <div className="w-full max-w-xl mx-auto">
-                    <TokenSearchForm onSearch={handleSearch} isLoading={isLoading} />
-                  </div>
-                </div>
-              </div>
+              <Header onSearch={handleSearch} isLoading={isLoading} />
               <div className="h-24"></div>
               <Routes>
                 <Route path="/" element={<Index />} />
