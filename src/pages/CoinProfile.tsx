@@ -101,7 +101,7 @@ const CoinProfile = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 pt-32">
         <Skeleton className="h-12 w-24 mb-4" />
         <Skeleton className="h-6 w-48 mb-2" />
         <Skeleton className="h-4 w-64 mb-4" />
@@ -116,7 +116,7 @@ const CoinProfile = () => {
 
   if (error || !coin) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center">
+      <div className="p-6 pt-32 flex flex-col items-center justify-center">
         <CandlestickChart className="h-16 w-16 text-muted-foreground mb-4" />
         <h2 className="text-2xl font-bold">Token not found</h2>
         <p className="text-muted-foreground">{error || 'The requested token data could not be loaded.'}</p>
@@ -124,15 +124,8 @@ const CoinProfile = () => {
     );
   }
 
-  console.log('Data being passed to TokenStats:', {
-    marketCap: coin.market_cap,
-    usdMarketCap: coin.usd_market_cap,
-    volume24h: coin.volume_24h,
-    liquidity: coin.liquidity
-  });
-
   return (
-    <div className="p-6">
+    <div className="p-6 pt-32">
       <TokenHeader
         name={coin.name}
         symbol={coin.symbol}
