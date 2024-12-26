@@ -75,7 +75,7 @@ export const Header = ({ onSearch, isLoading }: {
               ))}
             </div>
           </div>
-          <div>
+          <div className="flex items-center">
             <WalletConnect />
           </div>
         </div>
