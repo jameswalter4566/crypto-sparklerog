@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface CoinGridProps {
   coins?: CoinData[];
@@ -55,6 +55,19 @@ type RealtimePayload = RealtimePostgresChangesPayload<RealtimeCoin>;
 export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
   const { toast } = useToast();
 
+  // Function to update coin data
+  const updateCoinData = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('update-coin-data');
+      if (error) {
+        console.error('Error updating coin data:', error);
+      }
+    } catch (error) {
+      console.error('Error invoking update function:', error);
+    }
+  };
+
+  // Query for fetching coins with automatic refetch
   const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
@@ -84,8 +97,6 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         console.error('Error fetching trending coins:', error);
         throw error;
       }
-
-      console.log('Trending coins data:', trendingCoins);
 
       return (trendingCoins as unknown as CoinQueryResult[]).map(trend => {
         if (!trend.coins) {
@@ -129,14 +140,17 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         };
       }).filter(Boolean);
     },
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 5000,
     gcTime: Infinity,
-    staleTime: 0, // Consider data stale immediately to enable refetching
+    staleTime: 0,
   });
 
-  // Set up real-time subscription
+  // Set up real-time updates
   useEffect(() => {
-    console.log('Setting up real-time subscription');
+    // Update coin data every 5 seconds
+    const updateInterval = setInterval(updateCoinData, 5000);
+
+    // Set up real-time subscription for price updates
     const channel = supabase.channel('coin_updates')
       .on(
         'postgres_changes',
@@ -147,11 +161,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         },
         (payload: RealtimePayload) => {
           console.log('Received real-time update:', payload);
-          
-          // Refetch data when we receive an update
           refetch();
           
-          // Show toast notification with proper type checking
           if (payload.new && 'name' in payload.new) {
             toast({
               title: "Price Update",
@@ -162,9 +173,8 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
     return () => {
-      console.log('Cleaning up real-time subscription');
+      clearInterval(updateInterval);
       supabase.removeChannel(channel);
     };
   }, [refetch, toast]);
