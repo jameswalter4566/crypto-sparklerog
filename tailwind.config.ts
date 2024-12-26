@@ -90,13 +90,28 @@ export default {
           "50%": { 
             boxShadow: "0 0 20px rgba(249,115,22,0.5), 0 0 40px rgba(249,115,22,0.3), 0 0 60px rgba(249,115,22,0.2)"
           }
-        }
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-20px)" },
+        },
+        "price-glow-green": {
+          "0%, 100%": { boxShadow: "0 0 15px rgba(34, 197, 94, 0.2)" },
+          "50%": { boxShadow: "0 0 30px rgba(34, 197, 94, 0.4)" },
+        },
+        "price-glow-red": {
+          "0%, 100%": { boxShadow: "0 0 15px rgba(239, 68, 68, 0.2)" },
+          "50%": { boxShadow: "0 0 30px rgba(239, 68, 68, 0.4)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "glow-pulse": "glow-pulse 1.5s ease-in-out infinite",
-        "laser-glow": "laser-glow 2s ease-in-out infinite"
+        "laser-glow": "laser-glow 2s ease-in-out infinite",
+        "float": "float 10s ease-in-out infinite",
+        "price-glow-green": "price-glow-green 2s ease-in-out infinite",
+        "price-glow-red": "price-glow-red 2s ease-in-out infinite",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

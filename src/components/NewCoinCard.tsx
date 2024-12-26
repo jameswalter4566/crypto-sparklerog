@@ -5,6 +5,7 @@ import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
+import { cn } from "@/lib/utils";
 
 interface NewCoinCardProps {
   id: string;
@@ -28,9 +29,15 @@ export function NewCoinCard({
   mintAddress,
   searchCount,
   priceHistory,
-  usdMarketCap
+  usdMarketCap,
+  change24h
 }: NewCoinCardProps) {
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
+  
+  const getGlowClass = (change24h: number | null) => {
+    if (!change24h) return "";
+    return change24h > 0 ? "hover:animate-price-glow-green" : "hover:animate-price-glow-red";
+  };
 
   const formatPrice = (value: number | null) => {
     if (typeof value !== "number" || isNaN(value)) {
@@ -55,8 +62,11 @@ export function NewCoinCard({
   const imageSource = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
 
   return (
-    <Link to={`/coin/${id}`} className="block">
-      <Card className="hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 animate-laser-border relative">
+    <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
+      <Card className={cn(
+        "hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 relative",
+        getGlowClass(change24h)
+      )}>
         {searchCount !== undefined && searchCount > 0 && (
           <div className="absolute top-2 right-2 z-10 flex flex-col items-center">
             <Badge 
