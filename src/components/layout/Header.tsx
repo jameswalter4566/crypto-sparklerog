@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Star, Navigation } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -8,7 +8,6 @@ interface MenuItem {
   title: string;
   icon: React.ComponentType;
   path: string;
-  external?: boolean;
 }
 
 export const Header = ({ onSearch, isLoading }: { 
@@ -19,12 +18,6 @@ export const Header = ({ onSearch, isLoading }: {
   console.log("Header component rendered");
 
   const menuItems: MenuItem[] = [
-    {
-      title: "NODE",
-      icon: Navigation,
-      path: "https://nodecompany.fun",
-      external: true,
-    },
     {
       title: "Trending",
       icon: Coins,
@@ -52,13 +45,9 @@ export const Header = ({ onSearch, isLoading }: {
     },
   ];
 
-  const handleNavigation = (path: string, external?: boolean) => {
-    console.log("Navigation triggered:", { path, external });
-    if (external) {
-      window.open(path, '_blank');
-    } else {
-      navigate(path);
-    }
+  const handleNavigation = (path: string) => {
+    console.log("Navigation triggered:", { path });
+    navigate(path);
   };
 
   return (
@@ -77,7 +66,7 @@ export const Header = ({ onSearch, isLoading }: {
                   key={item.title}
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleNavigation(item.path, item.external)}
+                  onClick={() => handleNavigation(item.path)}
                   className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
                 >
                   <item.icon className="h-4 w-4" />
@@ -88,7 +77,7 @@ export const Header = ({ onSearch, isLoading }: {
           </div>
           <WalletConnect />
         </div>
-        <div className="w-full max-w-xl mx-auto">
+        <div className="w-full max-w-4xl mx-auto">
           <TokenSearchForm onSearch={onSearch} isLoading={isLoading} />
         </div>
       </div>
