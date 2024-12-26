@@ -56,9 +56,9 @@ export const Header = ({ onSearch, isLoading }: {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img 
-              src="/u1251571754_httpss.mj.runNz6izZD6Xoc_Create_me_a_four_letter__08879d3a-1b7c-44e1-aae1-8d48bb2ee55a_1.png" 
+              src="/swap-high-resolution-logo.png" 
               alt="Logo" 
-              className="h-16"
+              className="h-16 w-auto object-contain"
             />
             <div className="flex items-center gap-2">
               {menuItems.map((item) => (
