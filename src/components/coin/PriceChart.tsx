@@ -23,7 +23,7 @@ interface PriceChartProps {
 export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   const [chartData, setChartData] = useState(initialData);
   const { toast } = useToast();
-  const animationRef = useRef<number>(0);
+  const prevDataRef = useRef(chartData);
 
   useEffect(() => {
     // Set up real-time listener for market cap changes
@@ -44,7 +44,6 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
             const newMarketCap = payload.new.usd_market_cap;
             const currentTime = new Date().toLocaleDateString();
 
-            // Add new data point with smooth animation
             setChartData(prevData => {
               const newData = [...prevData];
               
@@ -60,6 +59,8 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               }
               newData.push(latestPoint);
               
+              // Update ref for comparison
+              prevDataRef.current = newData;
               return newData;
             });
 
@@ -75,9 +76,6 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
 
     return () => {
       supabase.removeChannel(channel);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
     };
   }, [coinId, toast]);
 
@@ -102,13 +100,6 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
                 <stop offset="5%" stopColor="#4B9CD3" stopOpacity={0.8}/>
                 <stop offset="95%" stopColor="#4B9CD3" stopOpacity={0}/>
               </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
@@ -125,7 +116,8 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               tickLine={false}
               tick={{ fill: '#888', fontSize: 12 }}
               tickFormatter={(value) => `$${value.toLocaleString()}`}
-              domain={['auto', 'auto']} // This ensures the chart adjusts its scale automatically
+              domain={['auto', 'auto']}
+              width={80}
             />
             <Tooltip
               contentStyle={{
@@ -143,11 +135,8 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorPrice)"
-              filter="url(#glow)"
-              isAnimationActive={true} // Enable animations
-              animationDuration={300} // Set animation duration
-              animationBegin={0} // Start animation immediately
-              className="animate-laser-glow" 
+              isAnimationActive={false}
+              dot={false}
             />
           </AreaChart>
         </ResponsiveContainer>
