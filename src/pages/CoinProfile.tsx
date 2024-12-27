@@ -72,7 +72,8 @@ const CoinProfile = () => {
           data={coin.historic_data?.map(item => ({
             date: item.timestamp,
             price: item.price
-          })) || []} 
+          })) || []}
+          coinId={coin.id}
         />
         <SwapInterface defaultTokenAddress={coin.solana_addr} />
       </div>

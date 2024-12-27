@@ -5,24 +5,85 @@ import {
   YAxis,
   AreaChart,
   Area,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Tooltip
 } from 'recharts';
+import { useEffect, useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PriceChartProps {
   data: Array<{
     date: string;
     price: number;
   }>;
+  coinId: string; // Add coinId prop to identify which coin to listen to
 }
 
-export const PriceChart = ({ data }: PriceChartProps) => {
+export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
+  const [chartData, setChartData] = useState(initialData);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Set up real-time listener for market cap changes
+    const channel = supabase
+      .channel('coin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'coins',
+          filter: `id=eq.${coinId}`
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          
+          if (payload.new && payload.new.usd_market_cap) {
+            const newMarketCap = payload.new.usd_market_cap;
+            const currentTime = new Date().toLocaleDateString();
+
+            // Add new data point
+            setChartData(prevData => {
+              const newData = [...prevData];
+              
+              // Add new point or update the latest one
+              const latestPoint = {
+                date: currentTime,
+                price: newMarketCap
+              };
+              
+              // Keep only the last 30 data points for better visualization
+              if (newData.length >= 30) {
+                newData.shift(); // Remove oldest point
+              }
+              newData.push(latestPoint);
+              
+              return newData;
+            });
+
+            // Show toast notification
+            toast({
+              title: "Market Cap Updated",
+              description: `New market cap: $${newMarketCap.toLocaleString()}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [coinId, toast]);
+
   // Generate mock data if no data is provided
   const mockData = Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
     price: Math.sin(i * 0.5) * 10 + 20 + Math.random() * 5
   }));
 
-  const chartData = data.length > 0 ? data : mockData;
+  const displayData = chartData.length > 0 ? chartData : mockData;
 
   return (
     <Card className="w-full h-[600px]">
@@ -31,7 +92,7 @@ export const PriceChart = ({ data }: PriceChartProps) => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={500}>
-          <AreaChart data={chartData}>
+          <AreaChart data={displayData}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#4B9CD3" stopOpacity={0.8}/>
@@ -53,12 +114,22 @@ export const PriceChart = ({ data }: PriceChartProps) => {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={false}
+              tick={{ fill: '#888', fontSize: 12 }}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
-              tick={false}
+              tick={{ fill: '#888', fontSize: 12 }}
+              tickFormatter={(value) => `$${value.toLocaleString()}`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                border: '1px solid #444',
+                borderRadius: '4px'
+              }}
+              labelStyle={{ color: '#fff' }}
+              formatter={(value: number) => [`$${value.toLocaleString()}`, 'Market Cap']}
             />
             <Area 
               type="monotone" 
