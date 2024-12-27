@@ -13,6 +13,7 @@ import NewCoins from "./pages/NewCoins";
 import { useToast } from "./hooks/use-toast";
 import { supabase } from "./integrations/supabase/client";
 import { useState } from "react";
+import { priceColors } from "./constants/colors";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,10 @@ const App = () => {
   console.log("App component rendered");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  const getRandomColor = () => {
+    return priceColors[Math.floor(Math.random() * priceColors.length)];
+  };
 
   const updateSearchCount = async (coinId: string) => {
     console.log('Updating search count for coin:', coinId);
@@ -112,11 +117,18 @@ const App = () => {
 
       if (coinMetadata) {
         await updateSearchCount(coinMetadata.id);
+        
+        // Show colorful toast notification for searched coin
         toast({
-          title: "Success",
-          description: `${coinMetadata.name} found successfully.`,
+          title: "New Search!",
+          description: (
+            <span style={{ color: getRandomColor(), fontWeight: "bold" }}>
+              {coinMetadata.name} was just searched! 🔍
+            </span>
+          ),
           variant: "default",
         });
+        
         return coinMetadata;
       }
       return null;
