@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -17,12 +17,13 @@ interface PriceChartProps {
     date: string;
     price: number;
   }>;
-  coinId: string; // Add coinId prop to identify which coin to listen to
+  coinId: string;
 }
 
 export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   const [chartData, setChartData] = useState(initialData);
   const { toast } = useToast();
+  const animationRef = useRef<number>(0);
 
   useEffect(() => {
     // Set up real-time listener for market cap changes
@@ -43,11 +44,11 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
             const newMarketCap = payload.new.usd_market_cap;
             const currentTime = new Date().toLocaleDateString();
 
-            // Add new data point
+            // Add new data point with smooth animation
             setChartData(prevData => {
               const newData = [...prevData];
               
-              // Add new point or update the latest one
+              // Add new point
               const latestPoint = {
                 date: currentTime,
                 price: newMarketCap
@@ -74,6 +75,9 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
 
     return () => {
       supabase.removeChannel(channel);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
   }, [coinId, toast]);
 
@@ -121,6 +125,7 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               tickLine={false}
               tick={{ fill: '#888', fontSize: 12 }}
               tickFormatter={(value) => `$${value.toLocaleString()}`}
+              domain={['auto', 'auto']} // This ensures the chart adjusts its scale automatically
             />
             <Tooltip
               contentStyle={{
@@ -139,6 +144,9 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               fillOpacity={1} 
               fill="url(#colorPrice)"
               filter="url(#glow)"
+              isAnimationActive={true} // Enable animations
+              animationDuration={300} // Set animation duration
+              animationBegin={0} // Start animation immediately
               className="animate-laser-glow" 
             />
           </AreaChart>
