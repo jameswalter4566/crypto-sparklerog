@@ -118,6 +118,8 @@ const App = () => {
       if (coinMetadata) {
         await updateSearchCount(coinMetadata.id);
         
+        console.log("Showing toast for:", coinMetadata.name); // Debug log
+        
         // Show colorful toast notification for searched coin
         toast({
           title: "New Search!",
@@ -126,6 +128,7 @@ const App = () => {
               {coinMetadata.name} was just searched! 🔍
             </span>
           ),
+          duration: 5000, // Keep the toast visible for 5 seconds
           variant: "default",
         });
         
@@ -148,8 +151,10 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
+        <div className="relative">
+          <Toaster className="z-50" /> {/* Ensure toasts are visible */}
+          <Sonner position="top-right" className="z-50" /> {/* Add position and ensure visibility */}
+        </div>
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">
             <main className="flex-1 overflow-x-hidden">
