@@ -10,12 +10,18 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (videoRef.current && videoTrack) {
-      videoTrack.play(videoRef.current);
-      return () => {
-        videoTrack.stop();
-      };
+    if (!videoRef.current || !videoTrack) {
+      console.log("[VideoStream] Missing video ref or track");
+      return;
     }
+
+    console.log("[VideoStream] Playing video track");
+    videoTrack.play(videoRef.current);
+
+    return () => {
+      console.log("[VideoStream] Stopping video track");
+      videoTrack.stop();
+    };
   }, [videoTrack]);
 
   return (
