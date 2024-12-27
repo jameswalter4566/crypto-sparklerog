@@ -16,12 +16,6 @@ export interface Participant {
   isTalking: boolean;
   /** The participant's SOL balance */
   solBalance: number | null;
-  /** Whether this participant has their video enabled */
-  isVideoEnabled?: boolean;
-  /** The participant's video track, if any */
-  videoTrack?: any;
-  /** Whether this participant is the local user */
-  isLocal?: boolean;
 }
 
 /**

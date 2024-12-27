@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { VoiceChatControls } from "./VoiceChatControls";
 import { VoiceChatParticipants } from "./VoiceChatParticipants";
 import { useVoiceChat } from "./useVoiceChat";
@@ -13,7 +14,6 @@ import {
 import { Card } from "@/components/ui/card";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { toast } from "sonner";
-import { DeviceSelect } from "./DeviceSelect";
 
 interface VoiceChatRoomProps {
   channelName: string;
@@ -25,25 +25,21 @@ interface VoiceChatRoomProps {
   } | null;
 }
 
+const AGORA_APP_ID = "c6f7a2828b774baebabd8ece87268954";
+
 export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRoomProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
-  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>(() => {
     return localStorage.getItem('selectedMicrophoneId') || "";
-  });
-  const [selectedCameraId, setSelectedCameraId] = useState<string>(() => {
-    return localStorage.getItem('selectedCameraId') || "";
   });
   const [isDeviceSelected, setIsDeviceSelected] = useState(false);
 
   const {
     participants,
     isMuted,
-    isVideoEnabled,
     handleToggleMute,
-    handleToggleVideo,
     join,
     leave,
     toggleMute,
@@ -51,49 +47,37 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   } = useVoiceChat({
     channelName,
     userProfile,
-    agoraAppId: "c6f7a2828b774baebabd8ece87268954",
+    agoraAppId: AGORA_APP_ID,
     microphoneId: selectedMicrophoneId,
-    cameraId: selectedCameraId
   });
 
   useEffect(() => {
+    console.log("[VoiceChatRoom] Participants updated:", participants);
+    console.log("[VoiceChatRoom] Connection status:", isConnected ? "Connected" : "Disconnected");
+  }, [participants, isConnected]);
+
+  useEffect(() => {
     const getDevices = async () => {
-      console.log("[VoiceChatRoom] Requesting media permissions and listing devices...");
+      console.log("[VoiceChatRoom] Requesting audio permission and listing devices...");
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        const audioDevs = await AgoraRTC.getMicrophones();
-        const videoDevs = await AgoraRTC.getCameras();
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const devices = await AgoraRTC.getMicrophones();
+        console.log("[VoiceChatRoom] Available audio devices:", devices);
+        setAudioDevices(devices);
         
-        console.log("[VoiceChatRoom] Available audio devices:", audioDevs);
-        console.log("[VoiceChatRoom] Available video devices:", videoDevs);
-        
-        setAudioDevices(audioDevs);
-        setVideoDevices(videoDevs);
-        
-        // Handle audio device selection
-        const savedAudioId = localStorage.getItem('selectedMicrophoneId');
-        if (savedAudioId && audioDevs.some(device => device.deviceId === savedAudioId)) {
-          setSelectedMicrophoneId(savedAudioId);
-        } else if (audioDevs.length > 0) {
-          setSelectedMicrophoneId(audioDevs[0].deviceId);
-        }
-
-        // Handle video device selection
-        const savedVideoId = localStorage.getItem('selectedCameraId');
-        if (savedVideoId && videoDevs.some(device => device.deviceId === savedVideoId)) {
-          setSelectedCameraId(savedVideoId);
-        } else if (videoDevs.length > 0) {
-          setSelectedCameraId(videoDevs[0].deviceId);
-        }
-
-        if (audioDevs.length === 0) {
+        const savedDeviceId = localStorage.getItem('selectedMicrophoneId');
+        if (savedDeviceId && devices.some(device => device.deviceId === savedDeviceId)) {
+          setSelectedMicrophoneId(savedDeviceId);
+        } else if (devices.length > 0) {
+          setSelectedMicrophoneId(devices[0].deviceId);
+        } else {
           const errMsg = "No audio input devices found. Please plug in a microphone.";
           setError(errMsg);
           toast.error(errMsg);
         }
       } catch (err) {
-        console.error('[VoiceChatRoom] Failed to get media devices:', err);
-        const errorMsg = err instanceof Error ? err.message : "Failed to access media devices. Please check your browser permissions.";
+        console.error('[VoiceChatRoom] Failed to get audio devices:', err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to access microphone. Please check your browser permissions.";
         setError(errorMsg);
         toast.error(errorMsg);
       } finally {
@@ -104,11 +88,9 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     getDevices();
 
     const handleDeviceChange = async () => {
-      console.log("[VoiceChatRoom] Media devices changed");
-      const audioDevs = await AgoraRTC.getMicrophones();
-      const videoDevs = await AgoraRTC.getCameras();
-      setAudioDevices(audioDevs);
-      setVideoDevices(videoDevs);
+      console.log("[VoiceChatRoom] Audio devices changed");
+      const devices = await AgoraRTC.getMicrophones();
+      setAudioDevices(devices);
     };
 
     navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
@@ -118,7 +100,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   }, []);
 
   const handleDeviceSelect = async () => {
-    console.log("[VoiceChatRoom] Selected devices - Mic:", selectedMicrophoneId, "Camera:", selectedCameraId);
+    console.log("[VoiceChatRoom] Selected microphone ID:", selectedMicrophoneId);
     if (!selectedMicrophoneId) {
       const errMsg = "Please select a microphone device before joining.";
       setError(errMsg);
@@ -133,8 +115,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
       await join();
       setIsDeviceSelected(true);
       localStorage.setItem('selectedMicrophoneId', selectedMicrophoneId);
-      localStorage.setItem('selectedCameraId', selectedCameraId);
-      console.log("[VoiceChatRoom] Successfully joined voice chat");
+      console.log("[VoiceChatRoom] Successfully joined voice chat with device:", selectedMicrophoneId);
     } catch (err) {
       console.error('[VoiceChatRoom] Failed to initialize voice chat:', err);
       const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
@@ -161,10 +142,6 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     };
   }, [leave, isDeviceSelected]);
 
-  // Find the local participant to pass their ID to the controls
-  const localParticipant = participants.find(p => p.isLocal);
-  const localUserId = localParticipant?.id;
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -183,31 +160,54 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   }
 
   if (!isDeviceSelected) {
-    return <DeviceSelect 
-      audioDevices={audioDevices}
-      videoDevices={videoDevices}
-      selectedMicrophoneId={selectedMicrophoneId}
-      selectedCameraId={selectedCameraId}
-      setSelectedMicrophoneId={setSelectedMicrophoneId}
-      setSelectedCameraId={setSelectedCameraId}
-      onConfirm={handleDeviceSelect}
-      onCancel={onLeave}
-    />;
+    return (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Select Audio Device</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Microphone</label>
+            <Select
+              value={selectedMicrophoneId}
+              onValueChange={setSelectedMicrophoneId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select microphone..." />
+              </SelectTrigger>
+              <SelectContent>
+                {audioDevices.map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onLeave}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeviceSelect}
+              disabled={!selectedMicrophoneId}
+            >
+              Join Voice Chat
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
   }
 
   return (
     <div className="p-4">
       <VoiceChatControls
         isMuted={isMuted}
-        isVideoEnabled={isVideoEnabled}
-        onToggleMute={() => localUserId && handleToggleMute(localUserId)}
-        onToggleVideo={() => localUserId && handleToggleVideo(localUserId)}
+        onToggleMute={toggleMute}
         onLeave={onLeave}
       />
       <VoiceChatParticipants
         participants={participants}
         onToggleMute={handleToggleMute}
-        onToggleVideo={handleToggleVideo}
       />
     </div>
   );
