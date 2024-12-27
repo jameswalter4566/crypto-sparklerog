@@ -100,16 +100,7 @@ export const useCoinData = (id: string | undefined) => {
           if (payload.new && coin) {
             const newData = payload.new as Partial<CoinData>;
             const updatedCoin: CoinData = {
-              id: coin.id,
-              name: coin.name,
-              symbol: coin.symbol,
-              description: coin.description,
-              image_url: coin.image_url,
-              total_supply: coin.total_supply,
-              circulating_supply: coin.circulating_supply,
-              non_circulating_supply: coin.non_circulating_supply,
-              solana_addr: coin.solana_addr,
-              historic_data: coin.historic_data,
+              ...coin,
               price: typeof newData.price !== 'undefined' ? newData.price : coin.price,
               change_24h: typeof newData.change_24h !== 'undefined' ? newData.change_24h : coin.change_24h,
               market_cap: typeof newData.market_cap !== 'undefined' ? newData.market_cap : coin.market_cap,
