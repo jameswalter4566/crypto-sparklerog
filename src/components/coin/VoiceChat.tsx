@@ -19,6 +19,7 @@ const config: ClientConfig = {
   codec: "vp8"
 };
 
+// Create client outside component to prevent recreation
 const client = AgoraRTC.createClient(config) as unknown as IAgoraRTCClient;
 
 const VOICE_CHAT_STATE_KEY = 'voiceChatState';
@@ -52,6 +53,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
         console.log("Wallet connected:", address);
         setWalletConnected(true);
         
+        // Use proper URL formatting for the API call
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('wallet_address, display_name, avatar_url')
@@ -80,7 +82,6 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   }, []);
 
   useEffect(() => {
-    // Save voice chat state to localStorage whenever it changes
     if (isJoined) {
       localStorage.setItem(VOICE_CHAT_STATE_KEY, JSON.stringify({
         joined: true,
@@ -92,7 +93,6 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
   }, [isJoined, coinId]);
 
   useEffect(() => {
-    // Initial check on mount
     checkWalletAndProfile();
 
     // @ts-ignore
@@ -116,7 +116,6 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
     solana.on('connect', onConnect);
     solana.on('disconnect', onDisconnect);
 
-    // Handle page visibility changes
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isJoined) {
         console.log("Page became visible, checking connection status");
