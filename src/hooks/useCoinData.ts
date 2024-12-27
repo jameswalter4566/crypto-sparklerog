@@ -80,6 +80,12 @@ export const useCoinData = (id: string | undefined) => {
     }
   }, [id, toast]);
 
+  // Initial data fetch
+  useEffect(() => {
+    fetchCoinData();
+  }, [fetchCoinData]);
+
+  // Set up real-time subscription
   useEffect(() => {
     if (!id) return;
 
@@ -110,6 +116,7 @@ export const useCoinData = (id: string | undefined) => {
             };
             
             setCoin(updatedCoin);
+            console.log('Updated coin data:', updatedCoin);
 
             toast({
               title: "Price Update",
@@ -120,15 +127,18 @@ export const useCoinData = (id: string | undefined) => {
       )
       .subscribe();
 
-    return () => {
-      console.log('Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [id, toast, coin]);
+    // Auto-refresh every 5 seconds
+    const refreshInterval = setInterval(() => {
+      console.log('Auto-refreshing coin data');
+      fetchCoinData(true);
+    }, 5000);
 
-  useEffect(() => {
-    fetchCoinData();
-  }, [fetchCoinData]);
+    return () => {
+      console.log('Cleaning up real-time subscription and refresh interval');
+      supabase.removeChannel(channel);
+      clearInterval(refreshInterval);
+    };
+  }, [id, toast, coin, fetchCoinData]);
 
   return {
     coin,
