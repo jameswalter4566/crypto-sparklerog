@@ -47,21 +47,33 @@ const NewCoins = () => {
           return [];
         }
 
-        console.log('Search data received:', searchData);
+        console.log('Raw search data received:', searchData);
 
-        return searchData
-          .filter(item => item.coins)
-          .map(item => ({
-            id: item.coins.id,
-            name: item.coins.name,
-            symbol: item.coins.symbol,
-            price: item.coins.price,
-            change_24h: item.coins.change_24h,
-            imageUrl: item.coins.image_url || "/placeholder.svg", // Map image_url to imageUrl
-            mintAddress: item.coins.solana_addr || "", // Map solana_addr to mintAddress
-            priceHistory: item.coins.historic_data, // Map historic_data to priceHistory
-            usdMarketCap: item.coins.usd_market_cap // Map usd_market_cap to usdMarketCap
-          }));
+        const mappedCoins = searchData
+          .filter(item => {
+            if (!item.coins) {
+              console.log('Filtered out item with no coins data:', item);
+              return false;
+            }
+            return true;
+          })
+          .map(item => {
+            console.log('Processing coin:', item.coins);
+            return {
+              id: item.coins.id,
+              name: item.coins.name,
+              symbol: item.coins.symbol,
+              price: item.coins.price,
+              change_24h: item.coins.change_24h,
+              imageUrl: item.coins.image_url || "/placeholder.svg",
+              mintAddress: item.coins.solana_addr || "",
+              priceHistory: item.coins.historic_data,
+              usdMarketCap: item.coins.usd_market_cap
+            };
+          });
+
+        console.log('Mapped coins:', mappedCoins);
+        return mappedCoins;
       } catch (err) {
         console.error('Failed to fetch coins:', err);
         throw err;
