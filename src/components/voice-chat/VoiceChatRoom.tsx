@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import AgoraRTC from "agora-rtc-sdk-ng";
+import { toast } from "sonner";
 
 interface VoiceChatRoomProps {
   channelName: string;
@@ -34,7 +35,6 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     return localStorage.getItem('selectedMicrophoneId') || "";
   });
   const [isDeviceSelected, setIsDeviceSelected] = useState(false);
-  const { toast } = useToast();
 
   const {
     participants,
@@ -51,7 +51,6 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     microphoneId: selectedMicrophoneId,
   });
 
-  // Debug: Log whenever participants change
   useEffect(() => {
     console.log("[VoiceChatRoom] Participants updated:", participants);
     console.log("[VoiceChatRoom] Connection status:", isConnected ? "Connected" : "Disconnected");
@@ -66,24 +65,21 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
         console.log("[VoiceChatRoom] Available audio devices:", devices);
         setAudioDevices(devices);
         
-        // Try to use the previously selected device or fall back to the first available device
         const savedDeviceId = localStorage.getItem('selectedMicrophoneId');
         if (savedDeviceId && devices.some(device => device.deviceId === savedDeviceId)) {
           setSelectedMicrophoneId(savedDeviceId);
         } else if (devices.length > 0) {
           setSelectedMicrophoneId(devices[0].deviceId);
         } else {
-          setError("No audio input devices found. Please plug in a microphone.");
+          const errMsg = "No audio input devices found. Please plug in a microphone.";
+          setError(errMsg);
+          toast.error(errMsg);
         }
       } catch (err) {
         console.error('[VoiceChatRoom] Failed to get audio devices:', err);
         const errorMsg = err instanceof Error ? err.message : "Failed to access microphone. Please check your browser permissions.";
         setError(errorMsg);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMsg,
-        });
+        toast.error(errorMsg);
       } finally {
         setIsLoading(false);
       }
@@ -91,7 +87,6 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
 
     getDevices();
 
-    // Handle device changes
     const handleDeviceChange = async () => {
       console.log("[VoiceChatRoom] Audio devices changed");
       const devices = await AgoraRTC.getMicrophones();
@@ -102,18 +97,14 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     return () => {
       navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
     };
-  }, [toast]);
+  }, []);
 
   const handleDeviceSelect = async () => {
     console.log("[VoiceChatRoom] Selected microphone ID:", selectedMicrophoneId);
     if (!selectedMicrophoneId) {
       const errMsg = "Please select a microphone device before joining.";
       setError(errMsg);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errMsg,
-      });
+      toast.error(errMsg);
       return;
     }
 
@@ -126,24 +117,18 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
       localStorage.setItem('selectedMicrophoneId', selectedMicrophoneId);
       console.log("[VoiceChatRoom] Successfully joined voice chat with device:", selectedMicrophoneId);
     } catch (err) {
-      console.error('[VoiceChatRoom] Failed to initialize Agora:', err);
+      console.error('[VoiceChatRoom] Failed to initialize voice chat:', err);
       const errorMsg = err instanceof Error ? err.message : "An error occurred while setting up voice chat.";
       setError(errorMsg);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMsg,
-      });
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle beforeunload event to clean up properly
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (isDeviceSelected) {
-        // Attempt to clean up gracefully
         leave();
       }
     };
