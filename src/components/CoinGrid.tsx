@@ -40,7 +40,7 @@ interface CoinQueryResult {
     change_24h: number;
     image_url: string | null;
     solana_addr: string | null;
-    historic_data: HistoricDataItem[] | null;
+    historic_data: Array<{ price: number; timestamp: string }> | null;
     market_cap: number | null;
     usd_market_cap: number | null;
   } | null;
@@ -157,12 +157,18 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         
         try {
           if (trend.coins.historic_data) {
-            const historyData = trend.coins.historic_data as HistoricDataItem[];
+            // First cast to unknown, then to our expected type
+            const historyData = trend.coins.historic_data as unknown as Array<{
+              price: number | string;
+              timestamp: string | number;
+            }>;
             
             if (Array.isArray(historyData)) {
               priceHistory = historyData.map(item => ({
-                price: Number(item.price),
-                timestamp: String(item.timestamp)
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                timestamp: typeof item.timestamp === 'number' 
+                  ? new Date(item.timestamp).toISOString() 
+                  : String(item.timestamp)
               }));
             }
           }
