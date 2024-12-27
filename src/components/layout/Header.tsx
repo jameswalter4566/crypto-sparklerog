@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight, Users } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight, Twitter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -61,8 +61,8 @@ export const Header = ({ onSearch, isLoading }: {
       path: "/leaderboard",
     },
     {
-      title: "Community",
-      icon: Users,
+      title: "Community Updates",
+      icon: Twitter,
       path: "https://x.com/SwapSolDotFun",
       isExternal: true,
     },
