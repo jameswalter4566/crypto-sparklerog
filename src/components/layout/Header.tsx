@@ -72,11 +72,11 @@ export const Header = ({ onSearch, isLoading }: {
       <div className="flex flex-col gap-4 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 overflow-hidden rounded-full">
+            <div className="h-18 w-18 overflow-hidden rounded-full">
               <img 
                 src="/swaplogoofficial.jpg" 
                 alt="Logo" 
-                className={`h-14 w-14 object-contain cursor-pointer animate-glow-pulse
+                className={`h-18 w-18 object-contain cursor-pointer animate-glow-pulse
                   ${isSpinning ? 'animate-[spin_1s_linear]' : ''}
                   transition-all duration-300 hover:scale-105`}
                 onClick={handleLogoClick}
