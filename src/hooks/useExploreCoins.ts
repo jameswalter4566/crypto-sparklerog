@@ -50,9 +50,16 @@ export function useExploreCoins() {
         console.log('[useExploreCoins] Received explore coins:', exploreCoins);
 
         return exploreCoins.map((explore: ExploreCoinResponse) => ({
-          ...explore.coins,
-          searchCount: explore.search_count,
-          priceHistory: explore.coins.historic_data
+          id: explore.coins.id,
+          name: explore.coins.name,
+          symbol: explore.coins.symbol,
+          price: explore.coins.price,
+          change_24h: explore.coins.change_24h,
+          imageUrl: explore.coins.image_url, // Mapped from image_url to imageUrl
+          mintAddress: explore.coins.solana_addr, // Mapped from solana_addr to mintAddress
+          priceHistory: explore.coins.historic_data,
+          usdMarketCap: explore.coins.usd_market_cap, // Mapped from usd_market_cap to usdMarketCap
+          searchCount: explore.search_count
         }));
       } catch (error) {
         console.error('[useExploreCoins] Error in query function:', error);
