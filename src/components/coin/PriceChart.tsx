@@ -135,7 +135,9 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorPrice)"
-              isAnimationActive={false}
+              isAnimationActive={true}
+              animationDuration={1000}
+              animationEasing="ease-in-out"
               dot={false}
             />
           </AreaChart>
