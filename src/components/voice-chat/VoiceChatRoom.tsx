@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { VoiceChatControls } from "./VoiceChatControls";
 import { VoiceChatParticipants } from "./VoiceChatParticipants";
 import { useVoiceChat } from "./useVoiceChat";
@@ -198,13 +197,17 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     );
   }
 
+  // Find the local participant to pass their ID to the controls
+  const localParticipant = participants.find(p => p.isLocal);
+  const localUserId = localParticipant?.id;
+
   return (
     <div className="p-4">
       <VoiceChatControls
         isMuted={isMuted}
         isVideoEnabled={isVideoEnabled}
-        onToggleMute={toggleMute}
-        onToggleVideo={handleToggleVideo}
+        onToggleMute={() => localUserId && handleToggleMute(localUserId)}
+        onToggleVideo={() => localUserId && handleToggleVideo(localUserId)}
         onLeave={onLeave}
       />
       <VoiceChatParticipants
