@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { serve } from 'https://deno.fresh.dev/std@v9.6.1/http/server.ts';
 import { WebSocket } from 'https://deno.fresh.dev/std@v9.6.1/ws/mod.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
