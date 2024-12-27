@@ -12,6 +12,29 @@ export const useCoinData = (id: string | undefined) => {
   const { toast } = useToast();
 
   const API_URL = 'https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/get-coin';
+  const COINGECKO_API_URL = 'https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/get-coingecko-id';
+
+  const fetchCoinGeckoId = useCallback(async (solanaAddr: string) => {
+    try {
+      const response = await fetch(COINGECKO_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ solana_addr: solanaAddr }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch CoinGecko ID');
+      }
+
+      const result = await response.json();
+      return result.coingecko_id;
+    } catch (err) {
+      console.error('Error fetching CoinGecko ID:', err);
+      return null;
+    }
+  }, []);
 
   const fetchCoinData = useCallback(async (isRefresh: boolean = false) => {
     if (!id) return;
@@ -36,6 +59,15 @@ export const useCoinData = (id: string | undefined) => {
 
       if (result.error) {
         throw new Error(result.error);
+      }
+
+      // If we don't have a CoinGecko ID, try to fetch it
+      if (!result.coingecko_id && result.solana_addr) {
+        console.log('No CoinGecko ID found, attempting to fetch it');
+        const coingeckoId = await fetchCoinGeckoId(result.solana_addr);
+        if (coingeckoId) {
+          result.coingecko_id = coingeckoId;
+        }
       }
 
       const coinData: CoinData = {
@@ -79,9 +111,8 @@ export const useCoinData = (id: string | undefined) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [id, toast]);
+  }, [id, toast, fetchCoinGeckoId]);
 
-  // Initial data fetch
   useEffect(() => {
     fetchCoinData();
   }, [fetchCoinData]);
