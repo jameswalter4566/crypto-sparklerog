@@ -63,7 +63,7 @@ export const Header = ({ onSearch, isLoading }: {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img 
-              src="/SWAPICONORANGE.jpg" 
+              src="/swaplogoofficial.jpg" 
               alt="Logo" 
               className="h-16 w-auto object-contain"
             />
