@@ -38,10 +38,12 @@ export const VoiceChatUser = ({
     >
       <div className="w-24 h-24 mb-3 relative rounded-full overflow-hidden">
         {user.videoTrack && user.isVideoEnabled ? (
-          <VideoStream 
-            videoTrack={user.videoTrack} 
-            className="w-full h-full object-cover rounded-full"
-          />
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <VideoStream 
+              videoTrack={user.videoTrack} 
+              className="w-full h-full object-cover"
+            />
+          </div>
         ) : (
           <Avatar className="w-24 h-24">
             <AvatarImage src={user.avatar} alt={displayName} />

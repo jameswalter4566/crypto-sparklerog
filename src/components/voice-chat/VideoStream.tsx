@@ -26,15 +26,8 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
       // Clear any existing content
       container.innerHTML = '';
       
-      // Create a dedicated video element
-      const videoElement = document.createElement('div');
-      videoElement.style.width = '100%';
-      videoElement.style.height = '100%';
-      videoElement.style.overflow = 'hidden';
-      container.appendChild(videoElement);
-      
-      // Play the video track in the dedicated element
-      videoTrack.play(videoElement);
+      // Play the video track directly in the container
+      videoTrack.play(container, { fit: 'cover' });
 
       return () => {
         console.log("[VideoStream] Cleaning up video track");
@@ -56,7 +49,7 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   return (
     <div 
       ref={videoRef} 
-      className={`w-full h-full overflow-hidden ${className}`}
+      className={`relative w-full h-full overflow-hidden ${className}`}
       style={{ 
         minHeight: '100%', 
         minWidth: '100%',
