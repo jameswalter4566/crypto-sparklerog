@@ -25,8 +25,6 @@ interface VoiceChatRoomProps {
   } | null;
 }
 
-const AGORA_APP_ID = "c6f7a2828b774baebabd8ece87268954";
-
 export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRoomProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +37,9 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   const {
     participants,
     isMuted,
+    isVideoEnabled,
     handleToggleMute,
+    handleToggleVideo,
     join,
     leave,
     toggleMute,
@@ -47,7 +47,7 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
   } = useVoiceChat({
     channelName,
     userProfile,
-    agoraAppId: AGORA_APP_ID,
+    agoraAppId: "c6f7a2828b774baebabd8ece87268954",
     microphoneId: selectedMicrophoneId,
   });
 
@@ -202,12 +202,15 @@ export const VoiceChatRoom = ({ channelName, onLeave, userProfile }: VoiceChatRo
     <div className="p-4">
       <VoiceChatControls
         isMuted={isMuted}
+        isVideoEnabled={isVideoEnabled}
         onToggleMute={toggleMute}
+        onToggleVideo={handleToggleVideo}
         onLeave={onLeave}
       />
       <VoiceChatParticipants
         participants={participants}
         onToggleMute={handleToggleMute}
+        onToggleVideo={handleToggleVideo}
       />
     </div>
   );

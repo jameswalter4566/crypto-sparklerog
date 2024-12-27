@@ -13,10 +13,8 @@ export const useParticipants = () => {
 
       if (existing) {
         console.log("[Participants] Local participant already exists. Updating profile:", existing);
-        // Update the existing local participant with new profile data
         return prev.map((p) => (p.id === uid ? localParticipant : p));
       } else {
-        // Insert the local participant at the start, preserving other participants
         const filtered = prev.filter((p) => p.id !== uid);
         return [localParticipant, ...filtered];
       }
@@ -26,13 +24,11 @@ export const useParticipants = () => {
   const addRemoteParticipant = useCallback((uid: number, profile: ParticipantProfile | null = null) => {
     console.log("[Participants] Adding remote participant:", uid);
     setParticipants((prev) => {
-      // Check if the participant already exists
       const exists = prev.find((p) => p.id === uid);
       if (exists) {
         console.log("[Participants] Remote participant already exists:", exists);
         return prev;
       }
-      // Add new remote participant at the end, preserving existing participants
       const newParticipant = createParticipant(uid, profile);
       console.log("[Participants] Created remote participant:", newParticipant);
       return [...prev, newParticipant];
@@ -55,6 +51,13 @@ export const useParticipants = () => {
     );
   }, []);
 
+  const handleToggleVideo = useCallback((userId: number) => {
+    console.log("[Participants] Toggling video for user:", userId);
+    setParticipants((prev) =>
+      prev.map((p) => (p.id === userId ? { ...p, isVideoEnabled: !p.isVideoEnabled } : p))
+    );
+  }, []);
+
   const clearParticipants = useCallback(() => {
     console.log("[Participants] Clearing all participants");
     setParticipants([]);
@@ -66,6 +69,7 @@ export const useParticipants = () => {
     addRemoteParticipant,
     removeParticipant,
     handleToggleMute,
+    handleToggleVideo,
     clearParticipants
   };
 };

@@ -69,24 +69,20 @@ export const useVoiceChat = ({
     }
 
     try {
-      // First create the local audio track
       const audioTrack = await createLocalAudioTrack();
       if (!audioTrack) {
         throw new Error("Failed to create audio track");
       }
 
-      // Then connect to the channel
       const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
 
-      // Store the UID mapping for the local user
       if (userProfile?.wallet_address) {
         console.log("[Voice Chat] Storing UID mapping:", { uid: uidNumber, wallet: userProfile.wallet_address });
         await storeVoiceChatUID(uidNumber, userProfile.wallet_address);
       }
 
-      // After connecting, publish the track
       console.log("[Voice Chat] Publishing audio track");
       await client.publish([audioTrack as unknown as ILocalTrack]);
       console.log("[Voice Chat] Published audio track successfully");
@@ -100,27 +96,20 @@ export const useVoiceChat = ({
     }
   }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
-  const handleToggleLocalVideo = useCallback(async () => {
-    try {
-      if (isVideoEnabled) {
-        if (localVideoTrack) {
-          await client.unpublish([localVideoTrack as unknown as ILocalTrack]);
-          stopVideoTrack();
-        }
-      } else {
-        const videoTrack = await createLocalVideoTrack();
-        if (videoTrack) {
-          await client.publish([videoTrack as unknown as ILocalTrack]);
-        }
+  const handleUserPublished = useCallback(async (user: any, mediaType: "audio" | "video") => {
+    console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
+    await client.subscribe(user, mediaType);
+    console.log("[Voice Chat] Subscribed to remote media:", user.uid, mediaType);
+    
+    if (mediaType === "audio") {
+      user.audioTrack?.play();
+    } else if (mediaType === "video") {
+      const participant = participants.find(p => p.id === user.uid);
+      if (participant) {
+        handleToggleVideo(user.uid);
       }
-      if (localUid) {
-        handleToggleVideo(localUid);
-      }
-    } catch (error) {
-      console.error("[Voice Chat] Error toggling video:", error);
-      toast.error("Failed to toggle video. Please try again.");
     }
-  }, [isVideoEnabled, localVideoTrack, client, stopVideoTrack, createLocalVideoTrack, localUid, handleToggleVideo]);
+  }, [client, participants, handleToggleVideo]);
 
   const leave = useCallback(async () => {
     try {
@@ -173,50 +162,23 @@ export const useVoiceChat = ({
       removeParticipant(uidNumber);
     };
 
-    const handleUserPublished = async (user: any, mediaType: string) => {
-      console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
-      await client.subscribe(user, mediaType);
-      console.log("[Voice Chat] Subscribed to remote media:", user.uid, mediaType);
-      
-      if (mediaType === "audio") {
-        user.audioTrack?.play();
-      } else if (mediaType === "video") {
-        const participant = participants.find(p => p.id === user.uid);
-        if (participant) {
-          handleToggleVideo(user.uid);
-        }
-      }
-    };
-
-    const handleUserUnpublished = (user: any, mediaType: string) => {
-      console.log("[Voice Chat] User unpublished:", user.uid, mediaType);
-      if (mediaType === "video") {
-        const participant = participants.find(p => p.id === user.uid);
-        if (participant) {
-          handleToggleVideo(user.uid);
-        }
-      }
-    };
-
     client.on("user-joined", handleUserJoined);
     client.on("user-left", handleUserLeft);
     client.on("user-published", handleUserPublished);
-    client.on("user-unpublished", handleUserUnpublished);
 
     return () => {
       client.off("user-joined", handleUserJoined);
       client.off("user-left", handleUserLeft);
       client.off("user-published", handleUserPublished);
-      client.off("user-unpublished", handleUserUnpublished);
     };
-  }, [client, localUid, addRemoteParticipant, removeParticipant, participants, handleToggleVideo]);
+  }, [client, localUid, addRemoteParticipant, removeParticipant, handleUserPublished]);
 
   return {
     participants,
     isMuted,
     isVideoEnabled,
     handleToggleMute,
-    handleToggleVideo: handleToggleLocalVideo,
+    handleToggleVideo,
     join,
     leave,
     toggleMute,
