@@ -6,6 +6,9 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface NewCoinCardProps {
   id: string;
@@ -24,15 +27,56 @@ export function NewCoinCard({
   id, 
   name, 
   symbol, 
-  price, 
+  price: initialPrice, 
   imageUrl, 
   mintAddress,
   searchCount,
   priceHistory,
   usdMarketCap,
-  change24h
+  change24h: initialChange24h
 }: NewCoinCardProps) {
+  const [price, setPrice] = useState<number | null>(initialPrice);
+  const [change24h, setChange24h] = useState<number | null>(initialChange24h);
+  const { toast } = useToast();
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel('coin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'coins',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Received real-time update for coin:', payload);
+          if (payload.new) {
+            const newPrice = payload.new.price;
+            const newChange = payload.new.change_24h;
+            
+            if (typeof newPrice === 'number' && newPrice !== price) {
+              setPrice(newPrice);
+              toast({
+                title: `${name} Price Updated`,
+                description: `New price: SOL ${newPrice.toFixed(6)}`,
+              });
+            }
+            
+            if (typeof newChange === 'number' && newChange !== change24h) {
+              setChange24h(newChange);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, name, price, change24h, toast]);
   
   const getGlowClass = (change24h: number | null) => {
     if (!change24h) return "";
