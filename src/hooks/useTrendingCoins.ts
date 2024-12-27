@@ -1,29 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { CoinData } from "@/types/coin";
 
-interface PriceHistoryItem {
-  price: number;
-  timestamp: string;
-}
-
-interface CoinData {
-  id: string;
-  name: string;
-  symbol: string;
-  price: number | null;
-  change_24h: number | null;
-  image_url: string | null;
-  solana_addr: string | null;
-  priceHistory: PriceHistoryItem[] | null;
-  searchCount: number;
-  usdMarketCap: number | null;
+interface TrendingCoinResponse {
+  coin_id: string;
+  search_count: number;
+  coins: CoinData;
 }
 
 export function useTrendingCoins() {
-  const { toast } = useToast();
-
   const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
@@ -63,53 +49,19 @@ export function useTrendingCoins() {
 
         console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
 
-        return trendingCoins
-          .filter(trend => trend && trend.coins) // Filter out null/undefined entries
-          .map(trend => {
-            if (!trend.coins) {
-              console.warn('[useTrendingCoins] Missing coins data for trend:', trend);
-              return null;
-            }
-
-            let priceHistory: PriceHistoryItem[] | null = null;
-            
-            try {
-              if (trend.coins.historic_data) {
-                const historyData = trend.coins.historic_data as unknown as Array<{
-                  price: number | string;
-                  timestamp: string | number;
-                }>;
-                
-                if (Array.isArray(historyData)) {
-                  priceHistory = historyData.map(item => ({
-                    price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                    timestamp: typeof item.timestamp === 'number' 
-                      ? new Date(item.timestamp).toISOString() 
-                      : String(item.timestamp)
-                  }));
-                }
-              }
-            } catch (err) {
-              console.error('[useTrendingCoins] Error parsing historic data:', err);
-              priceHistory = null;
-            }
-
-            return {
-              ...trend.coins,
-              searchCount: trend.search_count,
-              priceHistory,
-              usdMarketCap: trend.coins.usd_market_cap
-            };
-          })
-          .filter(Boolean) as CoinData[]; // Filter out null entries after mapping
+        // Transform the data to match the expected format
+        return trendingCoins.map((trend: TrendingCoinResponse) => ({
+          ...trend.coins,
+          searchCount: trend.search_count,
+          priceHistory: trend.coins.historic_data
+        }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
         throw error;
       }
     },
-    refetchInterval: 5000,
-    gcTime: Infinity,
-    staleTime: 0,
+    refetchInterval: 30000, // Refetch every 30 seconds instead of 5
+    staleTime: 15000, // Consider data fresh for 15 seconds
   });
 
   useEffect(() => {
@@ -120,23 +72,13 @@ export function useTrendingCoins() {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'coins'
         },
         (payload) => {
           console.log('[useTrendingCoins] Received real-time update:', payload);
-          
-          if (payload.new) {
-            refetch();
-            
-            if (payload.new.name) {
-              toast({
-                title: "Market Data Updated",
-                description: `Latest data received for ${payload.new.name}`,
-              });
-            }
-          }
+          refetch();
         }
       )
       .subscribe();
@@ -145,10 +87,10 @@ export function useTrendingCoins() {
       console.log('[useTrendingCoins] Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [refetch, toast]);
+  }, [refetch]);
 
   return { 
-    coins: coins || [], // Ensure we always return an array
+    coins: coins || [], 
     isLoading 
   };
 }

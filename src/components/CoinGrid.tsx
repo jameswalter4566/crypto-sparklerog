@@ -59,23 +59,19 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
             return null;
           }
 
-          const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
-          const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
-          const validMarketCap = typeof coin.usdMarketCap === "number" && !isNaN(coin.usdMarketCap) ? coin.usdMarketCap : null;
-
           return (
             <NewCoinCard
               key={coin.id}
               id={coin.id}
               name={coin.name || "Unknown Coin"}
               symbol={coin.symbol || "N/A"}
-              price={validPrice}
-              change24h={validChange24h}
+              price={typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null}
+              change24h={typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null}
               imageUrl={coin.image_url || "/placeholder.svg"}
               mintAddress={coin.solana_addr || ""}
               searchCount={coin.searchCount}
               priceHistory={coin.priceHistory}
-              usdMarketCap={validMarketCap}
+              usdMarketCap={typeof coin.usd_market_cap === "number" && !isNaN(coin.usd_market_cap) ? coin.usd_market_cap : null}
             />
           );
         })}
