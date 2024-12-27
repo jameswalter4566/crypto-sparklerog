@@ -94,11 +94,11 @@ export const useCoinData = (id: string | undefined) => {
           table: 'coins',
           filter: `id=eq.${id}`
         },
-        (payload: RealtimePostgresChangesPayload<Partial<CoinData>>) => {
+        (payload: RealtimePostgresChangesPayload<any>) => {
           console.log('Received real-time update:', payload);
           
           if (payload.new && coin) {
-            const newData = payload.new;
+            const newData = payload.new as Partial<CoinData>;
             const updatedCoin: CoinData = {
               id: coin.id,
               name: coin.name,
@@ -110,12 +110,12 @@ export const useCoinData = (id: string | undefined) => {
               non_circulating_supply: coin.non_circulating_supply,
               solana_addr: coin.solana_addr,
               historic_data: coin.historic_data,
-              price: newData.price !== undefined ? newData.price : coin.price,
-              change_24h: newData.change_24h !== undefined ? newData.change_24h : coin.change_24h,
-              market_cap: newData.market_cap !== undefined ? newData.market_cap : coin.market_cap,
-              usd_market_cap: newData.usd_market_cap !== undefined ? newData.usd_market_cap : coin.usd_market_cap,
-              volume_24h: newData.volume_24h !== undefined ? newData.volume_24h : coin.volume_24h,
-              liquidity: newData.liquidity !== undefined ? newData.liquidity : coin.liquidity,
+              price: typeof newData.price !== 'undefined' ? newData.price : coin.price,
+              change_24h: typeof newData.change_24h !== 'undefined' ? newData.change_24h : coin.change_24h,
+              market_cap: typeof newData.market_cap !== 'undefined' ? newData.market_cap : coin.market_cap,
+              usd_market_cap: typeof newData.usd_market_cap !== 'undefined' ? newData.usd_market_cap : coin.usd_market_cap,
+              volume_24h: typeof newData.volume_24h !== 'undefined' ? newData.volume_24h : coin.volume_24h,
+              liquidity: typeof newData.liquidity !== 'undefined' ? newData.liquidity : coin.liquidity,
             };
             
             setCoin(updatedCoin);
