@@ -98,15 +98,25 @@ export const useCoinData = (id: string | undefined) => {
           console.log('Received real-time update:', payload);
           
           if (payload.new && coin) {
-            const updatedCoin = {
+            const updatedCoin: CoinData = {
               ...coin,
               price: payload.new.price ?? coin.price,
               change_24h: payload.new.change_24h ?? coin.change_24h,
               market_cap: payload.new.market_cap ?? coin.market_cap,
               usd_market_cap: payload.new.usd_market_cap ?? coin.usd_market_cap,
               volume_24h: payload.new.volume_24h ?? coin.volume_24h,
-              liquidity: payload.new.liquidity ?? coin.liquidity
-            } as CoinData;
+              liquidity: payload.new.liquidity ?? coin.liquidity,
+              id: coin.id,
+              name: coin.name,
+              symbol: coin.symbol,
+              description: coin.description,
+              image_url: coin.image_url,
+              total_supply: coin.total_supply,
+              circulating_supply: coin.circulating_supply,
+              non_circulating_supply: coin.non_circulating_supply,
+              solana_addr: coin.solana_addr,
+              historic_data: coin.historic_data
+            };
             
             setCoin(updatedCoin);
 
