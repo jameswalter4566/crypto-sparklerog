@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const PUMP_FUN_WS_URL = "wss://frontend-ws.pump.fun/socket/websocket";
+const RECONNECT_INTERVAL = 3000; // 3 seconds
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 interface CoinUpdate {
   id: string;
@@ -15,6 +17,40 @@ interface CoinUpdate {
   market_cap: number;
   volume_24h: number;
   liquidity: number;
+}
+
+let reconnectAttempts = 0;
+let isConnected = false;
+
+async function updateCoinData(supabase: any, update: CoinUpdate) {
+  try {
+    // Use upsert to handle both new and existing coins
+    const { error } = await supabase
+      .from('coins')
+      .upsert({
+        id: update.id,
+        price: update.price,
+        change_24h: update.change_24h,
+        market_cap: update.market_cap,
+        volume_24h: update.volume_24h,
+        liquidity: update.liquidity,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id',
+        returning: 'minimal' // Don't return the row to save bandwidth
+      });
+
+    if (error) {
+      console.error('Error upserting coin data:', error);
+      return false;
+    }
+    
+    console.log('Successfully upserted coin:', update.id);
+    return true;
+  } catch (error) {
+    console.error('Error in updateCoinData:', error);
+    return false;
+  }
 }
 
 async function handleWebSocket() {
@@ -32,8 +68,34 @@ async function handleWebSocket() {
       }
     );
 
+    // Queue for batching updates
+    let updateQueue: CoinUpdate[] = [];
+    let processingQueue = false;
+
+    // Process queued updates every second
+    const processQueue = async () => {
+      if (processingQueue || updateQueue.length === 0) return;
+      
+      processingQueue = true;
+      const updates = [...updateQueue];
+      updateQueue = [];
+
+      console.log(`Processing ${updates.length} queued updates`);
+      
+      for (const update of updates) {
+        await updateCoinData(supabase, update);
+      }
+      
+      processingQueue = false;
+    };
+
+    const queueInterval = setInterval(processQueue, 1000);
+
     ws.onopen = () => {
       console.log('WebSocket connection established');
+      isConnected = true;
+      reconnectAttempts = 0;
+      
       ws.send(JSON.stringify({
         "topic": "price_updates:*",
         "event": "phx_join",
@@ -49,25 +111,8 @@ async function handleWebSocket() {
 
         if (data.event === "price_update") {
           const update: CoinUpdate = data.payload;
-          console.log('Processing price update for coin:', update.id);
-
-          const { error } = await supabase
-            .from('coins')
-            .update({
-              price: update.price,
-              change_24h: update.change_24h,
-              market_cap: update.market_cap,
-              volume_24h: update.volume_24h,
-              liquidity: update.liquidity,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', update.id);
-
-          if (error) {
-            console.error('Error updating coin data:', error);
-          } else {
-            console.log('Successfully updated coin:', update.id);
-          }
+          console.log('Queueing price update for coin:', update.id);
+          updateQueue.push(update);
         }
       } catch (error) {
         console.error('Error processing message:', error);
@@ -76,13 +121,24 @@ async function handleWebSocket() {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      isConnected = false;
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
+    ws.onclose = (event) => {
+      console.log('WebSocket closed, code:', event.code, 'reason:', event.reason);
+      isConnected = false;
+      clearInterval(queueInterval);
+
+      // Attempt to reconnect if we haven't exceeded max attempts
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+        setTimeout(() => handleWebSocket(), RECONNECT_INTERVAL);
+      } else {
+        console.error('Max reconnection attempts reached. Giving up.');
+      }
     };
 
-    // Keep the connection alive
     return ws;
   } catch (error) {
     console.error('Error in handleWebSocket:', error);
@@ -98,21 +154,28 @@ serve(async (req) => {
   }
 
   try {
+    // Keep the connection alive by not ending the response
     const ws = await handleWebSocket();
     
-    return new Response(
-      JSON.stringify({ 
-        status: 'connected',
-        message: 'WebSocket connection established successfully' 
-      }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json'
-        },
-        status: 200
+    // Use TransformStream to keep the connection alive
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+    
+    // Write initial connection message
+    const encoder = new TextEncoder();
+    await writer.write(encoder.encode(JSON.stringify({
+      status: 'connected',
+      message: 'WebSocket connection established successfully'
+    })));
+
+    return new Response(stream.readable, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
       }
-    );
+    });
   } catch (error) {
     console.error('Error in serve handler:', error);
     return new Response(
