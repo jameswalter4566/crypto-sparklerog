@@ -35,6 +35,7 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         {displayCoins?.map((coin) => {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
+          const validMarketCap = typeof coin.usdMarketCap === "number" && !isNaN(coin.usdMarketCap) ? coin.usdMarketCap : null;
 
           return (
             <NewCoinCard
@@ -48,7 +49,7 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
               mintAddress={coin.solana_addr || ""}
               searchCount={coin.searchCount}
               priceHistory={coin.priceHistory}
-              usdMarketCap={coin.usdMarketCap}
+              usdMarketCap={validMarketCap}
             />
           );
         })}

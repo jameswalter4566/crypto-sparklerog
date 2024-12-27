@@ -55,6 +55,8 @@ export function useTrendingCoins() {
         throw error;
       }
 
+      console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
+
       return trendingCoins.map(trend => {
         if (!trend.coins) {
           console.error('[useTrendingCoins] Missing coins data for trend:', trend);
@@ -92,13 +94,15 @@ export function useTrendingCoins() {
         };
       }).filter(Boolean) as CoinData[];
     },
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 5000,
     gcTime: Infinity,
     staleTime: 0,
   });
 
   // Set up real-time subscription for price updates
   useEffect(() => {
+    console.log('[useTrendingCoins] Setting up real-time subscription');
+    
     const channel = supabase
       .channel('coin-updates')
       .on(
@@ -110,19 +114,22 @@ export function useTrendingCoins() {
         },
         (payload) => {
           console.log('[useTrendingCoins] Received real-time update:', payload);
+          
           // Force a refetch when we receive an update
           refetch();
           
-          // Show a toast notification for price updates
-          toast({
-            title: "Price Updated",
-            description: `Latest market data received for ${payload.new.name}`,
-          });
+          if (payload.new && payload.new.name) {
+            toast({
+              title: "Market Data Updated",
+              description: `Latest data received for ${payload.new.name}`,
+            });
+          }
         }
       )
       .subscribe();
 
     return () => {
+      console.log('[useTrendingCoins] Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [refetch, toast]);
