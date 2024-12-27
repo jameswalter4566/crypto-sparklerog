@@ -85,6 +85,7 @@ async function handleWebSocket() {
 
   } catch (error) {
     console.error('Error in handleWebSocket:', error);
+    throw error;
   }
 }
 
@@ -102,13 +103,18 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json'
-        } 
+        },
+        status: 200
       }
     );
   } catch (error) {
     console.error('Error in serve handler:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        status: 'error',
+        details: error instanceof Error ? error.stack : undefined
+      }),
       { 
         status: 500,
         headers: { 
