@@ -3,6 +3,7 @@ import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
 import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -16,7 +17,16 @@ export const Header = ({ onSearch, isLoading }: {
   isLoading: boolean;
 }) => {
   const navigate = useNavigate();
+  const [isSpinning, setIsSpinning] = useState(false);
   console.log("Header component rendered");
+
+  const handleLogoClick = () => {
+    setIsSpinning(true);
+    setTimeout(() => {
+      setIsSpinning(false);
+      navigate('/');
+    }, 1000); // Wait for spin animation to complete
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -65,7 +75,10 @@ export const Header = ({ onSearch, isLoading }: {
             <img 
               src="/swaplogoofficial.jpg" 
               alt="Logo" 
-              className="h-16 w-auto object-contain"
+              className={`h-16 w-auto object-contain cursor-pointer animate-glow-pulse rounded-full
+                ${isSpinning ? 'animate-[spin_1s_linear]' : ''}
+                transition-all duration-300 hover:scale-105`}
+              onClick={handleLogoClick}
             />
             <div className="flex items-center gap-2">
               {menuItems.map((item) => (

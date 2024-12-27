@@ -76,10 +76,10 @@ export default {
         },
         "glow-pulse": {
           "0%, 100%": { 
-            boxShadow: "0 0 25px rgba(249,115,22,0.5)"
+            boxShadow: "0 0 20px rgba(249,115,22,0.4), 0 0 40px rgba(249,115,22,0.2)"
           },
           "50%": { 
-            boxShadow: "0 0 50px rgba(249,115,22,0.9)"
+            boxShadow: "0 0 30px rgba(249,115,22,0.6), 0 0 60px rgba(249,115,22,0.3)"
           }
         },
         "laser-glow": {
@@ -107,7 +107,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
-        "glow-pulse": "glow-pulse 1.5s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "laser-glow": "laser-glow 2s ease-in-out infinite",
         "float": "float 10s ease-in-out infinite",
         "price-glow-green": "price-glow-green 2s ease-in-out infinite",
