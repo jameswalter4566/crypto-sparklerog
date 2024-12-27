@@ -25,8 +25,8 @@ interface PriceHistoryItem {
 }
 
 interface HistoricDataItem {
-  price: number | string;
-  timestamp: string | number;
+  price: number;
+  timestamp: string;
 }
 
 interface CoinQueryResult {
@@ -157,22 +157,13 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         
         try {
           if (trend.coins.historic_data) {
-            const historyData = trend.coins.historic_data;
+            const historyData = trend.coins.historic_data as HistoricDataItem[];
             
             if (Array.isArray(historyData)) {
-              priceHistory = historyData
-                .filter((item): item is HistoricDataItem => 
-                  typeof item === 'object' && 
-                  item !== null && 
-                  'price' in item && 
-                  'timestamp' in item
-                )
-                .map(item => ({
-                  price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                  timestamp: typeof item.timestamp === 'number' 
-                    ? new Date(item.timestamp).toISOString() 
-                    : String(item.timestamp)
-                }));
+              priceHistory = historyData.map(item => ({
+                price: Number(item.price),
+                timestamp: String(item.timestamp)
+              }));
             }
           }
         } catch (err) {
