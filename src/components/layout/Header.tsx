@@ -76,7 +76,7 @@ export const Header = ({ onSearch, isLoading }: {
                   onClick={() => handleNavigation(item.path)}
                   className={`flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary ${
                     item.isSpecial 
-                      ? 'text-primary font-["3D_Cyborg"] text-xl tracking-wider scale-125' 
+                      ? 'text-primary font-["3D_Cyborg"] text-xl tracking-[0.25em] scale-125 animate-laser-glow uppercase' 
                       : ''
                   }`}
                 >
