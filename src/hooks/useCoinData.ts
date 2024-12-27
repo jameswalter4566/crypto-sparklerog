@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { CoinData, CoinDataResponse } from '@/types/coin';
+import { CoinData } from '@/types/coin';
 import { useToast } from "@/hooks/use-toast";
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
@@ -98,15 +98,15 @@ export const useCoinData = (id: string | undefined) => {
           console.log('Received real-time update:', payload);
           
           if (payload.new && coin) {
-            const updatedCoin: CoinData = {
+            const updatedCoin = {
               ...coin,
-              price: payload.new.price,
-              change_24h: payload.new.change_24h,
-              market_cap: payload.new.market_cap,
-              usd_market_cap: payload.new.usd_market_cap,
-              volume_24h: payload.new.volume_24h,
-              liquidity: payload.new.liquidity
-            };
+              price: payload.new.price ?? coin.price,
+              change_24h: payload.new.change_24h ?? coin.change_24h,
+              market_cap: payload.new.market_cap ?? coin.market_cap,
+              usd_market_cap: payload.new.usd_market_cap ?? coin.usd_market_cap,
+              volume_24h: payload.new.volume_24h ?? coin.volume_24h,
+              liquidity: payload.new.liquidity ?? coin.liquidity
+            } satisfies CoinData;
             
             setCoin(updatedCoin);
 
