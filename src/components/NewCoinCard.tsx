@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Coins } from "lucide-react"; // Import the Coins icon as fallback
 
 interface NewCoinCardProps {
   id: string;
@@ -116,9 +117,6 @@ export function NewCoinCard({
     return `$${value.toFixed(2)}`;
   };
 
-  const defaultImage = "/placeholder.svg";
-  const finalImageUrl = !imageError && imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
-
   return (
     <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
       <Card 
@@ -131,17 +129,25 @@ export function NewCoinCard({
         <SearchCountBadge count={searchCount || 0} />
         <CardHeader className="p-3 sm:p-5">
           <div className="flex flex-col items-center gap-3 sm:gap-5">
-            <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
-              <AvatarImage 
-                src={finalImageUrl}
-                alt={name || "Unknown Coin"}
-                className="object-cover"
-                onError={() => {
-                  console.log('Image failed to load, using fallback');
-                  setImageError(true);
-                }}
-              />
-              <AvatarFallback>{symbol ? symbol.slice(0, 2).toUpperCase() : "??"}</AvatarFallback>
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 bg-card">
+              {!imageError && imageUrl ? (
+                <AvatarImage 
+                  src={imageUrl}
+                  alt={name || "Unknown Coin"}
+                  className="object-cover"
+                  onError={() => {
+                    console.log('Image failed to load:', imageUrl);
+                    setImageError(true);
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center bg-card">
+                  <Coins className="h-12 w-12 text-primary" />
+                </div>
+              )}
+              <AvatarFallback>
+                <Coins className="h-12 w-12 text-primary" />
+              </AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-2 sm:gap-4">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
