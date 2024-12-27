@@ -36,14 +36,12 @@ export const VoiceChatUser = ({
         ${user.isTalking ? 'animate-pulse shadow-[0_0_15px_rgba(153,69,255,0.8)]' : 'shadow-[0_0_15px_rgba(153,69,255,0.5)]'}
       `}
     >
-      <div className="w-24 h-24 mb-3 relative">
+      <div className="w-24 h-24 mb-3 relative rounded-full overflow-hidden">
         {user.videoTrack && user.isVideoEnabled ? (
-          <div className="w-24 h-24 rounded-full overflow-hidden">
-            <VideoStream 
-              videoTrack={user.videoTrack} 
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <VideoStream 
+            videoTrack={user.videoTrack} 
+            className="w-full h-full object-cover"
+          />
         ) : (
           <Avatar className="w-24 h-24">
             <AvatarImage src={user.avatar} alt={displayName} />

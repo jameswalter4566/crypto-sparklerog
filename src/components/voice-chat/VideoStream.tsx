@@ -10,8 +10,13 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current || !videoTrack) {
-      console.log("[VideoStream] Missing video ref or track");
+    if (!videoRef.current) {
+      console.log("[VideoStream] Missing video ref");
+      return;
+    }
+
+    if (!videoTrack) {
+      console.log("[VideoStream] Missing video track");
       return;
     }
 
@@ -20,11 +25,13 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
       videoTrack.play(videoRef.current);
 
       return () => {
-        console.log("[VideoStream] Stopping video track");
-        try {
-          videoTrack.stop();
-        } catch (error) {
-          console.error("[VideoStream] Error stopping video track:", error);
+        console.log("[VideoStream] Cleaning up video track");
+        if (videoTrack) {
+          try {
+            videoTrack.stop();
+          } catch (error) {
+            console.error("[VideoStream] Error stopping video track:", error);
+          }
         }
       };
     } catch (error) {
@@ -35,7 +42,8 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   return (
     <div 
       ref={videoRef} 
-      className={`relative w-full h-full ${className}`}
+      className={`w-full h-full ${className}`}
+      style={{ minHeight: '100%', minWidth: '100%' }}
     />
   );
 };
