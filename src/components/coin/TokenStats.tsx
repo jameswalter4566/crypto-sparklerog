@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lightning } from "lucide-react";
+import { Zap } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 interface TokenStatsProps {
@@ -82,7 +82,7 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
               {formatValue(marketCap)}
             </p>
             {showLightning && (
-              <Lightning className="h-5 w-5 text-yellow-500 animate-fade-in" />
+              <Zap className="h-5 w-5 text-yellow-500 animate-fade-in" />
             )}
           </div>
         </CardContent>
@@ -98,7 +98,7 @@ export const TokenStats = ({ marketCap, usdMarketCap, volume24h, liquidity }: To
               {formatValue(usdMarketCap)}
             </p>
             {showLightning && (
-              <Lightning className="h-5 w-5 text-yellow-500 animate-fade-in" />
+              <Zap className="h-5 w-5 text-yellow-500 animate-fade-in" />
             )}
           </div>
         </CardContent>
