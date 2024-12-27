@@ -25,7 +25,7 @@ export const Header = ({ onSearch, isLoading }: {
     setTimeout(() => {
       setIsSpinning(false);
       navigate('/');
-    }, 1000); // Wait for spin animation to complete
+    }, 1000);
   };
 
   const menuItems: MenuItem[] = [
@@ -72,14 +72,16 @@ export const Header = ({ onSearch, isLoading }: {
       <div className="flex flex-col gap-4 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src="/swaplogoofficial.jpg" 
-              alt="Logo" 
-              className={`h-12 w-12 object-cover cursor-pointer animate-glow-pulse rounded-full
-                ${isSpinning ? 'animate-[spin_1s_linear]' : ''}
-                transition-all duration-300 hover:scale-105`}
-              onClick={handleLogoClick}
-            />
+            <div className="h-12 w-12 overflow-hidden rounded-full">
+              <img 
+                src="/swaplogoofficial.jpg" 
+                alt="Logo" 
+                className={`h-16 w-16 object-cover cursor-pointer animate-glow-pulse
+                  ${isSpinning ? 'animate-[spin_1s_linear]' : ''}
+                  transition-all duration-300 hover:scale-105`}
+                onClick={handleLogoClick}
+              />
+            </div>
             <div className="flex items-center gap-2">
               {menuItems.map((item) => (
                 <Button
