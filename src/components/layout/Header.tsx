@@ -75,7 +75,7 @@ export const Header = ({ onSearch, isLoading }: {
             <img 
               src="/swaplogoofficial.jpg" 
               alt="Logo" 
-              className={`h-16 w-auto object-contain cursor-pointer animate-glow-pulse rounded-full
+              className={`h-12 w-12 object-cover cursor-pointer animate-glow-pulse rounded-full
                 ${isSpinning ? 'animate-[spin_1s_linear]' : ''}
                 transition-all duration-300 hover:scale-105`}
               onClick={handleLogoClick}
