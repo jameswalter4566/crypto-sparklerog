@@ -6,6 +6,18 @@ import { useCoinUpdates } from "@/hooks/useCoinUpdates";
 
 interface CoinGridProps {
   title?: string;
+  coins?: Array<{
+    id: string;
+    name: string;
+    symbol: string;
+    price: number;
+    change_24h: number;
+    imageUrl: string;
+    mintAddress: string;
+    priceHistory: any;
+    usdMarketCap: number;
+  }>;
+  isLoading?: boolean;
 }
 
 interface PriceHistoryItem {
@@ -35,16 +47,18 @@ interface CoinQueryResult {
   } | null;
 }
 
-export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
+export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading: propIsLoading }: CoinGridProps) {
   const queryClient = useQueryClient();
   
   // Set up real-time updates
   useCoinUpdates(queryClient);
 
-  // Query for fetching coins with automatic refetch
-  const { data: coins, isLoading } = useQuery({
+  // Only fetch if coins weren't provided as props
+  const { data: fetchedCoins, isLoading: queryIsLoading } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
+      if (propCoins) return null; // Don't fetch if we have prop coins
+      
       console.log('Fetching trending coins');
       const { data: trendingCoins, error } = await supabase
         .from('coin_searches')
@@ -114,12 +128,16 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
         };
       }).filter(Boolean);
     },
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: propCoins ? false : 5000, // Only refetch if we're not using prop coins
     gcTime: Infinity,
     staleTime: 0,
+    enabled: !propCoins, // Only enable the query if we don't have prop coins
   });
 
-  if (isLoading) {
+  const isLoadingData = propIsLoading ?? queryIsLoading;
+  const displayCoins = propCoins ?? fetchedCoins;
+
+  if (isLoadingData) {
     return <div>Loading...</div>;
   }
 
@@ -127,7 +145,7 @@ export function CoinGrid({ title = "Trending Coins" }: CoinGridProps) {
     <div className="space-y-3 sm:space-y-5 px-2">
       <CoinGridHeader title={title} />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-        {coins?.map((coin) => {
+        {displayCoins?.map((coin) => {
           const validPrice = typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null;
           const validChange24h = typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null;
 
