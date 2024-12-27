@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CoinGrid } from "@/components/CoinGrid";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { AnimatedBackground } from "@/components/effects/AnimatedBackground";
+import { MovingBanners } from "@/components/effects/MovingBanners";
 
 interface CoinMetadata {
   id: string;
@@ -23,6 +24,7 @@ const Index = () => {
   return (
     <>
       <AnimatedBackground />
+      <MovingBanners />
       <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
         <WelcomeDialog />
         {searchResults.length > 0 && (
