@@ -45,6 +45,8 @@ export const useCoinData = (id: string | undefined) => {
         description: result.description,
         image_url: result.image_url,
         total_supply: result.total_supply,
+        circulating_supply: result.circulating_supply,
+        non_circulating_supply: result.non_circulating_supply,
         price: result.price,
         change_24h: result.change_24h,
         market_cap: result.market_cap,
@@ -78,7 +80,6 @@ export const useCoinData = (id: string | undefined) => {
     }
   }, [id, toast]);
 
-  // Set up real-time subscription for price updates
   useEffect(() => {
     if (!id) return;
 
@@ -96,23 +97,22 @@ export const useCoinData = (id: string | undefined) => {
         (payload: RealtimePostgresChangesPayload<CoinData>) => {
           console.log('Received real-time update:', payload);
           
-          if (payload.new) {
-            setCoin(prevCoin => {
-              if (!prevCoin) return payload.new;
-              return {
-                ...prevCoin,
-                price: payload.new.price,
-                change_24h: payload.new.change_24h,
-                market_cap: payload.new.market_cap,
-                usd_market_cap: payload.new.usd_market_cap,
-                volume_24h: payload.new.volume_24h,
-                liquidity: payload.new.liquidity
-              };
-            });
+          if (payload.new && coin) {
+            const updatedCoin: CoinData = {
+              ...coin,
+              price: payload.new.price,
+              change_24h: payload.new.change_24h,
+              market_cap: payload.new.market_cap,
+              usd_market_cap: payload.new.usd_market_cap,
+              volume_24h: payload.new.volume_24h,
+              liquidity: payload.new.liquidity
+            };
+            
+            setCoin(updatedCoin);
 
             toast({
               title: "Price Update",
-              description: `${payload.new.name}'s price data has been updated.`,
+              description: `${updatedCoin.name}'s price data has been updated.`,
             });
           }
         }
@@ -123,7 +123,7 @@ export const useCoinData = (id: string | undefined) => {
       console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [id, toast]);
+  }, [id, toast, coin]);
 
   useEffect(() => {
     fetchCoinData();

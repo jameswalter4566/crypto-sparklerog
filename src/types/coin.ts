@@ -13,6 +13,8 @@ export interface CoinData {
   liquidity: number | null;
   solana_addr: string | null;
   historic_data: Array<{ price: number; timestamp: string }> | null;
+  circulating_supply: number | null;
+  non_circulating_supply: number | null;
 }
 
 export interface CoinDataResponse {

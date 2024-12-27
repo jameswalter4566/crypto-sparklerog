@@ -63,8 +63,8 @@ const CoinProfile = () => {
 
       <TokenSupply
         total={coin.total_supply}
-        circulating={null}
-        nonCirculating={null}
+        circulating={coin.circulating_supply}
+        nonCirculating={coin.non_circulating_supply}
       />
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
