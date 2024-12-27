@@ -106,7 +106,7 @@ export const useCoinData = (id: string | undefined) => {
               usd_market_cap: payload.new.usd_market_cap ?? coin.usd_market_cap,
               volume_24h: payload.new.volume_24h ?? coin.volume_24h,
               liquidity: payload.new.liquidity ?? coin.liquidity
-            } satisfies CoinData;
+            } as CoinData;
             
             setCoin(updatedCoin);
 
