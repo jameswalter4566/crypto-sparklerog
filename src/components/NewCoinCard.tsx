@@ -94,12 +94,13 @@ export function NewCoinCard({
     if (value === null || isNaN(value)) {
       return "N/A";
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
+    
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(2)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(2)}K`;
+    }
+    return `$${value.toFixed(2)}`;
   };
 
   const defaultImage = "/placeholder.svg";
@@ -152,8 +153,8 @@ export function NewCoinCard({
             </CardTitle>
             <span className="text-sm sm:text-lg text-gray-400 truncate max-w-[140px] sm:max-w-[180px]">{symbol || "N/A"}</span>
             <div className="mt-1 text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px]">{formatPrice(price)}</div>
-            {usdMarketCap && (
-              <div className="text-sm sm:text-lg text-gray-400">
+            {usdMarketCap !== undefined && (
+              <div className="text-sm text-gray-400">
                 MC: {formatMarketCap(usdMarketCap)}
               </div>
             )}
