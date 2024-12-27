@@ -1,0 +1,2 @@
+[functions.pump-listener]
+verify_jwt = false
