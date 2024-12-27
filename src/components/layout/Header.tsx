@@ -20,6 +20,12 @@ export const Header = ({ onSearch, isLoading }: {
 
   const menuItems: MenuItem[] = [
     {
+      title: "SWAP",
+      icon: ArrowLeftRight,
+      path: "/swap",
+      isSpecial: true,
+    },
+    {
       title: "Trending",
       icon: Coins,
       path: "/",
@@ -33,12 +39,6 @@ export const Header = ({ onSearch, isLoading }: {
       title: "Search",
       icon: Search,
       path: "/search",
-    },
-    {
-      title: "SWAP",
-      icon: ArrowLeftRight,
-      path: "/swap",
-      isSpecial: true,
     },
     {
       title: "Launch",
@@ -76,11 +76,11 @@ export const Header = ({ onSearch, isLoading }: {
                   onClick={() => handleNavigation(item.path)}
                   className={`flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary ${
                     item.isSpecial 
-                      ? 'text-primary font-["3D_Cyborg"] text-lg tracking-wider' 
+                      ? 'text-primary font-["3D_Cyborg"] text-xl tracking-wider scale-125' 
                       : ''
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className={`${item.isSpecial ? 'h-6 w-6' : 'h-4 w-4'}`} />
                   <span className="hidden sm:inline">{item.title}</span>
                 </Button>
               ))}
