@@ -74,6 +74,7 @@ const CoinProfile = () => {
             price: item.price
           })) || []}
           coinId={coin.id}
+          coingeckoId={coin.coingecko_id}
         />
         <SwapInterface defaultTokenAddress={coin.solana_addr} />
       </div>
