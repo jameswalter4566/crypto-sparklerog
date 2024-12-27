@@ -94,18 +94,12 @@ export const useCoinData = (id: string | undefined) => {
           table: 'coins',
           filter: `id=eq.${id}`
         },
-        (payload: RealtimePostgresChangesPayload<CoinData>) => {
+        (payload: RealtimePostgresChangesPayload<Partial<CoinData>>) => {
           console.log('Received real-time update:', payload);
           
           if (payload.new && coin) {
+            const newData = payload.new;
             const updatedCoin: CoinData = {
-              ...coin,
-              price: payload.new.price ?? coin.price,
-              change_24h: payload.new.change_24h ?? coin.change_24h,
-              market_cap: payload.new.market_cap ?? coin.market_cap,
-              usd_market_cap: payload.new.usd_market_cap ?? coin.usd_market_cap,
-              volume_24h: payload.new.volume_24h ?? coin.volume_24h,
-              liquidity: payload.new.liquidity ?? coin.liquidity,
               id: coin.id,
               name: coin.name,
               symbol: coin.symbol,
@@ -115,7 +109,13 @@ export const useCoinData = (id: string | undefined) => {
               circulating_supply: coin.circulating_supply,
               non_circulating_supply: coin.non_circulating_supply,
               solana_addr: coin.solana_addr,
-              historic_data: coin.historic_data
+              historic_data: coin.historic_data,
+              price: newData.price !== undefined ? newData.price : coin.price,
+              change_24h: newData.change_24h !== undefined ? newData.change_24h : coin.change_24h,
+              market_cap: newData.market_cap !== undefined ? newData.market_cap : coin.market_cap,
+              usd_market_cap: newData.usd_market_cap !== undefined ? newData.usd_market_cap : coin.usd_market_cap,
+              volume_24h: newData.volume_24h !== undefined ? newData.volume_24h : coin.volume_24h,
+              liquidity: newData.liquidity !== undefined ? newData.liquidity : coin.liquidity,
             };
             
             setCoin(updatedCoin);
