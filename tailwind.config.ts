@@ -114,6 +114,10 @@ export default {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
         },
+        "flash-yellow": {
+          "0%, 100%": { backgroundColor: "transparent" },
+          "50%": { backgroundColor: "rgba(234, 179, 8, 0.2)" }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -125,6 +129,7 @@ export default {
         "price-glow-green": "price-glow-green 2s ease-in-out infinite",
         "price-glow-red": "price-glow-red 2s ease-in-out infinite",
         "logo-spin": "logo-spin 1s ease-in-out",
+        "flash-yellow": "flash-yellow 1s ease-in-out",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
