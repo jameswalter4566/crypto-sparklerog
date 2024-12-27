@@ -34,7 +34,7 @@ export function useTrendingCoins() {
               usd_market_cap
             )
           `)
-          .order('search_count', { ascending: false })
+          .order('coins(market_cap)', { ascending: false, nullsLast: true })
           .limit(30);
 
         if (error) {
