@@ -86,8 +86,7 @@ const App = () => {
 
     setIsLoading(true);
     try {
-      const functionUrl = new URL("https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin");
-      
+      // First check if the coin exists in our database
       const { data: existingCoin, error: selectError } = await supabase
         .from("coins")
         .select("*")
@@ -102,21 +101,16 @@ const App = () => {
       let coinMetadata = existingCoin;
 
       if (!coinMetadata) {
-        const response = await fetch(functionUrl.toString(), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ solana_addr: mintAddress }),
+        // If coin doesn't exist, call the edge function to add it
+        const response = await supabase.functions.invoke('add-coin', {
+          body: { solana_addr: mintAddress }
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Edge Function Error: ${JSON.stringify(errorData)}`);
+        if (!response.data) {
+          throw new Error('Failed to fetch token information from edge function');
         }
 
-        const result = await response.json();
-        coinMetadata = result;
+        coinMetadata = response.data;
       }
 
       if (coinMetadata) {
