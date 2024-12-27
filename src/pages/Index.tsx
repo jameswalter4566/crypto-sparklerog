@@ -24,25 +24,23 @@ const Index = () => {
   return (
     <>
       <AnimatedBackground />
-      <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
-        <WelcomeDialog />
+      <div className="relative">
         {searchResults.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {searchResults.map((coin) => (
-              <NewCoinCard
-                key={coin.id}
-                id={coin.id}
-                name={coin.name || "Unknown Coin"}
-                symbol={coin.symbol || "N/A"}
-                imageUrl={coin.image_url || "/placeholder.svg"}
-                price={typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null}
-                change24h={typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null}
-                mintAddress={coin.id}
-              />
+          <div className="absolute right-4 top-2 text-right">
+            {searchResults.map((coin, index) => (
+              <div 
+                key={`${coin.id}-${index}`}
+                className="text-sm font-medium text-primary animate-fade-in mb-1"
+              >
+                {coin.name} was just searched! 🔍
+              </div>
             ))}
           </div>
         )}
-        <CoinGrid />
+        <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
+          <WelcomeDialog />
+          <CoinGrid />
+        </div>
       </div>
     </>
   );
