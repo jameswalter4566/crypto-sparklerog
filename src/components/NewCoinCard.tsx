@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Coins } from "lucide-react"; // Import the Coins icon as fallback
+import { Coins } from "lucide-react";
 
 interface NewCoinCardProps {
   id: string;
@@ -129,7 +129,7 @@ export function NewCoinCard({
         <SearchCountBadge count={searchCount || 0} />
         <CardHeader className="p-3 sm:p-5">
           <div className="flex flex-col items-center gap-3 sm:gap-5">
-            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 bg-card">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 bg-gray-800">
               {!imageError && imageUrl ? (
                 <AvatarImage 
                   src={imageUrl}
@@ -141,11 +141,11 @@ export function NewCoinCard({
                   }}
                 />
               ) : (
-                <div className="h-full w-full flex items-center justify-center bg-card">
+                <div className="h-full w-full flex items-center justify-center bg-gray-800">
                   <Coins className="h-12 w-12 text-primary" />
                 </div>
               )}
-              <AvatarFallback>
+              <AvatarFallback className="bg-gray-800">
                 <Coins className="h-12 w-12 text-primary" />
               </AvatarFallback>
             </Avatar>
