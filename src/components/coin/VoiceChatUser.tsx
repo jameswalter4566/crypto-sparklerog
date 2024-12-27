@@ -40,7 +40,7 @@ export const VoiceChatUser = ({
         {user.videoTrack && user.isVideoEnabled ? (
           <VideoStream 
             videoTrack={user.videoTrack} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
           <Avatar className="w-24 h-24">

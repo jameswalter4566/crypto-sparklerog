@@ -10,8 +10,9 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current) {
-      console.log("[VideoStream] Missing video ref");
+    const container = videoRef.current;
+    if (!container) {
+      console.log("[VideoStream] Missing video container ref");
       return;
     }
 
@@ -21,17 +22,21 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
     }
 
     try {
-      console.log("[VideoStream] Playing video track");
-      videoTrack.play(videoRef.current);
+      console.log("[VideoStream] Playing video track in container");
+      // Clear any existing content
+      container.innerHTML = '';
+      videoTrack.play(container);
 
       return () => {
         console.log("[VideoStream] Cleaning up video track");
-        if (videoTrack) {
-          try {
-            videoTrack.stop();
-          } catch (error) {
-            console.error("[VideoStream] Error stopping video track:", error);
+        try {
+          videoTrack.stop();
+          // Clear the container on cleanup
+          if (container) {
+            container.innerHTML = '';
           }
+        } catch (error) {
+          console.error("[VideoStream] Error stopping video track:", error);
         }
       };
     } catch (error) {
@@ -42,8 +47,12 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
   return (
     <div 
       ref={videoRef} 
-      className={`w-full h-full ${className}`}
-      style={{ minHeight: '100%', minWidth: '100%' }}
+      className={`w-full h-full overflow-hidden ${className}`}
+      style={{ 
+        minHeight: '100%', 
+        minWidth: '100%',
+        position: 'relative'
+      }}
     />
   );
 };
