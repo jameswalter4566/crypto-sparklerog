@@ -49,7 +49,6 @@ export function useTrendingCoins() {
 
         console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
 
-        // Transform the data to match the expected format
         return trendingCoins.map((trend: TrendingCoinResponse) => ({
           ...trend.coins,
           searchCount: trend.search_count,
@@ -60,8 +59,8 @@ export function useTrendingCoins() {
         throw error;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds instead of 5
-    staleTime: 15000, // Consider data fresh for 15 seconds
+    refetchInterval: 30000,
+    staleTime: 15000,
   });
 
   useEffect(() => {
@@ -78,6 +77,7 @@ export function useTrendingCoins() {
         },
         (payload) => {
           console.log('[useTrendingCoins] Received real-time update:', payload);
+          // Trigger a refetch when we receive an update
           refetch();
         }
       )

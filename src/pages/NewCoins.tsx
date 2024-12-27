@@ -2,17 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { CoinGrid } from "@/components/CoinGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { CoinData } from "@/data/mockCoins";
+import { useEffect } from "react";
 
 const NewCoins = () => {
   const { toast } = useToast();
 
-  const { data: coins, isLoading, error } = useQuery({
+  const { data: coins, isLoading, error, refetch } = useQuery({
     queryKey: ['new-coins'],
     queryFn: async () => {
       console.log('Fetching new coins...');
       try {
-        // Get coins ordered by their last search timestamp
         const { data: searchData, error: searchError } = await supabase
           .from('coin_searches')
           .select(`
@@ -51,9 +50,8 @@ const NewCoins = () => {
 
         console.log('Search data received:', searchData);
 
-        // Map the data to match CoinData structure
-        const mappedCoins = searchData
-          .filter(item => item.coins) // Filter out any null coins
+        return searchData
+          .filter(item => item.coins)
           .map(item => ({
             id: item.coins.id,
             name: item.coins.name,
@@ -65,21 +63,40 @@ const NewCoins = () => {
             priceHistory: item.coins.historic_data,
             usdMarketCap: item.coins.usd_market_cap
           }));
-
-        console.log('Mapped coins:', mappedCoins);
-        return mappedCoins;
       } catch (err) {
         console.error('Failed to fetch coins:', err);
         throw err;
       }
     },
     retry: 1,
-    staleTime: 30000, // Cache for 30 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 30000,
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     gcTime: Infinity
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('new-coins-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'coins'
+        },
+        (payload) => {
+          console.log('Received real-time coin update:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   if (error) {
     console.error('Query error:', error);
