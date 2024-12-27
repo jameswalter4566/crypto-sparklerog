@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { CoinGrid } from "@/components/CoinGrid";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
-import { NewCoinCard } from "@/components/NewCoinCard";
 import { AnimatedBackground } from "@/components/effects/AnimatedBackground";
 
 interface CoinMetadata {
@@ -24,23 +23,21 @@ const Index = () => {
   return (
     <>
       <AnimatedBackground />
-      <div className="relative">
+      <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
+        <WelcomeDialog />
         {searchResults.length > 0 && (
-          <div className="absolute right-4 top-2 text-right">
+          <div className="flex justify-end mb-4">
             {searchResults.map((coin, index) => (
               <div 
                 key={`${coin.id}-${index}`}
-                className="text-sm font-medium text-primary animate-fade-in mb-1"
+                className="text-sm font-medium text-primary animate-fade-in ml-4"
               >
                 {coin.name} was just searched! 🔍
               </div>
             ))}
           </div>
         )}
-        <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
-          <WelcomeDialog />
-          <CoinGrid />
-        </div>
+        <CoinGrid />
       </div>
     </>
   );
