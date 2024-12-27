@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,6 +10,7 @@ interface MenuItem {
   icon: React.ComponentType<any>;
   path: string;
   isSpecial?: boolean;
+  isExternal?: boolean;
 }
 
 export const Header = ({ onSearch, isLoading }: { 
@@ -18,7 +19,6 @@ export const Header = ({ onSearch, isLoading }: {
 }) => {
   const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState(false);
-  console.log("Header component rendered");
 
   const handleLogoClick = () => {
     setIsSpinning(true);
@@ -60,11 +60,20 @@ export const Header = ({ onSearch, isLoading }: {
       icon: Trophy,
       path: "/leaderboard",
     },
+    {
+      title: "Community",
+      icon: Users,
+      path: "https://x.com/SwapSolDotFun",
+      isExternal: true,
+    },
   ];
 
-  const handleNavigation = (path: string) => {
-    console.log("Navigation triggered:", { path });
-    navigate(path);
+  const handleNavigation = (path: string, isExternal?: boolean) => {
+    if (isExternal) {
+      window.open(path, '_blank');
+    } else {
+      navigate(path);
+    }
   };
 
   return (
@@ -89,7 +98,7 @@ export const Header = ({ onSearch, isLoading }: {
                   key={item.title}
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleNavigation(item.path)}
+                  onClick={() => handleNavigation(item.path, item.isExternal)}
                   className={`flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary ${
                     item.isSpecial 
                       ? 'text-primary font-["3D_Cyborg"] text-xl tracking-[0.25em] scale-125 animate-laser-glow uppercase' 
