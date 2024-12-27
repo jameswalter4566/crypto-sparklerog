@@ -32,11 +32,12 @@ export function NewCoinCard({
   mintAddress,
   searchCount,
   priceHistory,
-  usdMarketCap,
+  usdMarketCap: initialMarketCap,
   change24h: initialChange24h
 }: NewCoinCardProps) {
   const [price, setPrice] = useState<number | null>(initialPrice);
   const [change24h, setChange24h] = useState<number | null>(initialChange24h);
+  const [marketCap, setMarketCap] = useState<number | null>(initialMarketCap);
   const { toast } = useToast();
   const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
   
@@ -56,17 +57,22 @@ export function NewCoinCard({
           if (payload.new) {
             const newPrice = payload.new.price;
             const newChange = payload.new.change_24h;
+            const newMarketCap = payload.new.usd_market_cap;
             
             if (typeof newPrice === 'number' && newPrice !== price) {
               setPrice(newPrice);
-              toast({
-                title: `${name} Price Updated`,
-                description: `New price: SOL ${newPrice.toFixed(6)}`,
-              });
             }
             
             if (typeof newChange === 'number' && newChange !== change24h) {
               setChange24h(newChange);
+            }
+
+            if (typeof newMarketCap === 'number' && newMarketCap !== marketCap) {
+              setMarketCap(newMarketCap);
+              toast({
+                title: `${name} Market Cap Updated`,
+                description: `New market cap: ${formatMarketCap(newMarketCap)}`,
+              });
             }
           }
         }
@@ -76,7 +82,7 @@ export function NewCoinCard({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, name, price, change24h, toast]);
+  }, [id, name, price, change24h, marketCap, toast]);
   
   const getGlowClass = (change24h: number | null) => {
     if (!change24h) return "";
@@ -153,11 +159,9 @@ export function NewCoinCard({
             </CardTitle>
             <span className="text-sm sm:text-lg text-gray-400 truncate max-w-[140px] sm:max-w-[180px]">{symbol || "N/A"}</span>
             <div className="mt-1 text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px]">{formatPrice(price)}</div>
-            {usdMarketCap !== undefined && (
-              <div className="text-sm text-gray-400">
-                MC: {formatMarketCap(usdMarketCap)}
-              </div>
-            )}
+            <div className="text-sm text-gray-400">
+              MC: {formatMarketCap(marketCap)}
+            </div>
             {priceHistory && <MiniPriceChart data={priceHistory} />}
           </div>
         </CardContent>
