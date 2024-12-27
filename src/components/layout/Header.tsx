@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Compass } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +22,11 @@ export const Header = ({ onSearch, isLoading }: {
       title: "Trending",
       icon: Coins,
       path: "/",
+    },
+    {
+      title: "Explore",
+      icon: Compass,
+      path: "/explore",
     },
     {
       title: "Search",

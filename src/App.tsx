@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import Index from "./pages/Index";
+import Explore from "./pages/Explore";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
@@ -157,6 +158,7 @@ const App = () => {
               <div className="h-24"></div>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/explore" element={<Explore />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />
