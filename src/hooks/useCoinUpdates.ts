@@ -17,7 +17,7 @@ export function useCoinUpdates(queryClient: QueryClient) {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Setting up real-time subscription');
+    console.log('[useCoinUpdates] Setting up real-time subscription');
     
     const channel = supabase.channel('coin_updates')
       .on(
@@ -28,12 +28,15 @@ export function useCoinUpdates(queryClient: QueryClient) {
           table: 'coins'
         },
         (payload: RealtimePostgresChangesPayload<RealtimeCoin>) => {
-          console.log('Received real-time update:', payload);
+          console.log('[useCoinUpdates] Received real-time update:', payload);
+          console.log('[useCoinUpdates] Update type:', payload.eventType);
           
           // Invalidate and refetch the trending-coins query
+          console.log('[useCoinUpdates] Invalidating trending-coins query');
           queryClient.invalidateQueries({ queryKey: ['trending-coins'] });
           
           if (payload.new && 'name' in payload.new) {
+            console.log('[useCoinUpdates] Showing toast for:', payload.new.name);
             toast({
               title: "Price Update",
               description: `${payload.new.name}'s price has been updated.`,
@@ -41,10 +44,12 @@ export function useCoinUpdates(queryClient: QueryClient) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useCoinUpdates] Subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up real-time subscription');
+      console.log('[useCoinUpdates] Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient, toast]);

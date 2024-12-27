@@ -57,9 +57,12 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
   const { data: fetchedCoins, isLoading: queryIsLoading } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
-      if (propCoins) return null; // Don't fetch if we have prop coins
+      if (propCoins) {
+        console.log('[CoinGrid] Using prop coins, skipping fetch');
+        return null;
+      }
       
-      console.log('Fetching trending coins');
+      console.log('[CoinGrid] Fetching trending coins');
       const { data: trendingCoins, error } = await supabase
         .from('coin_searches')
         .select(`
@@ -82,13 +85,15 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         .limit(30);
 
       if (error) {
-        console.error('Error fetching trending coins:', error);
+        console.error('[CoinGrid] Error fetching trending coins:', error);
         throw error;
       }
 
+      console.log('[CoinGrid] Received trending coins:', trendingCoins);
+
       return (trendingCoins as unknown as CoinQueryResult[]).map(trend => {
         if (!trend.coins) {
-          console.error('Missing coins data for trend:', trend);
+          console.error('[CoinGrid] Missing coins data for trend:', trend);
           return null;
         }
 
@@ -115,7 +120,7 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
             }
           }
         } catch (err) {
-          console.error('Error parsing historic data:', err);
+          console.error('[CoinGrid] Error parsing historic data:', err);
           priceHistory = null;
         }
 
