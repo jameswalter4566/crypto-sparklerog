@@ -1,53 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { fetchFromPumpApi } from "../_shared/pump-api.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface PumpApiResponse {
-  mint: string;
-  name: string;
-  symbol: string;
-  virtual_sol_reserves: number;
-  virtual_token_reserves: number;
-  market_cap: number;
-  usd_market_cap: number;
-}
-
-async function fetchFromPumpApi(mintAddress: string): Promise<PumpApiResponse | null> {
-  try {
-    console.log(`Fetching data from Pump API for mint address: ${mintAddress}`);
-    const response = await fetch('https://frontend-api-v2.pump.fun/coins', {
-      method: 'GET',
-      headers: {
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Origin': 'https://pump.fun',
-        'Referer': 'https://pump.fun/',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Error fetching from Pump API: ${response.status}`);
-      return null;
-    }
-
-    const data = await response.json();
-    const matchingCoin = data.find((item: PumpApiResponse) => item.mint === mintAddress);
-    
-    if (matchingCoin) {
-      console.log(`Found matching coin data for ${mintAddress}:`, matchingCoin);
-    } else {
-      console.log(`No matching coin found for mint address: ${mintAddress}`);
-    }
-    
-    return matchingCoin || null;
-  } catch (error) {
-    console.error('Error fetching from Pump API:', error);
-    return null;
-  }
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -82,19 +39,32 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      console.log(`Processing coin: ${coin.name} (${coin.id})`);
-      const pumpData = await fetchFromPumpApi(coin.solana_addr);
+      console.log(`Fetching fresh data from Pump API for token: ${coin.name}`);
+      const pumpData = await fetchFromPumpApi('/coins', {
+        searchTerm: coin.solana_addr,
+        limit: 1,
+        sort: 'market_cap',
+        order: 'DESC',
+        includeNsfw: false
+      });
       
-      if (pumpData) {
-        const price = pumpData.virtual_sol_reserves / pumpData.virtual_token_reserves;
+      if (pumpData && pumpData.length > 0) {
+        const tokenData = pumpData[0];
+        console.log(`Received data for ${coin.name}:`, JSON.stringify(tokenData, null, 2));
+        
+        // Calculate price in SOL
+        const price = tokenData.virtual_sol_reserves && tokenData.virtual_token_reserves
+          ? tokenData.virtual_sol_reserves / tokenData.virtual_token_reserves
+          : null;
+
         console.log(`Calculated new price for ${coin.name}: ${price} SOL`);
         
         updates.push(supabase
           .from('coins')
           .update({
             price: price,
-            market_cap: pumpData.market_cap,
-            usd_market_cap: pumpData.usd_market_cap,
+            market_cap: tokenData.market_cap,
+            usd_market_cap: tokenData.usd_market_cap,
             updated_at: new Date().toISOString()
           })
           .eq('id', coin.id)

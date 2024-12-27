@@ -1,0 +1,17 @@
+project_id = "fybgcaeoxptmmcwgslpl"
+
+[functions]
+[functions.analyze-rug]
+verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
+
+[functions.get-coin]
+verify_jwt = false
+
+[functions.add-coin]
+verify_jwt = false
+
+[functions.update-token-prices]
+verify_jwt = false
