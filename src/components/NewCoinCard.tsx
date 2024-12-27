@@ -40,6 +40,7 @@ export function NewCoinCard({
   const [price, setPrice] = useState<number | null>(initialPrice);
   const [change24h, setChange24h] = useState<number | null>(initialChange24h);
   const [marketCap, setMarketCap] = useState<number | null>(initialMarketCap);
+  const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
   
   const cardColor = useMemo(() => {
@@ -116,7 +117,7 @@ export function NewCoinCard({
   };
 
   const defaultImage = "/placeholder.svg";
-  const imageSource = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
+  const finalImageUrl = !imageError && imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultImage;
 
   return (
     <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
@@ -132,13 +133,12 @@ export function NewCoinCard({
           <div className="flex flex-col items-center gap-3 sm:gap-5">
             <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
               <AvatarImage 
-                src={imageSource}
+                src={finalImageUrl}
                 alt={name || "Unknown Coin"}
                 className="object-cover"
-                onError={(e) => {
+                onError={() => {
                   console.log('Image failed to load, using fallback');
-                  const img = e.target as HTMLImageElement;
-                  img.src = defaultImage;
+                  setImageError(true);
                 }}
               />
               <AvatarFallback>{symbol ? symbol.slice(0, 2).toUpperCase() : "??"}</AvatarFallback>
