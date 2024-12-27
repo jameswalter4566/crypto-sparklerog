@@ -1,8 +1,7 @@
 import { NewCoinCard } from "./NewCoinCard";
 import { CoinGridHeader } from "./coin/CoinGridHeader";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCoinUpdates } from "@/hooks/useCoinUpdates";
 
 interface CoinGridProps {
   title?: string;
@@ -48,11 +47,6 @@ interface CoinQueryResult {
 }
 
 export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading: propIsLoading }: CoinGridProps) {
-  const queryClient = useQueryClient();
-  
-  // Set up real-time updates
-  useCoinUpdates(queryClient);
-
   // Only fetch if coins weren't provided as props
   const { data: fetchedCoins, isLoading: queryIsLoading } = useQuery({
     queryKey: ['trending-coins'],
@@ -133,7 +127,7 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         };
       }).filter(Boolean);
     },
-    refetchInterval: propCoins ? false : 5000, // Only refetch if we're not using prop coins
+    refetchInterval: propCoins ? false : 5000, // Refetch every 5 seconds if we're not using prop coins
     gcTime: Infinity,
     staleTime: 0,
     enabled: !propCoins, // Only enable the query if we don't have prop coins
