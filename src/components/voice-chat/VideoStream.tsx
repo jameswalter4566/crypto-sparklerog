@@ -26,14 +26,7 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
       // Clear any existing content
       container.innerHTML = '';
       
-      // Create a dedicated video element
-      const videoElement = document.createElement('video');
-      videoElement.style.width = '100%';
-      videoElement.style.height = '100%';
-      videoElement.style.objectFit = 'cover';
-      container.appendChild(videoElement);
-      
-      // Play the video track
+      // Let Agora create and manage its own video element
       videoTrack.play(container, { 
         fit: 'cover',
         mirror: true 
