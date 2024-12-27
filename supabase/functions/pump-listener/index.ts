@@ -1,77 +1,76 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-const PUMP_FUN_WS_URL = 'wss://prod.realtime.pump.fun/graphql/realtime';
+import { createClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PUMP_FUN_WS_URL = "wss://frontend-ws.pump.fun/socket/websocket";
+
+interface CoinUpdate {
+  id: string;
+  price: number;
+  change_24h: number;
+  market_cap: number;
+  volume_24h: number;
+  liquidity: number;
+}
+
 async function handleWebSocket() {
   try {
-    console.log('Attempting to connect to WebSocket...');
-    const ws = new WebSocket(PUMP_FUN_WS_URL, ['graphql-ws']);
+    console.log('Connecting to WebSocket...');
+    const ws = new WebSocket(PUMP_FUN_WS_URL);
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false
+        }
+      }
+    );
 
     ws.onopen = () => {
-      console.log('Connected to Pump.fun WebSocket');
-      
-      // Send connection init message
+      console.log('WebSocket connection established');
       ws.send(JSON.stringify({
-        type: 'connection_init',
-        payload: {}
-      }));
-
-      // Send subscription message
-      ws.send(JSON.stringify({
-        id: '1',
-        type: 'subscribe',
-        payload: {
-          query: `
-            subscription {
-              newCoinCreated {
-                mint
-                name
-                symbol
-              }
-            }
-          `
-        }
+        "topic": "price_updates:*",
+        "event": "phx_join",
+        "payload": {},
+        "ref": 0
       }));
     };
 
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('Received WebSocket message:', data);
-        
-        if (data.type === 'next' && data.payload.data?.newCoinCreated) {
-          const coin = data.payload.data.newCoinCreated;
-          console.log('New coin created:', coin);
-          
-          // Store the new coin in Supabase
+        console.log('Received message:', data);
+
+        if (data.event === "price_update") {
+          const update: CoinUpdate = data.payload;
+          console.log('Processing price update for coin:', update.id);
+
           const { error } = await supabase
             .from('coins')
-            .upsert({
-              id: coin.mint,
-              name: coin.name,
-              symbol: coin.symbol,
-              solana_addr: coin.mint,
+            .update({
+              price: update.price,
+              change_24h: update.change_24h,
+              market_cap: update.market_cap,
+              volume_24h: update.volume_24h,
+              liquidity: update.liquidity,
               updated_at: new Date().toISOString()
-            });
+            })
+            .eq('id', update.id);
 
           if (error) {
-            console.error('Error storing coin:', error);
+            console.error('Error updating coin data:', error);
           } else {
-            console.log('Successfully stored coin:', coin.name);
+            console.log('Successfully updated coin:', update.id);
           }
         }
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
+        console.error('Error processing message:', error);
       }
     };
 
@@ -83,6 +82,8 @@ async function handleWebSocket() {
       console.log('WebSocket connection closed');
     };
 
+    // Keep the connection alive
+    return ws;
   } catch (error) {
     console.error('Error in handleWebSocket:', error);
     throw error;
@@ -90,15 +91,20 @@ async function handleWebSocket() {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
 
   try {
-    await handleWebSocket();
+    const ws = await handleWebSocket();
+    
     return new Response(
-      JSON.stringify({ message: 'Pump.fun listener started successfully' }),
+      JSON.stringify({ 
+        status: 'connected',
+        message: 'WebSocket connection established successfully' 
+      }),
       { 
         headers: { 
           ...corsHeaders, 
@@ -116,11 +122,11 @@ serve(async (req) => {
         details: error instanceof Error ? error.stack : undefined
       }),
       { 
-        status: 500,
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json'
-        }
+        },
+        status: 500
       }
     );
   }
