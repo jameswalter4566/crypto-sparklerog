@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRTCClient, ILocalTrack } from 'agora-rtc-react';
 import { useLocalAudio } from './hooks/useLocalAudio';
+import { useLocalVideo } from './hooks/useLocalVideo';
 import { useParticipants } from './hooks/useParticipants';
 import { useVoiceChatConnection } from './hooks/useVoiceChatConnection';
 import type { ParticipantProfile } from './types';
 import { fetchUserProfile, storeVoiceChatUID } from '@/services/fetchUserProfile';
+import { toast } from 'sonner';
 
 interface UseVoiceChatProps {
   channelName: string;
@@ -15,13 +17,15 @@ interface UseVoiceChatProps {
   } | null;
   agoraAppId: string;
   microphoneId?: string;
+  cameraId?: string;
 }
 
 export const useVoiceChat = ({
   channelName,
   userProfile,
   agoraAppId,
-  microphoneId
+  microphoneId,
+  cameraId
 }: UseVoiceChatProps) => {
   const client = useRTCClient();
   const [localUid, setLocalUid] = useState<number | null>(null);
@@ -35,11 +39,20 @@ export const useVoiceChat = ({
   } = useLocalAudio(microphoneId);
 
   const {
+    localVideoTrack,
+    isVideoEnabled,
+    createLocalVideoTrack,
+    stopVideoTrack,
+    toggleVideo
+  } = useLocalVideo(cameraId);
+
+  const {
     participants,
     addLocalParticipant,
     addRemoteParticipant,
     removeParticipant,
     handleToggleMute,
+    handleToggleVideo,
     clearParticipants
   } = useParticipants();
 
@@ -87,10 +100,36 @@ export const useVoiceChat = ({
     }
   }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
 
+  const handleToggleLocalVideo = useCallback(async () => {
+    try {
+      if (isVideoEnabled) {
+        if (localVideoTrack) {
+          await client.unpublish([localVideoTrack as unknown as ILocalTrack]);
+          stopVideoTrack();
+        }
+      } else {
+        const videoTrack = await createLocalVideoTrack();
+        if (videoTrack) {
+          await client.publish([videoTrack as unknown as ILocalTrack]);
+        }
+      }
+      if (localUid) {
+        handleToggleVideo(localUid);
+      }
+    } catch (error) {
+      console.error("[Voice Chat] Error toggling video:", error);
+      toast.error("Failed to toggle video. Please try again.");
+    }
+  }, [isVideoEnabled, localVideoTrack, client, stopVideoTrack, createLocalVideoTrack, localUid, handleToggleVideo]);
+
   const leave = useCallback(async () => {
     try {
       if (localAudioTrack) {
         await client.unpublish([localAudioTrack as unknown as ILocalTrack]);
+      }
+      if (localVideoTrack) {
+        await client.unpublish([localVideoTrack as unknown as ILocalTrack]);
+        stopVideoTrack();
       }
       await disconnect();
       cleanupLocalAudio();
@@ -101,7 +140,7 @@ export const useVoiceChat = ({
       console.error("[Voice Chat] Error leaving voice chat:", error);
       throw error;
     }
-  }, [disconnect, cleanupLocalAudio, clearParticipants, client, localAudioTrack]);
+  }, [disconnect, cleanupLocalAudio, clearParticipants, client, localAudioTrack, localVideoTrack, stopVideoTrack]);
 
   useEffect(() => {
     console.log("[Voice Chat] Setting up voice chat event listeners");
@@ -136,15 +175,27 @@ export const useVoiceChat = ({
 
     const handleUserPublished = async (user: any, mediaType: string) => {
       console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
+      await client.subscribe(user, mediaType);
+      console.log("[Voice Chat] Subscribed to remote media:", user.uid, mediaType);
+      
       if (mediaType === "audio") {
-        await client.subscribe(user, mediaType);
-        console.log("[Voice Chat] Subscribed to remote audio:", user.uid);
         user.audioTrack?.play();
+      } else if (mediaType === "video") {
+        const participant = participants.find(p => p.id === user.uid);
+        if (participant) {
+          handleToggleVideo(user.uid);
+        }
       }
     };
 
-    const handleUserUnpublished = (user: any) => {
-      console.log("[Voice Chat] User unpublished:", user.uid);
+    const handleUserUnpublished = (user: any, mediaType: string) => {
+      console.log("[Voice Chat] User unpublished:", user.uid, mediaType);
+      if (mediaType === "video") {
+        const participant = participants.find(p => p.id === user.uid);
+        if (participant) {
+          handleToggleVideo(user.uid);
+        }
+      }
     };
 
     client.on("user-joined", handleUserJoined);
@@ -158,12 +209,14 @@ export const useVoiceChat = ({
       client.off("user-published", handleUserPublished);
       client.off("user-unpublished", handleUserUnpublished);
     };
-  }, [client, localUid, addRemoteParticipant, removeParticipant]);
+  }, [client, localUid, addRemoteParticipant, removeParticipant, participants, handleToggleVideo]);
 
   return {
     participants,
     isMuted,
+    isVideoEnabled,
     handleToggleMute,
+    handleToggleVideo: handleToggleLocalVideo,
     join,
     leave,
     toggleMute,
