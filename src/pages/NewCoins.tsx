@@ -26,7 +26,6 @@ const NewCoins = () => {
               image_url,
               solana_addr,
               historic_data,
-              market_cap,
               usd_market_cap
             )
           `)
@@ -58,10 +57,10 @@ const NewCoins = () => {
             symbol: item.coins.symbol,
             price: item.coins.price,
             change_24h: item.coins.change_24h,
-            imageUrl: item.coins.image_url || "/placeholder.svg",
-            mintAddress: item.coins.solana_addr,
-            priceHistory: item.coins.historic_data,
-            usdMarketCap: item.coins.usd_market_cap
+            image_url: item.coins.image_url, // Make sure we're using image_url consistently
+            solana_addr: item.coins.solana_addr,
+            historic_data: item.coins.historic_data,
+            usd_market_cap: item.coins.usd_market_cap
           }));
       } catch (err) {
         console.error('Failed to fetch coins:', err);

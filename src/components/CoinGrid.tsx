@@ -67,10 +67,10 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
               symbol={coin.symbol || "N/A"}
               price={typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null}
               change24h={typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null}
-              imageUrl={coin.image_url || "/placeholder.svg"}
-              mintAddress={coin.solana_addr || ""}
+              imageUrl={coin.image_url || "/placeholder.svg"} // Changed from imageUrl to image_url to match database column
+              mintAddress={coin.solana_addr || ""} // Changed from mintAddress to solana_addr to match database column
               searchCount={coin.searchCount}
-              priceHistory={coin.priceHistory}
+              priceHistory={coin.historic_data} // Changed from priceHistory to historic_data to match database column
               usdMarketCap={typeof coin.usd_market_cap === "number" && !isNaN(coin.usd_market_cap) ? coin.usd_market_cap : null}
             />
           );
