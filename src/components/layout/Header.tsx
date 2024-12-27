@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Compass } from "lucide-react";
+import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +8,7 @@ interface MenuItem {
   title: string;
   icon: React.ComponentType<any>;
   path: string;
+  isSpecial?: boolean;
 }
 
 export const Header = ({ onSearch, isLoading }: { 
@@ -32,6 +33,12 @@ export const Header = ({ onSearch, isLoading }: {
       title: "Search",
       icon: Search,
       path: "/search",
+    },
+    {
+      title: "SWAP",
+      icon: ArrowLeftRight,
+      path: "/swap",
+      isSpecial: true,
     },
     {
       title: "Launch",
@@ -67,7 +74,11 @@ export const Header = ({ onSearch, isLoading }: {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleNavigation(item.path)}
-                  className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
+                  className={`flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary ${
+                    item.isSpecial 
+                      ? 'text-primary font-["3D_Cyborg"] text-lg tracking-wider' 
+                      : ''
+                  }`}
                 >
                   <item.icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{item.title}</span>
