@@ -12,9 +12,6 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ChartLoading } from './ChartLoading';
-import { getChartConfig } from './ChartConfig';
-import { generateMockData } from './chartUtils';
 
 interface PriceChartProps {
   data: Array<{
@@ -30,107 +27,100 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   const prevDataRef = useRef(chartData);
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    // Simulate loading state
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
+    // Calculate min and max prices for better chart scaling
     if (chartData.length > 0) {
       const prices = chartData.map(d => d.price);
       const min = Math.min(...prices);
       const max = Math.max(...prices);
-      const padding = (max - min) * 0.1;
+      const padding = (max - min) * 0.1; // Add 10% padding
       setMinPrice(min - padding);
       setMaxPrice(max + padding);
     }
   }, [chartData]);
 
   useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      try {
-        // Clean up existing subscription if any
-        if (channelRef.current) {
-          await supabase.removeChannel(channelRef.current);
-        }
+    const channel = supabase
+      .channel('coin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'coins',
+          filter: `id=eq.${coinId}`
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          
+          if (payload.new && payload.new.usd_market_cap) {
+            const newMarketCap = payload.new.usd_market_cap;
+            const currentTime = new Date().toISOString();
 
-        // Set up new subscription
-        const channel = supabase
-          .channel('coin-updates')
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'coins',
-              filter: `id=eq.${coinId}`
-            },
-            (payload) => {
-              if (payload.new && payload.new.usd_market_cap) {
-                const newMarketCap = payload.new.usd_market_cap;
-                const currentTime = new Date().toISOString();
-
-                setChartData(prevData => {
-                  const newData = [...prevData];
-                  const latestPoint = {
-                    date: currentTime,
-                    price: newMarketCap
-                  };
-                  
-                  if (newData.length >= 100) {
-                    newData.shift();
-                  }
-                  newData.push(latestPoint);
-                  prevDataRef.current = newData;
-                  return newData;
-                });
-
-                toast({
-                  title: "Price Updated",
-                  description: `New price data received`,
-                });
+            setChartData(prevData => {
+              const newData = [...prevData];
+              const latestPoint = {
+                date: currentTime,
+                price: newMarketCap
+              };
+              
+              if (newData.length >= 100) { // Keep last 100 points for better performance
+                newData.shift();
               }
-            }
-          )
-          .subscribe();
+              newData.push(latestPoint);
+              prevDataRef.current = newData;
+              return newData;
+            });
 
-        channelRef.current = channel;
-      } catch (error) {
-        console.error('Error setting up realtime subscription:', error);
-        toast({
-          title: "Connection Error",
-          description: "Failed to establish realtime connection",
-          variant: "destructive",
-        });
-      }
-    };
-
-    setupRealtimeSubscription();
+            toast({
+              title: "Price Updated",
+              description: `New price data received`,
+            });
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      const cleanup = async () => {
-        if (channelRef.current) {
-          await supabase.removeChannel(channelRef.current);
-        }
-      };
-      cleanup();
+      supabase.removeChannel(channel);
     };
   }, [coinId, toast]);
 
-  if (isLoading) {
-    return <ChartLoading />;
-  }
+  // Generate realistic mock data if no data is provided
+  const mockData = Array.from({ length: 100 }, (_, i) => {
+    const basePrice = 100;
+    const volatility = 0.02; // 2% volatility
+    const time = new Date();
+    time.setMinutes(time.getMinutes() - (100 - i));
+    
+    const randomWalk = Array.from({ length: i + 1 }, () => 
+      (Math.random() - 0.5) * volatility
+    ).reduce((a, b) => a + b, 0);
+    
+    return {
+      date: time.toISOString(),
+      price: basePrice * (1 + randomWalk)
+    };
+  });
 
-  const displayData = chartData.length > 0 ? chartData : generateMockData();
-  const chartConfig = getChartConfig(minPrice, maxPrice);
+  const displayData = chartData.length > 0 ? chartData : mockData;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(price);
+  };
+
+  // Calculate price change for reference line
   const priceChange = displayData.length >= 2 
     ? ((displayData[displayData.length - 1].price - displayData[0].price) / displayData[0].price) * 100
     : 0;
@@ -152,10 +142,39 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid {...chartConfig.cartesianGrid} />
-            <XAxis {...chartConfig.xAxis} />
-            <YAxis {...chartConfig.yAxis} />
-            <Tooltip {...chartConfig.tooltip} />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(255, 255, 255, 0.1)"
+              vertical={false}
+            />
+            <XAxis 
+              dataKey="date"
+              axisLine={{ stroke: '#333' }}
+              tickLine={false}
+              tick={{ fill: '#666', fontSize: 12 }}
+              tickFormatter={formatDate}
+              minTickGap={50}
+            />
+            <YAxis 
+              domain={[minPrice, maxPrice]}
+              axisLine={{ stroke: '#333' }}
+              tickLine={false}
+              tick={{ fill: '#666', fontSize: 12 }}
+              tickFormatter={formatPrice}
+              width={80}
+              orientation="right"
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                padding: '8px'
+              }}
+              labelStyle={{ color: '#999' }}
+              formatter={(value: number) => [formatPrice(value), 'Price']}
+              labelFormatter={formatDate}
+            />
             <ReferenceLine
               y={displayData[0]?.price}
               stroke="#666"
@@ -174,8 +193,8 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
               fillOpacity={1} 
               fill="url(#colorPrice)"
               isAnimationActive={true}
-              animationDuration={1000}
-              animationEasing="ease-in-out"
+              animationDuration={300}
+              animationEasing="ease-out"
               dot={false}
               activeDot={{
                 r: 4,
