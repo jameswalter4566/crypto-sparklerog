@@ -15,7 +15,6 @@ export interface CoinData {
   historic_data: Array<{ price: number; timestamp: string }> | null;
   circulating_supply: number | null;
   non_circulating_supply: number | null;
-  coingecko_id: string | null;
 }
 
 export interface CoinDataResponse {
@@ -40,5 +39,4 @@ export interface CoinDataResponse {
   market_cap: number | null;
   usd_market_cap: number | null;
   change_24h: number | null;
-  coingecko_id: string | null;
 }

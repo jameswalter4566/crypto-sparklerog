@@ -13,24 +13,6 @@ export const useCoinData = (id: string | undefined) => {
 
   const API_URL = 'https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/get-coin';
 
-  const fetchCoinGeckoId = useCallback(async (solanaAddr: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-coingecko-id', {
-        body: { solana_addr: solanaAddr }
-      });
-
-      if (error) {
-        console.error('Error fetching CoinGecko ID:', error);
-        return null;
-      }
-
-      return data?.coingecko_id;
-    } catch (err) {
-      console.error('Error fetching CoinGecko ID:', err);
-      return null;
-    }
-  }, []);
-
   const fetchCoinData = useCallback(async (isRefresh: boolean = false) => {
     if (!id) return;
 
@@ -56,15 +38,6 @@ export const useCoinData = (id: string | undefined) => {
         throw new Error(result.error);
       }
 
-      // If we don't have a CoinGecko ID, try to fetch it
-      if (!result.coingecko_id && result.solana_addr) {
-        console.log('No CoinGecko ID found, attempting to fetch it');
-        const coingeckoId = await fetchCoinGeckoId(result.solana_addr);
-        if (coingeckoId) {
-          result.coingecko_id = coingeckoId;
-        }
-      }
-
       const coinData: CoinData = {
         id: result.id,
         name: result.name || 'Unknown Token',
@@ -81,8 +54,7 @@ export const useCoinData = (id: string | undefined) => {
         volume_24h: result.volume_24h,
         liquidity: result.liquidity,
         solana_addr: result.solana_addr || id,
-        historic_data: result.historic_data || [],
-        coingecko_id: result.coingecko_id
+        historic_data: result.historic_data || []
       };
 
       console.log('Mapped coin data for UI:', coinData);
@@ -106,8 +78,9 @@ export const useCoinData = (id: string | undefined) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [id, toast, fetchCoinGeckoId]);
+  }, [id, toast]);
 
+  // Initial data fetch
   useEffect(() => {
     fetchCoinData();
   }, [fetchCoinData]);

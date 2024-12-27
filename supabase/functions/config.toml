@@ -15,6 +15,3 @@ verify_jwt = false
 
 [functions.update-token-prices]
 verify_jwt = false
-
-[functions.get-coingecko-id]
-verify_jwt = false

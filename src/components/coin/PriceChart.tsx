@@ -1,7 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { Area, AreaChart, XAxis, YAxis } from "recharts";
-import { format } from "date-fns";
+import {
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  Tooltip
+} from 'recharts';
+import { useEffect, useState, useRef } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PriceChartProps {
   data: Array<{
@@ -9,113 +18,139 @@ interface PriceChartProps {
     price: number;
   }>;
   coinId: string;
-  coingeckoId?: string | null;
 }
 
-export const PriceChart = ({ data, coingeckoId }: PriceChartProps) => {
-  // If we have historic data, use it
-  if (data && data.length > 0) {
-    const chartData = data.map(item => ({
-      date: format(new Date(item.date), 'MMM d, yyyy'),
-      price: item.price
-    }));
+export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
+  const [chartData, setChartData] = useState(initialData);
+  const { toast } = useToast();
+  const animationRef = useRef<number>(0);
 
-    return (
-      <Card className="w-full h-[600px]">
-        <CardHeader>
-          <CardTitle>Price Chart</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            className="h-[500px]"
-            config={{
-              price: {
-                theme: {
-                  light: "rgba(234, 88, 12, 0.3)",
-                  dark: "rgba(234, 88, 12, 0.3)",
-                },
-              },
-              stroke: {
-                theme: {
-                  light: "rgb(234, 88, 12)",
-                  dark: "rgb(234, 88, 12)",
-                },
-              },
-            }}
-          >
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(234, 88, 12)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="rgb(234, 88, 12)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: 'currentColor' }}
-                tickMargin={10}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: 'currentColor' }}
-                tickMargin={10}
-                tickFormatter={(value) => `$${value.toFixed(4)}`}
-              />
-              <ChartTooltip />
-              <Area
-                type="monotone"
-                dataKey="price"
-                stroke="rgb(234, 88, 12)"
-                fill="url(#gradient)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-    );
-  }
+  useEffect(() => {
+    // Set up real-time listener for market cap changes
+    const channel = supabase
+      .channel('coin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'coins',
+          filter: `id=eq.${coinId}`
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          
+          if (payload.new && payload.new.usd_market_cap) {
+            const newMarketCap = payload.new.usd_market_cap;
+            const currentTime = new Date().toLocaleDateString();
 
-  // Fallback to CoinGecko widget if we have a coingeckoId
-  if (coingeckoId) {
-    return (
-      <Card className="w-full h-[600px]">
-        <CardHeader>
-          <CardTitle>Price Chart</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div 
-            style={{ height: '500px' }}
-            dangerouslySetInnerHTML={{
-              __html: `
-                <coingecko-coin-compare-chart-widget
-                  coin-ids="${coingeckoId}"
-                  currency="usd"
-                  height="500"
-                  locale="en"
-                  background-color="#000000"
-                  text-color="#FFFFFF"
-                ></coingecko-coin-compare-chart-widget>
-                <script src="https://widgets.coingecko.com/coingecko-coin-compare-chart-widget.js" id="coingecko-widget-script"></script>
-              `
-            }}
-          />
-        </CardContent>
-      </Card>
-    );
-  }
+            // Add new data point with smooth animation
+            setChartData(prevData => {
+              const newData = [...prevData];
+              
+              // Add new point
+              const latestPoint = {
+                date: currentTime,
+                price: newMarketCap
+              };
+              
+              // Keep only the last 30 data points for better visualization
+              if (newData.length >= 30) {
+                newData.shift(); // Remove oldest point
+              }
+              newData.push(latestPoint);
+              
+              return newData;
+            });
 
-  // Show placeholder if no data available
+            // Show toast notification
+            toast({
+              title: "Market Cap Updated",
+              description: `New market cap: $${newMarketCap.toLocaleString()}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [coinId, toast]);
+
+  // Generate mock data if no data is provided
+  const mockData = Array.from({ length: 30 }, (_, i) => ({
+    date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    price: Math.sin(i * 0.5) * 10 + 20 + Math.random() * 5
+  }));
+
+  const displayData = chartData.length > 0 ? chartData : mockData;
+
   return (
     <Card className="w-full h-[600px]">
       <CardHeader>
         <CardTitle>Price Chart</CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-center h-[500px] text-muted-foreground">
-        No price data available for this token
+      <CardContent>
+        <ResponsiveContainer width="100%" height={500}>
+          <AreaChart data={displayData}>
+            <defs>
+              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#4B9CD3" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#4B9CD3" stopOpacity={0}/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(75, 156, 211, 0.1)"
+            />
+            <XAxis 
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#888', fontSize: 12 }}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#888', fontSize: 12 }}
+              tickFormatter={(value) => `$${value.toLocaleString()}`}
+              domain={['auto', 'auto']} // This ensures the chart adjusts its scale automatically
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                border: '1px solid #444',
+                borderRadius: '4px'
+              }}
+              labelStyle={{ color: '#fff' }}
+              formatter={(value: number) => [`$${value.toLocaleString()}`, 'Market Cap']}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="price" 
+              stroke="#4B9CD3" 
+              strokeWidth={2}
+              fillOpacity={1} 
+              fill="url(#colorPrice)"
+              filter="url(#glow)"
+              isAnimationActive={true} // Enable animations
+              animationDuration={300} // Set animation duration
+              animationBegin={0} // Start animation immediately
+              className="animate-laser-glow" 
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );
