@@ -26,8 +26,18 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
       // Clear any existing content
       container.innerHTML = '';
       
-      // Play the video track directly in the container
-      videoTrack.play(container, { fit: 'cover' });
+      // Create a dedicated video element
+      const videoElement = document.createElement('video');
+      videoElement.style.width = '100%';
+      videoElement.style.height = '100%';
+      videoElement.style.objectFit = 'cover';
+      container.appendChild(videoElement);
+      
+      // Play the video track
+      videoTrack.play(container, { 
+        fit: 'cover',
+        mirror: true 
+      });
 
       return () => {
         console.log("[VideoStream] Cleaning up video track");
@@ -56,7 +66,8 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        borderRadius: 'inherit'
       }}
     />
   );
