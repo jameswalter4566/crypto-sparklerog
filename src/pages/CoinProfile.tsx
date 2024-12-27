@@ -9,10 +9,29 @@ import { PriceChart } from "@/components/coin/PriceChart";
 import { VoiceChat } from "@/components/coin/VoiceChat";
 import { SwapInterface } from "@/components/SwapInterface";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
+interface CoinData {
+  id: string;
+  name: string;
+  symbol: string;
+  description: string | null;
+  image_url: string | null;
+  total_supply: number | null;
+  price: number | null;
+  change_24h: number | null;
+  market_cap: number | null;
+  usd_market_cap: number | null;
+  volume_24h: number | null;
+  liquidity: number | null;
+  solana_addr: string | null;
+  historic_data: Array<{ price: number; timestamp: string }> | null;
+}
 
 const CoinProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const [coin, setCoin] = useState<any>(null);
+  const [coin, setCoin] = useState<CoinData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +114,53 @@ const CoinProfile = () => {
     }
   }, [id, toast]);
 
+  // Set up real-time subscription for price updates
+  useEffect(() => {
+    if (!id) return;
+
+    console.log('Setting up real-time subscription for coin:', id);
+    
+    const channel = supabase.channel('coin_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'coins',
+          filter: `id=eq.${id}`
+        },
+        (payload: RealtimePostgresChangesPayload<CoinData>) => {
+          console.log('Received real-time update:', payload);
+          
+          if (payload.new) {
+            setCoin(prevCoin => {
+              if (!prevCoin) return payload.new;
+              return {
+                ...prevCoin,
+                price: payload.new.price,
+                change_24h: payload.new.change_24h,
+                market_cap: payload.new.market_cap,
+                usd_market_cap: payload.new.usd_market_cap,
+                volume_24h: payload.new.volume_24h,
+                liquidity: payload.new.liquidity
+              };
+            });
+
+            toast({
+              title: "Price Update",
+              description: `${payload.new.name}'s price data has been updated.`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [id, toast]);
+
   useEffect(() => {
     fetchCoinData();
   }, [fetchCoinData]);
@@ -132,8 +198,8 @@ const CoinProfile = () => {
         image={coin.image_url}
         price={coin.price}
         description={coin.description}
-        tokenStandard={coin.token_standard}
-        decimals={coin.decimals}
+        tokenStandard="SPL"
+        decimals={null}
         updatedAt={new Date().toISOString()}
         onRefresh={() => fetchCoinData(true)}
         refreshing={refreshing}
@@ -148,9 +214,9 @@ const CoinProfile = () => {
       />
 
       <TokenSupply
-        total={coin.supply.total}
-        circulating={coin.supply.circulating}
-        nonCirculating={coin.supply.nonCirculating}
+        total={coin.total_supply}
+        circulating={null}
+        nonCirculating={null}
       />
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
