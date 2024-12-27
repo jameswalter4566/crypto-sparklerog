@@ -12,6 +12,8 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { ChartLoading } from "./ChartLoading";
+import { useChartConfig, formatDate, formatPrice } from "./ChartConfig";
 
 interface PriceChartProps {
   data: Array<{
@@ -25,20 +27,17 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   const [chartData, setChartData] = useState(initialData);
   const { toast } = useToast();
   const prevDataRef = useRef(chartData);
-  const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(0);
+  const { minPrice, maxPrice, priceChange } = useChartConfig(chartData);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Calculate min and max prices for better chart scaling
-    if (chartData.length > 0) {
-      const prices = chartData.map(d => d.price);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      const padding = (max - min) * 0.1; // Add 10% padding
-      setMinPrice(min - padding);
-      setMaxPrice(max + padding);
-    }
-  }, [chartData]);
+    // Simulate initial loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -65,7 +64,7 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
                 price: newMarketCap
               };
               
-              if (newData.length >= 100) { // Keep last 100 points for better performance
+              if (newData.length >= 100) {
                 newData.shift();
               }
               newData.push(latestPoint);
@@ -87,10 +86,14 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
     };
   }, [coinId, toast]);
 
+  if (isLoading) {
+    return <ChartLoading />;
+  }
+
   // Generate realistic mock data if no data is provided
   const mockData = Array.from({ length: 100 }, (_, i) => {
     const basePrice = 100;
-    const volatility = 0.02; // 2% volatility
+    const volatility = 0.02;
     const time = new Date();
     time.setMinutes(time.getMinutes() - (100 - i));
     
@@ -105,25 +108,6 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   });
 
   const displayData = chartData.length > 0 ? chartData : mockData;
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(price);
-  };
-
-  // Calculate price change for reference line
-  const priceChange = displayData.length >= 2 
-    ? ((displayData[displayData.length - 1].price - displayData[0].price) / displayData[0].price) * 100
-    : 0;
 
   return (
     <Card className="w-full h-[600px] bg-black border-gray-800">
