@@ -54,7 +54,8 @@ export const useCoinData = (id: string | undefined) => {
         volume_24h: result.volume_24h,
         liquidity: result.liquidity,
         solana_addr: result.solana_addr || id,
-        historic_data: result.historic_data || []
+        historic_data: result.historic_data || [],
+        coingecko_id: result.coingecko_id
       };
 
       console.log('Mapped coin data for UI:', coinData);
