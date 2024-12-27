@@ -20,6 +20,8 @@ export interface Participant {
   isVideoEnabled?: boolean;
   /** The participant's video track, if any */
   videoTrack?: any;
+  /** Whether this participant is the local user */
+  isLocal?: boolean;
 }
 
 /**
