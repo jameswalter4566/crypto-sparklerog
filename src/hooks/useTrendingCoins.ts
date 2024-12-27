@@ -50,9 +50,15 @@ export function useTrendingCoins() {
         console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
 
         return trendingCoins.map((trend: TrendingCoinResponse) => ({
-          ...trend.coins,
-          searchCount: trend.search_count,
-          priceHistory: trend.coins.historic_data
+          id: trend.coins.id,
+          name: trend.coins.name,
+          symbol: trend.coins.symbol,
+          price: trend.coins.price,
+          change_24h: trend.coins.change_24h,
+          imageUrl: trend.coins.image_url,
+          mintAddress: trend.coins.solana_addr,
+          priceHistory: trend.coins.historic_data,
+          usdMarketCap: trend.coins.usd_market_cap
         }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
@@ -77,7 +83,6 @@ export function useTrendingCoins() {
         },
         (payload) => {
           console.log('[useTrendingCoins] Received real-time update:', payload);
-          // Trigger a refetch when we receive an update
           refetch();
         }
       )
