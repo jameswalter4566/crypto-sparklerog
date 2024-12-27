@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
+import Featured from "./pages/Featured";
 import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
@@ -159,6 +160,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/explore" element={<Explore />} />
+                <Route path="/featured" element={<Featured />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />
