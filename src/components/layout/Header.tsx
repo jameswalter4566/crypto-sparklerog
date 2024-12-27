@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 interface MenuItem {
   title: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<any>; // Add type for icon props
   path: string;
 }
 
