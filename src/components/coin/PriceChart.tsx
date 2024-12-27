@@ -31,6 +31,7 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     // Simulate loading state
@@ -54,47 +55,73 @@ export const PriceChart = ({ data: initialData, coinId }: PriceChartProps) => {
   }, [chartData]);
 
   useEffect(() => {
-    const channel = supabase
-      .channel('coin-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'coins',
-          filter: `id=eq.${coinId}`
-        },
-        (payload) => {
-          if (payload.new && payload.new.usd_market_cap) {
-            const newMarketCap = payload.new.usd_market_cap;
-            const currentTime = new Date().toISOString();
-
-            setChartData(prevData => {
-              const newData = [...prevData];
-              const latestPoint = {
-                date: currentTime,
-                price: newMarketCap
-              };
-              
-              if (newData.length >= 100) {
-                newData.shift();
-              }
-              newData.push(latestPoint);
-              prevDataRef.current = newData;
-              return newData;
-            });
-
-            toast({
-              title: "Price Updated",
-              description: `New price data received`,
-            });
-          }
+    const setupRealtimeSubscription = async () => {
+      try {
+        // Clean up existing subscription if any
+        if (channelRef.current) {
+          await supabase.removeChannel(channelRef.current);
         }
-      )
-      .subscribe();
+
+        // Set up new subscription
+        const channel = supabase
+          .channel('coin-updates')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'coins',
+              filter: `id=eq.${coinId}`
+            },
+            (payload) => {
+              if (payload.new && payload.new.usd_market_cap) {
+                const newMarketCap = payload.new.usd_market_cap;
+                const currentTime = new Date().toISOString();
+
+                setChartData(prevData => {
+                  const newData = [...prevData];
+                  const latestPoint = {
+                    date: currentTime,
+                    price: newMarketCap
+                  };
+                  
+                  if (newData.length >= 100) {
+                    newData.shift();
+                  }
+                  newData.push(latestPoint);
+                  prevDataRef.current = newData;
+                  return newData;
+                });
+
+                toast({
+                  title: "Price Updated",
+                  description: `New price data received`,
+                });
+              }
+            }
+          )
+          .subscribe();
+
+        channelRef.current = channel;
+      } catch (error) {
+        console.error('Error setting up realtime subscription:', error);
+        toast({
+          title: "Connection Error",
+          description: "Failed to establish realtime connection",
+          variant: "destructive",
+        });
+      }
+    };
+
+    setupRealtimeSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      const cleanup = async () => {
+        if (channelRef.current) {
+          await supabase.removeChannel(channelRef.current);
+        }
+      };
+      cleanup();
     };
   }, [coinId, toast]);
 
