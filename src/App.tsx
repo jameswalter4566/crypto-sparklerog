@@ -101,16 +101,22 @@ const App = () => {
       let coinMetadata = existingCoin;
 
       if (!coinMetadata) {
+        console.log('Calling add-coin function for:', mintAddress);
         // If coin doesn't exist, call the edge function to add it
-        const response = await supabase.functions.invoke('add-coin', {
+        const { data, error } = await supabase.functions.invoke('add-coin', {
           body: { solana_addr: mintAddress }
         });
 
-        if (!response.data) {
-          throw new Error('Failed to fetch token information from edge function');
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(error.message || 'Failed to fetch token information');
         }
 
-        coinMetadata = response.data;
+        if (!data) {
+          throw new Error('No data returned from edge function');
+        }
+
+        coinMetadata = data;
       }
 
       if (coinMetadata) {
