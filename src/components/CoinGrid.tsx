@@ -47,7 +47,6 @@ interface CoinQueryResult {
 }
 
 export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading: propIsLoading }: CoinGridProps) {
-  // Only fetch if coins weren't provided as props
   const { data: fetchedCoins, isLoading: queryIsLoading } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
@@ -57,6 +56,8 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
       }
       
       console.log('[CoinGrid] Fetching trending coins');
+      
+      // First get the trending coins from Supabase
       const { data: trendingCoins, error } = await supabase
         .from('coin_searches')
         .select(`
@@ -83,9 +84,70 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
         throw error;
       }
 
-      console.log('[CoinGrid] Received trending coins:', trendingCoins);
+      // For each coin, fetch fresh data from pump.fun
+      const updatedCoins = await Promise.all(
+        trendingCoins.map(async (trend) => {
+          if (!trend.coins?.solana_addr) {
+            console.log(`[CoinGrid] No solana address for coin ${trend.coin_id}, skipping refresh`);
+            return trend;
+          }
 
-      return (trendingCoins as unknown as CoinQueryResult[]).map(trend => {
+          try {
+            const response = await fetch('https://frontend-api-v2.pump.fun/coins', {
+              headers: {
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Origin': 'https://pump.fun',
+                'Referer': 'https://pump.fun/',
+              },
+            });
+
+            if (!response.ok) {
+              console.error(`[CoinGrid] Error fetching from Pump API for ${trend.coin_id}: ${response.status}`);
+              return trend;
+            }
+
+            const data = await response.json();
+            const coinData = data.find((item: any) => item.mint === trend.coins?.solana_addr);
+
+            if (coinData) {
+              // Calculate new price and update the coin data
+              const priceInSol = coinData.virtual_sol_reserves && coinData.virtual_token_reserves
+                ? (coinData.virtual_sol_reserves / 1e9) / (coinData.virtual_token_reserves / 1e9)
+                : null;
+
+              // Update the coin in Supabase with fresh data
+              await supabase
+                .from('coins')
+                .update({
+                  price: priceInSol,
+                  market_cap: coinData.market_cap,
+                  usd_market_cap: coinData.usd_market_cap,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', trend.coin_id);
+
+              // Update the trend object with fresh data
+              return {
+                ...trend,
+                coins: {
+                  ...trend.coins,
+                  price: priceInSol,
+                  market_cap: coinData.market_cap,
+                  usd_market_cap: coinData.usd_market_cap
+                }
+              };
+            }
+          } catch (err) {
+            console.error(`[CoinGrid] Error processing coin ${trend.coin_id}:`, err);
+          }
+          return trend;
+        })
+      );
+
+      console.log('[CoinGrid] Received trending coins:', updatedCoins);
+
+      return updatedCoins.map(trend => {
         if (!trend.coins) {
           console.error('[CoinGrid] Missing coins data for trend:', trend);
           return null;
