@@ -5,7 +5,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-const PUMP_FUN_WS_URL = 'wss://prod.realtime.pump.fun/graphql/realtime?header=<your base64 header>&payload=e30=';
+const PUMP_FUN_WS_URL = 'wss://prod.realtime.pump.fun/graphql/realtime';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +14,7 @@ const corsHeaders = {
 
 async function handleWebSocket() {
   try {
+    console.log('Attempting to connect to WebSocket...');
     const ws = new WebSocket(PUMP_FUN_WS_URL, ['graphql-ws']);
 
     ws.onopen = () => {
@@ -22,9 +23,7 @@ async function handleWebSocket() {
       // Send connection init message
       ws.send(JSON.stringify({
         type: 'connection_init',
-        payload: {
-          // Add any required auth tokens here
-        }
+        payload: {}
       }));
 
       // Send subscription message
@@ -46,28 +45,33 @@ async function handleWebSocket() {
     };
 
     ws.onmessage = async (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'next' && data.payload.data?.newCoinCreated) {
-        const coin = data.payload.data.newCoinCreated;
-        console.log('New coin created:', coin);
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received WebSocket message:', data);
         
-        // Store the new coin in Supabase
-        const { error } = await supabase
-          .from('coins')
-          .upsert({
-            id: coin.mint,
-            name: coin.name,
-            symbol: coin.symbol,
-            solana_addr: coin.mint,
-            updated_at: new Date().toISOString()
-          });
+        if (data.type === 'next' && data.payload.data?.newCoinCreated) {
+          const coin = data.payload.data.newCoinCreated;
+          console.log('New coin created:', coin);
+          
+          // Store the new coin in Supabase
+          const { error } = await supabase
+            .from('coins')
+            .upsert({
+              id: coin.mint,
+              name: coin.name,
+              symbol: coin.symbol,
+              solana_addr: coin.mint,
+              updated_at: new Date().toISOString()
+            });
 
-        if (error) {
-          console.error('Error storing coin:', error);
-        } else {
-          console.log('Successfully stored coin:', coin.name);
+          if (error) {
+            console.error('Error storing coin:', error);
+          } else {
+            console.log('Successfully stored coin:', coin.name);
+          }
         }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
       }
     };
 
@@ -90,9 +94,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  await handleWebSocket();
-  return new Response(
-    JSON.stringify({ message: 'Pump.fun listener started' }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
+  try {
+    await handleWebSocket();
+    return new Response(
+      JSON.stringify({ message: 'Pump.fun listener started successfully' }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        } 
+      }
+    );
+  } catch (error) {
+    console.error('Error in serve handler:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }
 });
