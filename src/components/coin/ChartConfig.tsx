@@ -16,7 +16,7 @@ export const getChartConfig = (minPrice: number, maxPrice: number) => ({
     tick: { fill: '#666', fontSize: 12 },
     tickFormatter: formatPrice,
     width: 80,
-    orientation: "right"
+    orientation: "right" as const // Fixed by explicitly typing as "right"
   },
   cartesianGrid: {
     strokeDasharray: "3 3",
