@@ -17,6 +17,7 @@ interface PumpApiResponse {
 
 async function fetchFromPumpApi(mintAddress: string): Promise<PumpApiResponse | null> {
   try {
+    console.log(`Fetching data from Pump API for mint address: ${mintAddress}`);
     const response = await fetch('https://frontend-api-v2.pump.fun/coins', {
       method: 'GET',
       headers: {
@@ -33,7 +34,15 @@ async function fetchFromPumpApi(mintAddress: string): Promise<PumpApiResponse | 
     }
 
     const data = await response.json();
-    return data.find((item: PumpApiResponse) => item.mint === mintAddress) || null;
+    const matchingCoin = data.find((item: PumpApiResponse) => item.mint === mintAddress);
+    
+    if (matchingCoin) {
+      console.log(`Found matching coin data for ${mintAddress}:`, matchingCoin);
+    } else {
+      console.log(`No matching coin found for mint address: ${mintAddress}`);
+    }
+    
+    return matchingCoin || null;
   } catch (error) {
     console.error('Error fetching from Pump API:', error);
     return null;
@@ -46,6 +55,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Starting price update process...');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -53,25 +64,32 @@ Deno.serve(async (req) => {
     // Get all coins from the database
     const { data: coins, error: fetchError } = await supabase
       .from('coins')
-      .select('id, solana_addr')
+      .select('id, solana_addr, name')
       .not('solana_addr', 'is', null);
 
     if (fetchError) {
+      console.error('Error fetching coins from database:', fetchError);
       throw fetchError;
     }
 
-    console.log(`Updating prices for ${coins.length} coins`);
+    console.log(`Found ${coins?.length || 0} coins to update`);
 
     // Update each coin's price data
-    for (const coin of coins) {
-      if (!coin.solana_addr) continue;
+    const updates = [];
+    for (const coin of coins || []) {
+      if (!coin.solana_addr) {
+        console.log(`Skipping coin ${coin.id} - no Solana address`);
+        continue;
+      }
 
+      console.log(`Processing coin: ${coin.name} (${coin.id})`);
       const pumpData = await fetchFromPumpApi(coin.solana_addr);
       
       if (pumpData) {
         const price = pumpData.virtual_sol_reserves / pumpData.virtual_token_reserves;
+        console.log(`Calculated new price for ${coin.name}: ${price} SOL`);
         
-        const { error: updateError } = await supabase
+        updates.push(supabase
           .from('coins')
           .update({
             price: price,
@@ -79,22 +97,44 @@ Deno.serve(async (req) => {
             usd_market_cap: pumpData.usd_market_cap,
             updated_at: new Date().toISOString()
           })
-          .eq('id', coin.id);
-
-        if (updateError) {
-          console.error(`Error updating coin ${coin.id}:`, updateError);
-        } else {
-          console.log(`Updated price for coin ${coin.id}`);
-        }
+          .eq('id', coin.id)
+          .then(({ error }) => {
+            if (error) {
+              console.error(`Error updating coin ${coin.id}:`, error);
+              return { success: false, coin: coin.name, error };
+            }
+            console.log(`Successfully updated price for ${coin.name}`);
+            return { success: true, coin: coin.name };
+          })
+        );
+      } else {
+        console.log(`No Pump.fun data found for ${coin.name}`);
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    // Wait for all updates to complete
+    const results = await Promise.all(updates);
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    console.log(`Update complete. Successfully updated ${successful} coins. ${failed} updates failed.`);
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      summary: {
+        total: updates.length,
+        successful,
+        failed
+      }
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in update-token-prices function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
