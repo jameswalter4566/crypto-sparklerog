@@ -74,6 +74,11 @@ export const useVoiceChat = ({
         throw new Error("Failed to create audio track");
       }
 
+      let videoTrack = null;
+      if (cameraId) {
+        videoTrack = await createLocalVideoTrack();
+      }
+
       const uid = await connect(channelName, agoraAppId);
       const uidNumber = Number(uid);
       setLocalUid(uidNumber);
@@ -83,18 +88,24 @@ export const useVoiceChat = ({
         await storeVoiceChatUID(uidNumber, userProfile.wallet_address);
       }
 
-      console.log("[Voice Chat] Publishing audio track");
-      await client.publish([audioTrack as unknown as ILocalTrack]);
-      console.log("[Voice Chat] Published audio track successfully");
+      const tracksToPublish = [audioTrack as unknown as ILocalTrack];
+      if (videoTrack) {
+        tracksToPublish.push(videoTrack as unknown as ILocalTrack);
+      }
+
+      console.log("[Voice Chat] Publishing tracks");
+      await client.publish(tracksToPublish);
+      console.log("[Voice Chat] Published tracks successfully");
 
       addLocalParticipant(uidNumber, userProfile);
       console.log("[Voice Chat] Successfully connected to voice chat with UID:", uidNumber);
     } catch (error) {
       console.error("[Voice Chat] Error joining voice chat:", error);
       cleanupLocalAudio();
+      stopVideoTrack();
       throw error;
     }
-  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, cleanupLocalAudio, addLocalParticipant, userProfile, client]);
+  }, [isConnected, connect, channelName, agoraAppId, createLocalAudioTrack, createLocalVideoTrack, cleanupLocalAudio, stopVideoTrack, addLocalParticipant, userProfile, client, cameraId]);
 
   const handleUserPublished = useCallback(async (user: any, mediaType: "audio" | "video") => {
     console.log("[Voice Chat] User published:", user.uid, "MediaType:", mediaType);
