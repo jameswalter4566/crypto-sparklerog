@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { WebSocket } from "https://deno.land/std@0.168.0/ws/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -51,6 +50,7 @@ async function handleWebSocket() {
       
       if (data.type === 'next' && data.payload.data?.newCoinCreated) {
         const coin = data.payload.data.newCoinCreated;
+        console.log('New coin created:', coin);
         
         // Store the new coin in Supabase
         const { error } = await supabase
@@ -65,6 +65,8 @@ async function handleWebSocket() {
 
         if (error) {
           console.error('Error storing coin:', error);
+        } else {
+          console.log('Successfully stored coin:', coin.name);
         }
       }
     };
