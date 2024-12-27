@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CoinGrid } from "@/components/CoinGrid";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { AnimatedBackground } from "@/components/effects/AnimatedBackground";
+import { useExploreCoins } from "@/hooks/useExploreCoins";
 
 interface CoinMetadata {
   id: string;
@@ -19,6 +20,7 @@ interface CoinMetadata {
 
 const Explore = () => {
   const [searchResults, setSearchResults] = useState<CoinMetadata[]>([]);
+  const { coins, isLoading } = useExploreCoins();
 
   return (
     <>
@@ -37,7 +39,7 @@ const Explore = () => {
             ))}
           </div>
         )}
-        <CoinGrid title="Explore Coins" />
+        <CoinGrid title="Most Searched Coins" coins={coins} isLoading={isLoading} />
       </div>
     </>
   );
