@@ -1,12 +1,12 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Star } from "lucide-react";
+import { Coins, Trophy, Search, Rocket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface MenuItem {
   title: string;
-  icon: React.ComponentType<any>; // Add type for icon props
+  icon: React.ComponentType<any>;
   path: string;
 }
 
@@ -22,11 +22,6 @@ export const Header = ({ onSearch, isLoading }: {
       title: "Trending",
       icon: Coins,
       path: "/",
-    },
-    {
-      title: "New",
-      icon: Star,
-      path: "/new-coins",
     },
     {
       title: "Search",
