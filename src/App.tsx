@@ -152,8 +152,8 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="relative">
-          <Toaster className="z-50" /> {/* Ensure toasts are visible */}
-          <Sonner position="top-right" className="z-50" /> {/* Add position and ensure visibility */}
+          <Toaster /> {/* Remove className prop from Toaster */}
+          <Sonner position="top-right" /> {/* Keep only the position prop for Sonner */}
         </div>
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">
