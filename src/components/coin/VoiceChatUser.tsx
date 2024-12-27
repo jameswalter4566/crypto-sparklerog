@@ -2,7 +2,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { VideoStream } from "../voice-chat/VideoStream";
-import type { ICameraVideoTrack, IRemoteVideoTrack } from "agora-rtc-sdk-ng";
+import type { ICameraVideoTrack, IRemoteVideoTrack } from 'agora-rtc-sdk-ng';
 
 interface VoiceChatUserProps {
   user: {
@@ -38,8 +38,11 @@ export const VoiceChatUser = ({
     >
       <div className="w-24 h-24 mb-3 relative">
         {user.videoTrack && user.isVideoEnabled ? (
-          <div className="w-24 h-24 overflow-hidden rounded-full">
-            <VideoStream videoTrack={user.videoTrack} className="w-full h-full object-cover" />
+          <div className="w-24 h-24 rounded-full overflow-hidden">
+            <VideoStream 
+              videoTrack={user.videoTrack} 
+              className="w-full h-full object-cover"
+            />
           </div>
         ) : (
           <Avatar className="w-24 h-24">

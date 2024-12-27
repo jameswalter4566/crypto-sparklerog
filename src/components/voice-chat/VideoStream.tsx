@@ -15,19 +15,27 @@ export const VideoStream = ({ videoTrack, className = "" }: VideoStreamProps) =>
       return;
     }
 
-    console.log("[VideoStream] Playing video track");
-    videoTrack.play(videoRef.current);
+    try {
+      console.log("[VideoStream] Playing video track");
+      videoTrack.play(videoRef.current);
 
-    return () => {
-      console.log("[VideoStream] Stopping video track");
-      videoTrack.stop();
-    };
+      return () => {
+        console.log("[VideoStream] Stopping video track");
+        try {
+          videoTrack.stop();
+        } catch (error) {
+          console.error("[VideoStream] Error stopping video track:", error);
+        }
+      };
+    } catch (error) {
+      console.error("[VideoStream] Error playing video track:", error);
+    }
   }, [videoTrack]);
 
   return (
     <div 
       ref={videoRef} 
-      className={`relative w-full h-full rounded-lg overflow-hidden bg-black ${className}`}
+      className={`relative w-full h-full ${className}`}
     />
   );
 };
