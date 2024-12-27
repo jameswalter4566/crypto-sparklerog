@@ -6,9 +6,32 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
+// Array of vibrant colors for the price display
+const priceColors = [
+  '#8B5CF6', // Vivid Purple
+  '#D946EF', // Magenta Pink
+  '#F97316', // Bright Orange
+  '#0EA5E9', // Ocean Blue
+  '#1EAEDB', // Bright Blue
+  '#33C3F0', // Sky Blue
+  '#ea384c', // Red
+];
+
+// Array of pastel colors for card backgrounds
+const cardColors = [
+  'rgba(242, 252, 226, 0.03)', // Soft Green
+  'rgba(254, 247, 205, 0.03)', // Soft Yellow
+  'rgba(254, 198, 161, 0.03)', // Soft Orange
+  'rgba(229, 222, 255, 0.03)', // Soft Purple
+  'rgba(255, 222, 226, 0.03)', // Soft Pink
+  'rgba(253, 225, 211, 0.03)', // Soft Peach
+  'rgba(211, 228, 253, 0.03)', // Soft Blue
+  'rgba(241, 240, 251, 0.03)', // Soft Gray
+];
 
 interface NewCoinCardProps {
   id: string;
@@ -38,8 +61,24 @@ export function NewCoinCard({
   const [price, setPrice] = useState<number | null>(initialPrice);
   const [change24h, setChange24h] = useState<number | null>(initialChange24h);
   const [marketCap, setMarketCap] = useState<number | null>(initialMarketCap);
+  const [currentPriceColor, setCurrentPriceColor] = useState(priceColors[0]);
   const { toast } = useToast();
-  const symbolFallback = symbol ? symbol.slice(0, 2).toUpperCase() : "??";
+  
+  // Generate a random color for this card that stays consistent
+  const cardColor = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * cardColors.length);
+    return cardColors[randomIndex];
+  }, []);
+
+  // Effect for price color animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * priceColors.length);
+      setCurrentPriceColor(priceColors[randomIndex]);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
   
   useEffect(() => {
     const channel = supabase
@@ -114,10 +153,13 @@ export function NewCoinCard({
 
   return (
     <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
-      <Card className={cn(
-        "hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 relative",
-        getGlowClass(change24h)
-      )}>
+      <Card 
+        className={cn(
+          "hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 relative",
+          getGlowClass(change24h)
+        )}
+        style={{ backgroundColor: cardColor }}
+      >
         {searchCount !== undefined && searchCount > 0 && (
           <div className="absolute top-2 right-2 z-10 flex flex-col items-center">
             <Badge 
@@ -142,7 +184,7 @@ export function NewCoinCard({
                   img.src = defaultImage;
                 }}
               />
-              <AvatarFallback>{symbolFallback}</AvatarFallback>
+              <AvatarFallback>{symbol ? symbol.slice(0, 2).toUpperCase() : "??"}</AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-2 sm:gap-4">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
@@ -158,7 +200,12 @@ export function NewCoinCard({
               </div>
             </CardTitle>
             <span className="text-sm sm:text-lg text-gray-400 truncate max-w-[140px] sm:max-w-[180px]">{symbol || "N/A"}</span>
-            <div className="mt-1 text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px]">{formatPrice(price)}</div>
+            <div 
+              className="mt-1 text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px] transition-colors duration-300"
+              style={{ color: currentPriceColor }}
+            >
+              {formatPrice(price)}
+            </div>
             <div className="text-sm text-gray-400">
               MC: {formatMarketCap(marketCap)}
             </div>
