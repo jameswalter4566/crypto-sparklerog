@@ -36,37 +36,41 @@ const App = () => {
   const updateSearchCount = async (coinId: string) => {
     console.log('Updating search count for coin:', coinId);
     
-    const { data: currentData, error: fetchError } = await supabase
-      .from('coin_searches')
-      .select('search_count')
-      .eq('coin_id', coinId)
-      .single();
+    try {
+      const { data: currentData, error: fetchError } = await supabase
+        .from('coin_searches')
+        .select('search_count')
+        .eq('coin_id', coinId)
+        .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching current search count:', fetchError);
-      return;
-    }
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching current search count:', fetchError);
+        return;
+      }
 
-    const currentCount = currentData?.search_count || 0;
-    const newCount = currentCount + 1;
+      const currentCount = currentData?.search_count || 0;
+      const newCount = currentCount + 1;
 
-    const { error: upsertError } = await supabase
-      .from('coin_searches')
-      .upsert(
-        { 
-          coin_id: coinId,
-          last_searched_at: new Date().toISOString(),
-          search_count: newCount
-        },
-        {
-          onConflict: 'coin_id'
-        }
-      );
+      const { error: upsertError } = await supabase
+        .from('coin_searches')
+        .upsert(
+          { 
+            coin_id: coinId,
+            last_searched_at: new Date().toISOString(),
+            search_count: newCount
+          },
+          {
+            onConflict: 'coin_id'
+          }
+        );
 
-    if (upsertError) {
-      console.error('Error updating search count:', upsertError);
-    } else {
-      console.log('Successfully updated search count to:', newCount);
+      if (upsertError) {
+        console.error('Error updating search count:', upsertError);
+      } else {
+        console.log('Successfully updated search count to:', newCount);
+      }
+    } catch (error) {
+      console.error('Error in updateSearchCount:', error);
     }
   };
 
@@ -82,6 +86,8 @@ const App = () => {
 
     setIsLoading(true);
     try {
+      const functionUrl = new URL("https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin");
+      
       const { data: existingCoin, error: selectError } = await supabase
         .from("coins")
         .select("*")
@@ -96,9 +102,7 @@ const App = () => {
       let coinMetadata = existingCoin;
 
       if (!coinMetadata) {
-        const functionUrl = "https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/add-coin";
-
-        const response = await fetch(functionUrl, {
+        const response = await fetch(functionUrl.toString(), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -118,9 +122,8 @@ const App = () => {
       if (coinMetadata) {
         await updateSearchCount(coinMetadata.id);
         
-        console.log("Showing toast for:", coinMetadata.name); // Debug log
+        console.log("Showing toast for:", coinMetadata.name);
         
-        // Show colorful toast notification for searched coin
         toast({
           title: "New Search!",
           description: (
@@ -128,8 +131,7 @@ const App = () => {
               {coinMetadata.name} was just searched! 🔍
             </span>
           ),
-          duration: 5000, // Keep the toast visible for 5 seconds
-          variant: "default",
+          duration: 5000,
         });
         
         return coinMetadata;
@@ -152,8 +154,8 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="relative">
-          <Toaster /> {/* Remove className prop from Toaster */}
-          <Sonner position="top-right" /> {/* Keep only the position prop for Sonner */}
+          <Toaster />
+          <Sonner position="top-right" />
         </div>
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">
