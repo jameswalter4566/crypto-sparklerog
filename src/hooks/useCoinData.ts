@@ -54,7 +54,11 @@ export const useCoinData = (id: string | undefined) => {
         volume_24h: result.volume_24h,
         liquidity: result.liquidity,
         solana_addr: result.solana_addr || id,
-        historic_data: result.historic_data || []
+        historic_data: result.historic_data || [],
+        twitter_screen_name: result.twitter_screen_name,
+        website: result.website,
+        coingecko_id: result.coingecko_id,
+        decimals: result.decimals
       };
 
       console.log('Mapped coin data for UI:', coinData);
@@ -104,7 +108,7 @@ export const useCoinData = (id: string | undefined) => {
           console.log('Received real-time update:', payload);
           
           if (payload.new && coin) {
-            const newData = payload.new as Partial<CoinData>;
+            const newData = payload.new;
             const updatedCoin: CoinData = {
               ...coin,
               price: typeof newData.price !== 'undefined' ? newData.price : coin.price,

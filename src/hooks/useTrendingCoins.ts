@@ -39,7 +39,9 @@ export function useTrendingCoins() {
               website,
               total_supply,
               volume_24h,
-              liquidity
+              liquidity,
+              coingecko_id,
+              decimals
             )
           `)
           .order('search_count', { ascending: false })
