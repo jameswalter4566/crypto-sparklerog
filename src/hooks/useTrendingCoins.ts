@@ -36,7 +36,7 @@ export function useTrendingCoins() {
               usd_market_cap
             )
           `)
-          .order('coins(market_cap)', { ascending: false })
+          .order('search_count', { ascending: false })
           .limit(30);
 
         if (error) {
@@ -60,7 +60,8 @@ export function useTrendingCoins() {
           imageUrl: trend.coins.image_url,
           mintAddress: trend.coins.solana_addr,
           priceHistory: trend.coins.historic_data,
-          usdMarketCap: trend.coins.usd_market_cap
+          usdMarketCap: trend.coins.usd_market_cap,
+          searchCount: trend.search_count
         }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
