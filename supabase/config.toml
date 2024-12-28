@@ -13,3 +13,6 @@ verify_jwt = false
 
 [functions.add-coin]
 verify_jwt = false
+
+[functions.poll-new-coins]
+verify_jwt = false

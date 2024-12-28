@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { DatabaseManager } from "../_shared/database-manager.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const PUMP_API_URL = "https://frontend-api-v2.pump.fun/coins";
 
@@ -14,23 +14,24 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Check for authentication
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response(
-      JSON.stringify({ error: 'No authorization header' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-    );
-  }
-
   try {
-    const db = new DatabaseManager();
-    console.log('Polling Pump.fun for new coins...');
+    console.log('Starting poll-new-coins function');
+    
+    // Initialize Supabase client with service role key for admin access
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false
+        }
+      }
+    );
 
+    console.log('Fetching coins from Pump API...');
     const response = await fetch(PUMP_API_URL, {
       headers: {
         'Accept': '*/*',
-        'Accept-Encoding': 'gzip',
         'Accept-Language': 'en-US,en;q=0.9',
         'Origin': 'https://pump.fun',
         'Referer': 'https://pump.fun/',
@@ -38,31 +39,53 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch from Pump.fun: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Failed to fetch from Pump API:', errorText);
+      throw new Error(`Failed to fetch from Pump API: ${response.status}`);
     }
 
     const coins = await response.json();
-    console.log(`Received ${coins.length} coins from Pump.fun`);
+    console.log(`Received ${coins.length} coins from Pump API`);
 
     let updatedCount = 0;
     for (const coin of coins) {
       try {
-        await db.upsertCoin({
-          id: coin.mint,
-          name: coin.name,
-          symbol: coin.symbol,
-          description: coin.description,
-          image_url: coin.image_uri,
-          price: coin.price,
-          change_24h: coin.price_change_24h,
-          market_cap: coin.market_cap,
-          volume_24h: coin.volume_24h,
-          liquidity: coin.virtual_sol_reserves,
-          total_supply: coin.total_supply,
-          solana_addr: coin.mint,
-          updated_at: new Date().toISOString()
-        });
-        updatedCount++;
+        // Calculate price in SOL using virtual reserves
+        let priceInSol = null;
+        if (coin.virtual_sol_reserves && coin.virtual_token_reserves) {
+          const solAmount = coin.virtual_sol_reserves / 1e9; // Convert lamports to SOL
+          const tokenAmount = coin.virtual_token_reserves / 1e9; // Assuming 9 decimals
+          priceInSol = solAmount / tokenAmount;
+        }
+
+        const { error } = await supabaseAdmin
+          .from('coins')
+          .upsert({
+            id: coin.mint,
+            name: coin.name,
+            symbol: coin.symbol,
+            image_url: coin.image_uri,
+            price: priceInSol,
+            market_cap: coin.market_cap,
+            usd_market_cap: coin.usd_market_cap,
+            liquidity: coin.virtual_sol_reserves ? coin.virtual_sol_reserves / 1e9 : null,
+            total_supply: coin.total_supply ? coin.total_supply / 1e9 : null,
+            solana_addr: coin.mint,
+            description: coin.description,
+            homepage: coin.website,
+            twitter_screen_name: coin.twitter?.replace('https://x.com/', ''),
+            chat_url: coin.telegram ? [coin.telegram] : null,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          });
+
+        if (error) {
+          console.error(`Error upserting coin ${coin.mint}:`, error);
+        } else {
+          updatedCount++;
+          console.log(`Successfully processed coin: ${coin.name} (${coin.mint})`);
+        }
       } catch (error) {
         console.error(`Error processing coin ${coin.mint}:`, error);
       }
@@ -72,13 +95,24 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, coinsProcessed: updatedCount }), 
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   } catch (error) {
     console.error('Error in poll-new-coins:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 500 
+      }
     );
   }
 });
