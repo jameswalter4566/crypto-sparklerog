@@ -30,19 +30,19 @@ export const MarketCapDisplay = ({ marketCap, usdMarketCap }: MarketCapDisplayPr
       return "";
     }
     if (value >= 1000000) {
-      return `($${(value / 1000000).toFixed(2)}M)`;
+      return `$${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-      return `($${(value / 1000).toFixed(2)}K)`;
+      return `$${(value / 1000).toFixed(2)}K`;
     }
-    return `($${value.toFixed(2)})`;
+    return `$${value.toFixed(2)}`;
   };
 
   return (
     <div className="text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px] transition-colors duration-300">
-      <span style={{ color: currentColor }}>
+      <span className="text-sm text-gray-400">
         {formatMarketCap(marketCap)}
       </span>
-      <span className="text-sm text-gray-400 ml-1">
+      <span className="ml-1" style={{ color: currentColor }}>
         {formatUsdMarketCap(usdMarketCap)}
       </span>
     </div>
