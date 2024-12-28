@@ -40,16 +40,39 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Failed to fetch from Pump API:', errorText);
+      console.error('Failed to fetch from Pump API:', response.status, errorText);
       throw new Error(`Failed to fetch from Pump API: ${response.status}`);
     }
 
-    const coins = await response.json();
+    // First try to get the response as text
+    const responseText = await response.text();
+    console.log('Raw API response:', responseText);
+
+    // Then parse it as JSON
+    let coins;
+    try {
+      coins = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      console.error('Response that failed to parse:', responseText);
+      throw new Error('Invalid JSON response from API');
+    }
+
+    if (!Array.isArray(coins)) {
+      console.error('Expected array of coins but got:', typeof coins);
+      throw new Error('Invalid response format: expected array of coins');
+    }
+
     console.log(`Received ${coins.length} coins from Pump API`);
 
     let updatedCount = 0;
     for (const coin of coins) {
       try {
+        if (!coin.mint || !coin.name || !coin.symbol) {
+          console.warn('Skipping coin with missing required fields:', coin);
+          continue;
+        }
+
         // Calculate price in SOL using virtual reserves
         let priceInSol = null;
         if (coin.virtual_sol_reserves && coin.virtual_token_reserves) {
@@ -73,7 +96,7 @@ serve(async (req) => {
             solana_addr: coin.mint,
             description: coin.description,
             homepage: coin.website,
-            twitter_screen_name: coin.twitter?.replace('https://x.com/', ''),
+            twitter_screen_name: coin.twitter?.replace('https://x.com/', '').replace('https://twitter.com/', ''),
             chat_url: coin.telegram ? [coin.telegram] : null,
             updated_at: new Date().toISOString()
           }, {
@@ -87,7 +110,7 @@ serve(async (req) => {
           console.log(`Successfully processed coin: ${coin.name} (${coin.mint})`);
         }
       } catch (error) {
-        console.error(`Error processing coin ${coin.mint}:`, error);
+        console.error(`Error processing coin ${coin?.mint || 'unknown'}:`, error);
       }
     }
 
