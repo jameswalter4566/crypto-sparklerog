@@ -29,10 +29,8 @@ export function useTrendingCoins() {
           return supabaseCoins;
         }
 
-        // Fetch from the edge function instead of directly from Pump API
-        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('poll-new-coins', {
-          body: { limit: 50, offset: 0 }
-        });
+        // If no data in Supabase, fetch from edge function
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('poll-new-coins');
 
         if (edgeFunctionError) {
           console.error('[useTrendingCoins] Edge function error:', edgeFunctionError);
@@ -40,10 +38,7 @@ export function useTrendingCoins() {
         }
 
         console.log('[useTrendingCoins] Received data from edge function:', edgeFunctionData);
-
-        // The edge function already handles mapping and storing the data
-        // Just return the mapped data
-        return edgeFunctionData.coins;
+        return edgeFunctionData.coins || [];
 
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);

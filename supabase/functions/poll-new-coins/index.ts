@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
 import { corsHeaders } from '../_shared/cors.ts'
 
 console.log('Hello from poll-new-coins!')
@@ -13,7 +13,7 @@ const supabaseClient = createClient(
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -76,7 +76,11 @@ serve(async (req) => {
     console.log('Successfully updated coins in database')
 
     return new Response(
-      JSON.stringify({ success: true, count: mappedCoins.length }),
+      JSON.stringify({ 
+        success: true, 
+        coins: mappedCoins,
+        count: mappedCoins.length 
+      }),
       { 
         headers: { 
           ...corsHeaders,
@@ -89,7 +93,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in poll-new-coins:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
       { 
         headers: { 
           ...corsHeaders,
