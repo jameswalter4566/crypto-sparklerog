@@ -2,6 +2,27 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
+interface CoinSearchResult {
+  coin_id: string;
+  search_count: number;
+  coins: {
+    id: string;
+    name: string;
+    symbol: string;
+    price: number | null;
+    change_24h: number | null;
+    image_url: string | null;
+    solana_addr: string | null;
+    historic_data: Array<{ price: number; timestamp: string }> | null;
+    usd_market_cap: number | null;
+    description: string | null;
+    twitter_screen_name: string | null;
+    homepage: string | null;
+    volume_24h: number | null;
+    liquidity: number | null;
+  };
+}
+
 export const useFeaturedCoins = () => {
   const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['featuredCoins'],
@@ -26,8 +47,8 @@ export const useFeaturedCoins = () => {
               historic_data,
               usd_market_cap,
               description,
-              twitter,
-              website,
+              twitter_screen_name,
+              homepage,
               volume_24h,
               liquidity
             )
@@ -56,7 +77,7 @@ export const useFeaturedCoins = () => {
         }
 
         // Map the joined data to the expected format
-        return trendingCoins.map(trend => ({
+        return (trendingCoins as CoinSearchResult[]).map(trend => ({
           id: trend.coins.id,
           name: trend.coins.name,
           symbol: trend.coins.symbol,
@@ -67,8 +88,8 @@ export const useFeaturedCoins = () => {
           priceHistory: trend.coins.historic_data,
           usdMarketCap: trend.coins.usd_market_cap,
           description: trend.coins.description,
-          twitter: trend.coins.twitter,
-          website: trend.coins.website,
+          twitter: trend.coins.twitter_screen_name,
+          website: trend.coins.homepage,
           volume24h: trend.coins.volume_24h,
           liquidity: trend.coins.liquidity,
           searchCount: trend.search_count
