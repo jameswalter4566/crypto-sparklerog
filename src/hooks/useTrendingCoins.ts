@@ -49,6 +49,13 @@ export function useTrendingCoins() {
           return [];
         }
 
+        // Poll the new coins endpoint
+        try {
+          await fetch('https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/poll-new-coins');
+        } catch (error) {
+          console.error('[useTrendingCoins] Error polling new coins:', error);
+        }
+
         console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
 
         return trendingCoins.map((trend: TrendingCoinResponse) => ({
@@ -68,8 +75,8 @@ export function useTrendingCoins() {
         throw error;
       }
     },
-    refetchInterval: 30000,
-    staleTime: 15000,
+    refetchInterval: 3000,
+    staleTime: 1000,
   });
 
   useEffect(() => {

@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export const useFeaturedCoins = () => {
-  return useQuery({
+  const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['featuredCoins'],
     queryFn: async () => {
       console.log('[useFeaturedCoins] Fetching featured coins');
@@ -34,6 +35,13 @@ export const useFeaturedCoins = () => {
 
       console.log('[useFeaturedCoins] Received coins:', trendingCoins);
 
+      // Poll the new coins endpoint
+      try {
+        await fetch('https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/poll-new-coins');
+      } catch (error) {
+        console.error('[useFeaturedCoins] Error polling new coins:', error);
+      }
+
       return trendingCoins.map(trend => ({
         id: trend.coins.id,
         name: trend.coins.name,
@@ -47,6 +55,31 @@ export const useFeaturedCoins = () => {
         searchCount: trend.search_count
       }));
     },
-    refetchInterval: 5000
+    refetchInterval: 3000 // Refetch every 3 seconds
   });
+
+  useEffect(() => {
+    // Set up real-time subscription for coin updates
+    const channel = supabase
+      .channel('coin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'coins'
+        },
+        (payload) => {
+          console.log('[useFeaturedCoins] Received real-time update:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  return { coins, isLoading };
 };
