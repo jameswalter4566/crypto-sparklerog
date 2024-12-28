@@ -18,9 +18,9 @@ export const MarketCapDisplay = ({ marketCap, usdMarketCap }: MarketCapDisplayPr
     return () => clearInterval(interval);
   }, []);
 
-  const formatMarketCap = (value: number | null) => {
+  const formatPrice = (value: number | null) => {
     if (typeof value !== "number" || isNaN(value)) {
-      return "MC not available";
+      return "Price not available";
     }
     return `SOL ${value.toFixed(6)}`;
   };
@@ -30,21 +30,21 @@ export const MarketCapDisplay = ({ marketCap, usdMarketCap }: MarketCapDisplayPr
       return "";
     }
     if (value >= 1000000) {
-      return `($${(value / 1000000).toFixed(2)}M)`;
+      return `MC: $${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-      return `($${(value / 1000).toFixed(2)}K)`;
+      return `MC: $${(value / 1000).toFixed(2)}K`;
     }
-    return `($${value.toFixed(2)})`;
+    return `MC: $${value.toFixed(2)}`;
   };
 
   return (
     <div className="text-lg sm:text-xl font-medium truncate max-w-[140px] sm:max-w-[180px] transition-colors duration-300">
       <span style={{ color: currentColor }}>
-        {formatMarketCap(marketCap)}
+        {formatPrice(marketCap)}
       </span>
-      <span className="text-sm text-gray-400 ml-1">
+      <div className="text-sm text-gray-400">
         {formatUsdMarketCap(usdMarketCap)}
-      </span>
+      </div>
     </div>
   );
 };
