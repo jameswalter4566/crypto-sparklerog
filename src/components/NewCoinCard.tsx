@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Coins } from "lucide-react";
+import { Coins, Twitter, Globe } from "lucide-react";
 
 interface NewCoinCardProps {
   id: string;
@@ -24,6 +24,11 @@ interface NewCoinCardProps {
   searchCount?: number;
   priceHistory?: Array<{ price: number; timestamp: string; }> | null;
   usdMarketCap?: number | null;
+  description?: string | null;
+  twitter?: string | null;
+  website?: string | null;
+  volume24h?: number | null;
+  liquidity?: number | null;
 }
 
 export function NewCoinCard({ 
@@ -36,7 +41,12 @@ export function NewCoinCard({
   searchCount,
   priceHistory,
   usdMarketCap: initialMarketCap,
-  change24h: initialChange24h
+  change24h: initialChange24h,
+  description,
+  twitter,
+  website,
+  volume24h,
+  liquidity
 }: NewCoinCardProps) {
   const [price, setPrice] = useState<number | null>(initialPrice);
   const [change24h, setChange24h] = useState<number | null>(initialChange24h);
@@ -154,6 +164,26 @@ export function NewCoinCard({
             <div className="flex items-center gap-2 sm:gap-4">
               <CopyAddressButton solanaAddr={mintAddress || ""} />
               <VoiceChatCounter coinId={id} />
+              {twitter && (
+                <a 
+                  href={`https://twitter.com/${twitter}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80"
+                >
+                  <Twitter className="h-5 w-5" />
+                </a>
+              )}
+              {website && (
+                <a 
+                  href={website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80"
+                >
+                  <Globe className="h-5 w-5" />
+                </a>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -169,6 +199,11 @@ export function NewCoinCard({
             <div className="text-sm text-gray-400">
               MC: {formatMarketCap(marketCap)}
             </div>
+            {description && (
+              <p className="text-xs text-gray-400 line-clamp-2 text-center mt-2">
+                {description}
+              </p>
+            )}
             {priceHistory && <MiniPriceChart data={priceHistory} />}
           </div>
         </CardContent>

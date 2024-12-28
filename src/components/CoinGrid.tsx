@@ -16,6 +16,11 @@ interface CoinGridProps {
     priceHistory: any;
     usdMarketCap: number;
     searchCount?: number;
+    description?: string;
+    twitter?: string;
+    website?: string;
+    volume24h?: number;
+    liquidity?: number;
   }>;
   isLoading?: boolean;
 }
@@ -73,6 +78,11 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
               searchCount={coin.searchCount}
               priceHistory={coin.priceHistory}
               usdMarketCap={typeof coin.usdMarketCap === "number" && !isNaN(coin.usdMarketCap) ? coin.usdMarketCap : null}
+              description={coin.description}
+              twitter={coin.twitter}
+              website={coin.website}
+              volume24h={coin.volume24h}
+              liquidity={coin.liquidity}
             />
           );
         })}

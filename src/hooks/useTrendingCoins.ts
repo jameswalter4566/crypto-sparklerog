@@ -33,11 +33,17 @@ export function useTrendingCoins() {
               solana_addr,
               historic_data,
               market_cap,
-              usd_market_cap
+              usd_market_cap,
+              description,
+              twitter_screen_name,
+              website,
+              total_supply,
+              volume_24h,
+              liquidity
             )
           `)
           .order('search_count', { ascending: false })
-          .limit(30);
+          .limit(50);
 
         if (error) {
           console.error('[useTrendingCoins] Error fetching trending coins:', error);
@@ -47,13 +53,6 @@ export function useTrendingCoins() {
         if (!trendingCoins) {
           console.warn('[useTrendingCoins] No trending coins data received');
           return [];
-        }
-
-        // Poll the new coins endpoint
-        try {
-          await fetch('https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/poll-new-coins');
-        } catch (error) {
-          console.error('[useTrendingCoins] Error polling new coins:', error);
         }
 
         console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
@@ -68,6 +67,12 @@ export function useTrendingCoins() {
           mintAddress: trend.coins.solana_addr,
           priceHistory: trend.coins.historic_data,
           usdMarketCap: trend.coins.usd_market_cap,
+          description: trend.coins.description,
+          twitter: trend.coins.twitter_screen_name,
+          website: trend.coins.website,
+          totalSupply: trend.coins.total_supply,
+          volume24h: trend.coins.volume_24h,
+          liquidity: trend.coins.liquidity,
           searchCount: trend.search_count
         }));
       } catch (error) {
@@ -75,7 +80,7 @@ export function useTrendingCoins() {
         throw error;
       }
     },
-    refetchInterval: 3000,
+    refetchInterval: 3000, // Refetch every 3 seconds like Pump.fun
     staleTime: 1000,
   });
 
