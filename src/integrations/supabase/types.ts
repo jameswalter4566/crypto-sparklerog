@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      coin_comments: {
+        Row: {
+          coin_id: string
+          content: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          coin_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          coin_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_comments_coin_id_fkey"
+            columns: ["coin_id"]
+            isOneToOne: false
+            referencedRelation: "coins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_comments_wallet_address_fkey"
+            columns: ["wallet_address"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["wallet_address"]
+          },
+        ]
+      }
       coin_searches: {
         Row: {
           coin_id: string
