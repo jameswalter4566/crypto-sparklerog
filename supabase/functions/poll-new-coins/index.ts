@@ -12,7 +12,6 @@ const supabaseClient = createClient(
 )
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -60,6 +59,7 @@ serve(async (req) => {
 
     console.log('Mapped coins for database:', mappedCoins)
 
+    // First insert/update the coins
     const { error: insertError } = await supabaseClient
       .from('coins')
       .upsert(mappedCoins, {
@@ -68,6 +68,22 @@ serve(async (req) => {
 
     if (insertError) {
       throw insertError
+    }
+
+    // Then update coin_searches for each coin
+    for (const coin of mappedCoins) {
+      const { error: searchError } = await supabaseClient
+        .from('coin_searches')
+        .upsert({
+          coin_id: coin.id,
+          search_count: 1
+        }, {
+          onConflict: 'coin_id'
+        })
+
+      if (searchError) {
+        console.error(`Error updating search count for coin ${coin.id}:`, searchError)
+      }
     }
 
     return new Response(
