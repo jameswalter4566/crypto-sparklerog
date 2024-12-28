@@ -19,12 +19,14 @@ export function useTrendingCoins() {
       
       try {
         const response = await fetch('https://frontend-api-v2.pump.fun/coins/for-you?offset=0&limit=50&includeNsfw=false', {
+          method: 'GET',
           headers: {
             'Accept': '*/*',
             'Accept-Encoding': 'gzip',
             'Accept-Language': 'en-US,en;q=0.9',
             'Origin': 'https://pump.fun',
             'Referer': 'https://pump.fun/',
+            'Referrer-Policy': 'strict-origin-when-cross-origin'
           }
         });
 
