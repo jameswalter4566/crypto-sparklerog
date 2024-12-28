@@ -117,6 +117,11 @@ export function NewCoinCard({
     return `$${value.toFixed(2)}`;
   };
 
+  const handleImageError = () => {
+    console.log('Image failed to load:', imageUrl);
+    setImageError(true);
+  };
+
   return (
     <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
       <Card 
@@ -135,10 +140,7 @@ export function NewCoinCard({
                   src={imageUrl}
                   alt={name || "Unknown Coin"}
                   className="object-cover"
-                  onError={() => {
-                    console.log('Image failed to load:', imageUrl);
-                    setImageError(true);
-                  }}
+                  onError={handleImageError}
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-gray-800">

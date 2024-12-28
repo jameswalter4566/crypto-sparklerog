@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { CoinData } from "@/types/coin";
 
 interface TrendingCoinResponse {
@@ -10,6 +10,8 @@ interface TrendingCoinResponse {
 }
 
 export function useTrendingCoins() {
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
   const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
@@ -70,9 +72,13 @@ export function useTrendingCoins() {
   });
 
   useEffect(() => {
+    if (channelRef.current) {
+      return;
+    }
+
     console.log('[useTrendingCoins] Setting up real-time subscription');
     
-    const channel = supabase
+    channelRef.current = supabase
       .channel('coin-updates')
       .on(
         'postgres_changes',
@@ -90,7 +96,10 @@ export function useTrendingCoins() {
 
     return () => {
       console.log('[useTrendingCoins] Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [refetch]);
 
