@@ -4,22 +4,19 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 console.log('Hello from poll-new-coins!')
 
-// Create a Supabase client with the Auth context of the function
 const supabaseClient = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
     console.log('Fetching trending coins from Pump API...')
 
-    // Fetch data from Pump API
     const response = await fetch('https://api.pump.fun/api/v1/tokens/trending', {
       method: 'GET',
       headers: {
@@ -41,7 +38,6 @@ serve(async (req) => {
       throw new Error('Unexpected API response format')
     }
 
-    // Map the data to our database schema
     const mappedCoins = data.map(coin => ({
       id: coin.mint,
       name: coin.name,
@@ -61,7 +57,6 @@ serve(async (req) => {
 
     console.log('Mapped coins:', mappedCoins)
 
-    // Store in Supabase
     const { error: insertError } = await supabaseClient
       .from('coins')
       .upsert(mappedCoins, {
