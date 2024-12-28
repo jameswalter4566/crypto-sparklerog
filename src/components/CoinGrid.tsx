@@ -8,19 +8,9 @@ interface CoinGridProps {
   coins?: Array<{
     id: string;
     name: string;
-    symbol: string;
-    price: number;
-    change_24h: number;
     imageUrl: string;
-    mintAddress: string;
-    priceHistory: any;
     usdMarketCap: number;
-    searchCount?: number;
     description?: string;
-    twitter?: string;
-    website?: string;
-    volume24h?: number;
-    liquidity?: number;
   }>;
   isLoading?: boolean;
 }
@@ -70,19 +60,9 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
               key={coin.id}
               id={coin.id}
               name={coin.name || "Unknown Coin"}
-              symbol={coin.symbol || "N/A"}
-              price={typeof coin.price === "number" && !isNaN(coin.price) ? coin.price : null}
-              change24h={typeof coin.change_24h === "number" && !isNaN(coin.change_24h) ? coin.change_24h : null}
-              imageUrl={coin.imageUrl || "/placeholder.svg"}
-              mintAddress={coin.mintAddress || ""}
-              searchCount={coin.searchCount}
-              priceHistory={coin.priceHistory}
               usdMarketCap={typeof coin.usdMarketCap === "number" && !isNaN(coin.usdMarketCap) ? coin.usdMarketCap : null}
+              imageUrl={coin.imageUrl || "/placeholder.svg"}
               description={coin.description}
-              twitter={coin.twitter}
-              website={coin.website}
-              volume24h={coin.volume24h}
-              liquidity={coin.liquidity}
             />
           );
         })}
