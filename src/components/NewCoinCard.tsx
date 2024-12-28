@@ -5,7 +5,7 @@ import { VoiceChatCounter } from "@/components/coin/VoiceChatCounter";
 import { Link } from "react-router-dom";
 import { MiniPriceChart } from "@/components/coin/MiniPriceChart";
 import { SearchCountBadge } from "@/components/coin/SearchCountBadge";
-import { CoinPriceDisplay } from "@/components/coin/CoinPriceDisplay";
+import { MarketCapDisplay } from "@/components/coin/MarketCapDisplay";
 import { cardColors } from "@/constants/colors";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
@@ -35,7 +35,7 @@ export function NewCoinCard({
   id, 
   name, 
   symbol, 
-  price: initialPrice, 
+  price: initialPrice,
   imageUrl, 
   mintAddress,
   searchCount,
@@ -71,7 +71,6 @@ export function NewCoinCard({
           filter: `id=eq.${id}`
         },
         (payload) => {
-          console.log('Received real-time update for coin:', payload);
           if (payload.new) {
             const newPrice = payload.new.price;
             const newChange = payload.new.change_24h;
@@ -87,10 +86,6 @@ export function NewCoinCard({
 
             if (typeof newMarketCap === 'number' && newMarketCap !== marketCap) {
               setMarketCap(newMarketCap);
-              toast({
-                title: `${name} Market Cap Updated`,
-                description: `New market cap: ${formatMarketCap(newMarketCap)}`,
-              });
             }
           }
         }
@@ -100,7 +95,7 @@ export function NewCoinCard({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, name, price, change24h, marketCap, toast]);
+  }, [id, price, change24h, marketCap]);
 
   const getGlowClass = (change24h: number | null) => {
     if (!change24h) return "";
@@ -114,21 +109,7 @@ export function NewCoinCard({
     return `SOL ${value.toFixed(6)}`;
   };
 
-  const formatMarketCap = (value: number | null) => {
-    if (value === null || isNaN(value)) {
-      return "N/A";
-    }
-    
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
-    } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(2)}K`;
-    }
-    return `$${value.toFixed(2)}`;
-  };
-
   const handleImageError = () => {
-    console.log('Image failed to load:', imageUrl);
     setImageError(true);
   };
 
@@ -195,9 +176,9 @@ export function NewCoinCard({
               </div>
             </CardTitle>
             <span className="text-sm sm:text-lg text-gray-400 truncate max-w-[140px] sm:max-w-[180px]">{symbol || "N/A"}</span>
-            <CoinPriceDisplay price={price} formatPrice={formatPrice} />
+            <MarketCapDisplay marketCap={price} usdMarketCap={marketCap} />
             <div className="text-sm text-gray-400">
-              MC: {formatMarketCap(marketCap)}
+              Price: {formatPrice(price)}
             </div>
             {description && (
               <p className="text-xs text-gray-400 line-clamp-2 text-center mt-2">
