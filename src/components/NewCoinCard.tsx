@@ -13,6 +13,10 @@ interface NewCoinCardProps {
   usdMarketCap?: number | null;
   imageUrl?: string;
   description?: string | null;
+  symbol?: string;
+  price?: number | null;
+  change24h?: number | null;
+  mintAddress?: string;
 }
 
 export function NewCoinCard({ 
