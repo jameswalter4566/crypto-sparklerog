@@ -80,7 +80,7 @@ export function useTrendingCoins() {
         throw error;
       }
     },
-    refetchInterval: 3000, // Refetch every 3 seconds like Pump.fun
+    refetchInterval: 3000,
     staleTime: 1000,
   });
 
