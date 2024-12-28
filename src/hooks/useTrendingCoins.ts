@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef } from "react";
-import { CoinData } from "@/types/coin";
 
 export function useTrendingCoins() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -24,13 +23,17 @@ export function useTrendingCoins() {
           throw error;
         }
 
+        // If we have data in Supabase, use it
         if (supabaseCoins && supabaseCoins.length > 0) {
           console.log('[useTrendingCoins] Using Supabase data:', supabaseCoins);
           return supabaseCoins;
         }
 
         // If no data in Supabase, fetch from edge function
-        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('poll-new-coins');
+        console.log('[useTrendingCoins] No data in Supabase, calling edge function');
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('poll-new-coins', {
+          method: 'POST'
+        });
 
         if (edgeFunctionError) {
           console.error('[useTrendingCoins] Edge function error:', edgeFunctionError);
@@ -45,7 +48,7 @@ export function useTrendingCoins() {
         throw error;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
     staleTime: 10000,
   });
 

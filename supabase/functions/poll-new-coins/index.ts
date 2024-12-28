@@ -1,8 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
-import { corsHeaders } from '../_shared/cors.ts'
 
-console.log('Hello from poll-new-coins!')
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 const supabaseClient = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -10,6 +12,7 @@ const supabaseClient = createClient(
 )
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -26,7 +29,6 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      console.error('Failed to fetch from Pump API:', response.status, response.statusText)
       throw new Error(`Failed to fetch from Pump API: ${response.status} ${response.statusText}`)
     }
 
@@ -34,8 +36,7 @@ serve(async (req) => {
     console.log('Received data from Pump API:', data)
 
     if (!Array.isArray(data)) {
-      console.error('Unexpected API response format:', data)
-      throw new Error('Unexpected API response format')
+      throw new Error('Invalid API response format')
     }
 
     const mappedCoins = data.map(coin => ({
@@ -43,21 +44,21 @@ serve(async (req) => {
       name: coin.name,
       symbol: coin.symbol,
       price: coin.market_cap,
-      change_24h: 0, // API doesn't provide this directly
+      change_24h: 0,
       image_url: coin.image_uri,
       solana_addr: coin.mint,
       market_cap: coin.market_cap,
       description: coin.description,
       twitter: coin.twitter,
       website: coin.website,
-      volume_24h: 0, // API doesn't provide this directly
-      liquidity: coin.real_sol_reserves / 1e9, // Convert from lamports to SOL
+      volume_24h: 0,
+      liquidity: coin.real_sol_reserves / 1e9,
       total_supply: coin.total_supply,
       usd_market_cap: coin.usd_market_cap,
       updated_at: new Date().toISOString()
     }))
 
-    console.log('Mapped coins:', mappedCoins)
+    console.log('Mapped coins for database:', mappedCoins)
 
     const { error: insertError } = await supabaseClient
       .from('coins')
@@ -66,11 +67,8 @@ serve(async (req) => {
       })
 
     if (insertError) {
-      console.error('Error inserting coins:', insertError)
       throw insertError
     }
-
-    console.log('Successfully updated coins in database')
 
     return new Response(
       JSON.stringify({ 
@@ -99,7 +97,7 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 400 
+        status: 500 
       }
     )
   }
