@@ -58,7 +58,12 @@ export const useCoinData = (id: string | undefined) => {
         twitter_screen_name: result.twitter_screen_name,
         website: result.website,
         coingecko_id: result.coingecko_id,
-        decimals: result.decimals
+        decimals: result.decimals,
+        homepage: result.homepage,
+        blockchain_site: result.blockchain_site || [],
+        official_forum_url: result.official_forum_url || [],
+        chat_url: result.chat_url || [],
+        announcement_url: result.announcement_url || []
       };
 
       console.log('Mapped coin data for UI:', coinData);

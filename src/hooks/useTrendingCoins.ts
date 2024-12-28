@@ -84,7 +84,12 @@ export function useTrendingCoins() {
           liquidity: trend.coins.liquidity,
           searchCount: trend.search_count,
           coingecko_id: trend.coins.coingecko_id,
-          decimals: trend.coins.decimals
+          decimals: trend.coins.decimals,
+          homepage: trend.coins.homepage,
+          blockchain_site: trend.coins.blockchain_site,
+          official_forum_url: trend.coins.official_forum_url,
+          chat_url: trend.coins.chat_url,
+          announcement_url: trend.coins.announcement_url
         }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
