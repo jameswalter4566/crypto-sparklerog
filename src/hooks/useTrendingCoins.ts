@@ -29,57 +29,22 @@ export function useTrendingCoins() {
           return supabaseCoins;
         }
 
-        // Fallback to direct API call if no Supabase data
-        const response = await fetch('https://frontend-api-v2.pump.fun/coins/for-you?offset=0&limit=50&includeNsfw=false', {
-          method: 'GET',
-          headers: {
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Origin': 'https://pump.fun',
-            'Referer': 'https://pump.fun/',
-            'Referrer-Policy': 'strict-origin-when-cross-origin'
-          }
+        // Fetch from the edge function instead of directly from Pump API
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('poll-new-coins', {
+          body: { limit: 50, offset: 0 }
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch coins: ${response.status}`);
+        if (edgeFunctionError) {
+          console.error('[useTrendingCoins] Edge function error:', edgeFunctionError);
+          throw edgeFunctionError;
         }
 
-        const data = await response.json();
-        console.log('[useTrendingCoins] Received data from Pump API:', data);
+        console.log('[useTrendingCoins] Received data from edge function:', edgeFunctionData);
 
-        // Map the API response to our CoinData format
-        const mappedCoins = data.map((coin: any) => ({
-          id: coin.mint,
-          name: coin.name,
-          symbol: coin.symbol,
-          price: coin.virtual_sol_reserves / coin.virtual_token_reserves,
-          change_24h: 0, // Calculate from historic data if available
-          imageUrl: coin.image_uri,
-          mintAddress: coin.mint,
-          priceHistory: [], // Would need separate API call for history
-          usdMarketCap: coin.usd_market_cap,
-          description: coin.description,
-          twitter: coin.twitter,
-          website: coin.website,
-          volume24h: coin.virtual_sol_reserves,
-          liquidity: coin.virtual_token_reserves,
-          searchCount: 0
-        }));
+        // The edge function already handles mapping and storing the data
+        // Just return the mapped data
+        return edgeFunctionData.coins;
 
-        // Store the fetched data in Supabase for future use
-        const { error: insertError } = await supabase
-          .from('coins')
-          .upsert(mappedCoins.map(coin => ({
-            ...coin,
-            updated_at: new Date().toISOString()
-          })));
-
-        if (insertError) {
-          console.error('[useTrendingCoins] Error storing in Supabase:', insertError);
-        }
-
-        return mappedCoins;
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
         throw error;
