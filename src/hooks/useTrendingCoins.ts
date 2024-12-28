@@ -18,78 +18,47 @@ export function useTrendingCoins() {
       console.log('[useTrendingCoins] Fetching trending coins');
       
       try {
-        const { data: trendingCoins, error } = await supabase
-          .from('coin_searches')
-          .select(`
-            coin_id,
-            search_count,
-            coins (
-              id,
-              name,
-              symbol,
-              price,
-              change_24h,
-              image_url,
-              solana_addr,
-              historic_data,
-              market_cap,
-              usd_market_cap,
-              description,
-              twitter_screen_name,
-              website,
-              total_supply,
-              volume_24h,
-              liquidity,
-              coingecko_id,
-              decimals,
-              homepage,
-              blockchain_site,
-              official_forum_url,
-              chat_url,
-              announcement_url,
-              circulating_supply,
-              non_circulating_supply
-            )
-          `)
-          .order('search_count', { ascending: false })
-          .limit(50);
+        const response = await fetch('https://frontend-api-v2.pump.fun/coins/for-you?offset=0&limit=50&includeNsfw=false', {
+          headers: {
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Origin': 'https://pump.fun',
+            'Referer': 'https://pump.fun/',
+          }
+        });
 
-        if (error) {
-          console.error('[useTrendingCoins] Error fetching trending coins:', error);
-          throw error;
+        if (!response.ok) {
+          throw new Error(`Failed to fetch coins: ${response.status}`);
         }
 
-        if (!trendingCoins) {
-          console.warn('[useTrendingCoins] No trending coins data received');
-          return [];
-        }
+        const data = await response.json();
+        console.log('[useTrendingCoins] Received data from API:', data);
 
-        console.log('[useTrendingCoins] Received trending coins:', trendingCoins);
-
-        return trendingCoins.map((trend: TrendingCoinResponse) => ({
-          id: trend.coins.id,
-          name: trend.coins.name,
-          symbol: trend.coins.symbol,
-          price: trend.coins.price,
-          change_24h: trend.coins.change_24h,
-          imageUrl: trend.coins.image_url,
-          mintAddress: trend.coins.solana_addr,
-          priceHistory: trend.coins.historic_data,
-          usdMarketCap: trend.coins.usd_market_cap,
-          description: trend.coins.description,
-          twitter: trend.coins.twitter_screen_name,
-          website: trend.coins.website || trend.coins.homepage,
-          totalSupply: trend.coins.total_supply,
-          volume24h: trend.coins.volume_24h,
-          liquidity: trend.coins.liquidity,
-          searchCount: trend.search_count,
-          coingecko_id: trend.coins.coingecko_id,
-          decimals: trend.coins.decimals,
-          homepage: trend.coins.homepage,
-          blockchain_site: trend.coins.blockchain_site,
-          official_forum_url: trend.coins.official_forum_url,
-          chat_url: trend.coins.chat_url,
-          announcement_url: trend.coins.announcement_url
+        // Map the API response to our CoinData format
+        return data.map((coin: any) => ({
+          id: coin.mint,
+          name: coin.name,
+          symbol: coin.symbol,
+          price: coin.price,
+          change_24h: coin.price_change_24h,
+          imageUrl: coin.image_uri,
+          mintAddress: coin.mint,
+          priceHistory: coin.price_history,
+          usdMarketCap: coin.usd_market_cap,
+          description: coin.description,
+          twitter: coin.twitter,
+          website: coin.website,
+          volume24h: coin.volume_24h,
+          liquidity: coin.liquidity,
+          searchCount: 0, // Default since this comes from a different source
+          coingecko_id: null,
+          decimals: null,
+          homepage: coin.website,
+          blockchain_site: [],
+          official_forum_url: [],
+          chat_url: [coin.telegram].filter(Boolean),
+          announcement_url: []
         }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
