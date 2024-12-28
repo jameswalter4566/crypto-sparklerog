@@ -41,7 +41,14 @@ export function useTrendingCoins() {
               volume_24h,
               liquidity,
               coingecko_id,
-              decimals
+              decimals,
+              homepage,
+              blockchain_site,
+              official_forum_url,
+              chat_url,
+              announcement_url,
+              circulating_supply,
+              non_circulating_supply
             )
           `)
           .order('search_count', { ascending: false })
@@ -71,11 +78,13 @@ export function useTrendingCoins() {
           usdMarketCap: trend.coins.usd_market_cap,
           description: trend.coins.description,
           twitter: trend.coins.twitter_screen_name,
-          website: trend.coins.website,
+          website: trend.coins.website || trend.coins.homepage,
           totalSupply: trend.coins.total_supply,
           volume24h: trend.coins.volume_24h,
           liquidity: trend.coins.liquidity,
-          searchCount: trend.search_count
+          searchCount: trend.search_count,
+          coingecko_id: trend.coins.coingecko_id,
+          decimals: trend.coins.decimals
         }));
       } catch (error) {
         console.error('[useTrendingCoins] Error in query function:', error);
