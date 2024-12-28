@@ -37,7 +37,10 @@ export const useFeaturedCoins = () => {
 
       // Poll the new coins endpoint
       try {
-        await fetch('https://fybgcaeoxptmmcwgslpl.supabase.co/functions/v1/poll-new-coins');
+        const { error: pollError } = await supabase.functions.invoke('poll-new-coins');
+        if (pollError) {
+          console.error('[useFeaturedCoins] Error polling new coins:', pollError);
+        }
       } catch (error) {
         console.error('[useFeaturedCoins] Error polling new coins:', error);
       }
@@ -81,5 +84,5 @@ export const useFeaturedCoins = () => {
     };
   }, [refetch]);
 
-  return { coins, isLoading };
+  return { coins: coins || [], isLoading };
 };

@@ -34,6 +34,7 @@ serve(async (req) => {
     const coins = await response.json();
     console.log(`Received ${coins.length} coins from Pump.fun`);
 
+    let updatedCount = 0;
     for (const coin of coins) {
       try {
         await db.upsertCoin({
@@ -51,14 +52,18 @@ serve(async (req) => {
           solana_addr: coin.mint,
           updated_at: new Date().toISOString()
         });
+        updatedCount++;
       } catch (error) {
         console.error(`Error processing coin ${coin.mint}:`, error);
       }
     }
 
-    return new Response(JSON.stringify({ success: true, coinsProcessed: coins.length }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.log(`Successfully processed ${updatedCount} coins`);
+
+    return new Response(
+      JSON.stringify({ success: true, coinsProcessed: updatedCount }), 
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Error in poll-new-coins:', error);
     return new Response(
