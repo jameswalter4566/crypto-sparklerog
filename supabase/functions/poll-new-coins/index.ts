@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     console.log('Fetching trending coins from Pump API...')
 
-    const response = await fetch('https://api.pump.fun/api/v1/tokens/trending', {
+    const response = await fetch('https://frontend-api-v2.pump.fun/coins/for-you?offset=0&limit=50&includeNsfw=false', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -42,16 +42,18 @@ serve(async (req) => {
       id: coin.mint,
       name: coin.name,
       symbol: coin.symbol,
-      price: coin.price,
-      change_24h: coin.price_change_24h,
-      image_url: coin.image,
+      price: coin.market_cap,
+      change_24h: 0, // API doesn't provide this directly
+      image_url: coin.image_uri,
       solana_addr: coin.mint,
-      market_cap: coin.market_cap_usd,
+      market_cap: coin.market_cap,
       description: coin.description,
-      twitter_screen_name: coin.twitter_handle,
+      twitter: coin.twitter,
       website: coin.website,
-      volume_24h: coin.volume_24h,
-      liquidity: coin.liquidity,
+      volume_24h: 0, // API doesn't provide this directly
+      liquidity: coin.real_sol_reserves / 1e9, // Convert from lamports to SOL
+      total_supply: coin.total_supply,
+      usd_market_cap: coin.usd_market_cap,
       updated_at: new Date().toISOString()
     }))
 
