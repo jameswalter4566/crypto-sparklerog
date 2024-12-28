@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Security-Policy': "default-src 'self'; connect-src 'self' wss://*.pump.fun https://*.pump.fun;",
+  'Content-Security-Policy': "default-src 'self'; connect-src 'self' wss://*.pump.fun https://*.pump.fun wss://*.helius-rpc.com;",
   'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -12,6 +12,7 @@ const corsHeaders = {
 };
 
 const PUMP_API_WS_URL = "wss://frontend-api-v2.pump.fun/socket.io/?EIO=4&transport=websocket";
+const HELIUS_WS_URL = "wss://pump-fe.helius-rpc.com/?api-key=1b8db865-a5a1-4535-9aec-01061440523b";
 const RECONNECT_INTERVAL = 3000; // 3 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
 
@@ -24,46 +25,14 @@ interface CoinUpdate {
   liquidity: number;
 }
 
-let reconnectAttempts = 0;
-let isConnected = false;
+class WebSocketManager {
+  private supabase;
+  private pumpWs: WebSocket | null = null;
+  private heliusWs: WebSocket | null = null;
+  private reconnectAttempts = 0;
 
-async function updateCoinData(supabase: any, update: CoinUpdate) {
-  try {
-    // Use upsert to handle both new and existing coins
-    const { error } = await supabase
-      .from('coins')
-      .upsert({
-        id: update.id,
-        price: update.price,
-        change_24h: update.change_24h,
-        market_cap: update.market_cap,
-        volume_24h: update.volume_24h,
-        liquidity: update.liquidity,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id',
-        returning: 'minimal' // Don't return the row to save bandwidth
-      });
-
-    if (error) {
-      console.error('Error upserting coin data:', error);
-      return false;
-    }
-    
-    console.log('Successfully upserted coin:', update.id);
-    return true;
-  } catch (error) {
-    console.error('Error in updateCoinData:', error);
-    return false;
-  }
-}
-
-async function handleWebSocket() {
-  try {
-    console.log('Connecting to WebSocket...');
-    const ws = new WebSocket(PUMP_API_WS_URL);
-
-    const supabase = createClient(
+  constructor() {
+    this.supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
@@ -72,82 +41,144 @@ async function handleWebSocket() {
         }
       }
     );
+  }
 
-    // Queue for batching updates
-    let updateQueue: CoinUpdate[] = [];
-    let processingQueue = false;
-
-    // Process queued updates every second
-    const processQueue = async () => {
-      if (processingQueue || updateQueue.length === 0) return;
+  async updateCoinData(update: CoinUpdate) {
+    try {
+      console.log('Processing update for coin:', update.id);
       
-      processingQueue = true;
-      const updates = [...updateQueue];
-      updateQueue = [];
+      const { error } = await this.supabase
+        .from('coins')
+        .upsert({
+          id: update.id,
+          price: update.price,
+          change_24h: update.change_24h,
+          market_cap: update.market_cap,
+          volume_24h: update.volume_24h,
+          liquidity: update.liquidity,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
 
-      console.log(`Processing ${updates.length} queued updates`);
-      
-      for (const update of updates) {
-        await updateCoinData(supabase, update);
-      }
-      
-      processingQueue = false;
-    };
-
-    const queueInterval = setInterval(processQueue, 1000);
-
-    ws.onopen = () => {
-      console.log('WebSocket connection established');
-      isConnected = true;
-      reconnectAttempts = 0;
-      
-      ws.send(JSON.stringify({
-        "topic": "price_updates:*",
-        "event": "phx_join",
-        "payload": {},
-        "ref": 0
-      }));
-    };
-
-    ws.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('Received message:', data);
-
-        if (data.event === "price_update") {
-          const update: CoinUpdate = data.payload;
-          console.log('Queueing price update for coin:', update.id);
-          updateQueue.push(update);
-        }
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      isConnected = false;
-    };
-
-    ws.onclose = (event) => {
-      console.log('WebSocket closed, code:', event.code, 'reason:', event.reason);
-      isConnected = false;
-      clearInterval(queueInterval);
-
-      // Attempt to reconnect if we haven't exceeded max attempts
-      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        reconnectAttempts++;
-        console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
-        setTimeout(() => handleWebSocket(), RECONNECT_INTERVAL);
+      if (error) {
+        console.error('Error updating coin data:', error);
       } else {
-        console.error('Max reconnection attempts reached. Giving up.');
+        console.log('Successfully updated coin:', update.id);
       }
-    };
+    } catch (error) {
+      console.error('Error in updateCoinData:', error);
+    }
+  }
 
-    return ws;
-  } catch (error) {
-    console.error('Error in handleWebSocket:', error);
-    throw error;
+  setupPumpWebSocket() {
+    try {
+      console.log('Connecting to Pump.fun WebSocket...');
+      this.pumpWs = new WebSocket(PUMP_API_WS_URL);
+
+      this.pumpWs.onopen = () => {
+        console.log('Pump.fun WebSocket connection established');
+        this.reconnectAttempts = 0;
+        
+        // Join the price updates channel
+        this.pumpWs?.send(JSON.stringify({
+          "topic": "price_updates:*",
+          "event": "phx_join",
+          "payload": {},
+          "ref": 0
+        }));
+      };
+
+      this.pumpWs.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('Received Pump.fun message:', data);
+
+          if (data.event === "price_update") {
+            await this.updateCoinData(data.payload);
+          }
+        } catch (error) {
+          console.error('Error processing Pump.fun message:', error);
+        }
+      };
+
+      this.pumpWs.onerror = (error) => {
+        console.error('Pump.fun WebSocket error:', error);
+      };
+
+      this.pumpWs.onclose = () => {
+        console.log('Pump.fun WebSocket connection closed');
+        this.handleReconnect('pump');
+      };
+    } catch (error) {
+      console.error('Error in setupPumpWebSocket:', error);
+    }
+  }
+
+  setupHeliusWebSocket() {
+    try {
+      console.log('Connecting to Helius WebSocket...');
+      this.heliusWs = new WebSocket(HELIUS_WS_URL);
+
+      this.heliusWs.onopen = () => {
+        console.log('Helius WebSocket connection established');
+        this.reconnectAttempts = 0;
+      };
+
+      this.heliusWs.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('Received Helius message:', data);
+          
+          // Process Helius-specific updates here
+          if (data.type === "update") {
+            await this.updateCoinData(data.payload);
+          }
+        } catch (error) {
+          console.error('Error processing Helius message:', error);
+        }
+      };
+
+      this.heliusWs.onerror = (error) => {
+        console.error('Helius WebSocket error:', error);
+      };
+
+      this.heliusWs.onclose = () => {
+        console.log('Helius WebSocket connection closed');
+        this.handleReconnect('helius');
+      };
+    } catch (error) {
+      console.error('Error in setupHeliusWebSocket:', error);
+    }
+  }
+
+  private handleReconnect(type: 'pump' | 'helius') {
+    if (this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      this.reconnectAttempts++;
+      console.log(`Attempting to reconnect ${type} WebSocket (attempt ${this.reconnectAttempts})...`);
+      
+      setTimeout(() => {
+        if (type === 'pump') {
+          this.setupPumpWebSocket();
+        } else {
+          this.setupHeliusWebSocket();
+        }
+      }, RECONNECT_INTERVAL);
+    } else {
+      console.error(`Max reconnection attempts reached for ${type} WebSocket`);
+    }
+  }
+
+  async initialize() {
+    this.setupPumpWebSocket();
+    this.setupHeliusWebSocket();
+  }
+
+  isConnected() {
+    return {
+      pump: this.pumpWs?.readyState === WebSocket.OPEN,
+      helius: this.heliusWs?.readyState === WebSocket.OPEN
+    };
   }
 }
 
@@ -159,21 +190,24 @@ serve(async (req) => {
   }
 
   try {
-    // Keep the connection alive by not ending the response
-    const ws = await handleWebSocket();
+    const wsManager = new WebSocketManager();
+    await wsManager.initialize();
     
-    // Use TransformStream to keep the connection alive
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
+    // Use TransformStream to keep the function alive
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
     
-    // Write initial connection message
-    const encoder = new TextEncoder();
-    await writer.write(encoder.encode(JSON.stringify({
-      status: 'connected',
-      message: 'WebSocket connection established successfully'
-    })));
+    // Keep the connection alive with periodic status updates
+    setInterval(() => {
+      const status = wsManager.isConnected();
+      writer.write(new TextEncoder().encode(JSON.stringify({
+        status: 'connected',
+        connections: status,
+        timestamp: new Date().toISOString()
+      })));
+    }, 30000);
 
-    return new Response(stream.readable, {
+    return new Response(readable, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
