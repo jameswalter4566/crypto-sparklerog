@@ -11,6 +11,7 @@ import CoinProfile from "./pages/CoinProfile";
 import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
 import RocketLaunch from "./pages/RocketLaunch";
+import NewCoins from "./pages/NewCoins";
 import { useToast } from "./hooks/use-toast";
 import { supabase } from "./integrations/supabase/client";
 import { useState } from "react";
@@ -158,7 +159,7 @@ const App = () => {
               <Header onSearch={handleSearch} isLoading={isLoading} />
               <div className="h-24"></div>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<NewCoins />} />
                 <Route path="/explore" element={<Explore />} />
                 <Route path="/featured" element={<Featured />} />
                 <Route path="/coin/:id" element={<CoinProfile />} />
