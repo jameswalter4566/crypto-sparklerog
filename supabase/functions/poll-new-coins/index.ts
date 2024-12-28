@@ -29,7 +29,16 @@ serve(async (req) => {
     );
 
     console.log('Fetching coins from Pump API...');
-    const response = await fetch(PUMP_API_URL, {
+    
+    // Add query parameters for pagination and sorting
+    const queryParams = new URLSearchParams({
+      limit: '50',
+      offset: '0',
+      sort: 'market_cap',
+      order: 'DESC'
+    });
+
+    const response = await fetch(`${PUMP_API_URL}?${queryParams}`, {
       headers: {
         'Accept': '*/*',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -44,23 +53,37 @@ serve(async (req) => {
       throw new Error(`Failed to fetch from Pump API: ${response.status}`);
     }
 
-    // First try to get the response as text
+    // First try to get the response as text and log it
     const responseText = await response.text();
     console.log('Raw API response:', responseText);
 
-    // Then parse it as JSON
+    // Then parse it as JSON with proper error handling
     let coins;
     try {
       coins = JSON.parse(responseText);
+      console.log('Parsed response:', coins);
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError);
       console.error('Response that failed to parse:', responseText);
-      throw new Error('Invalid JSON response from API');
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON response from API' }), 
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
+    // Validate the response structure
     if (!Array.isArray(coins)) {
       console.error('Expected array of coins but got:', typeof coins);
-      throw new Error('Invalid response format: expected array of coins');
+      return new Response(
+        JSON.stringify({ error: 'Invalid response format: expected array of coins' }), 
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log(`Received ${coins.length} coins from Pump API`);
