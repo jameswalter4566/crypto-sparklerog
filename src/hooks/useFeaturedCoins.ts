@@ -47,20 +47,20 @@ export const useFeaturedCoins = () => {
         console.log('[useFeaturedCoins] Received coins from pump.fun:', pumpData.coins);
         
         return pumpData.coins.map((coin: any) => ({
-          id: coin.mint, // Use mint as id
+          id: coin.id,
           name: coin.name,
           symbol: coin.symbol,
           price: coin.price || 0,
-          change_24h: 0, // This data isn't provided by pump.fun
-          imageUrl: coin.image_uri,
-          mintAddress: coin.mint,
+          change_24h: coin.change_24h || 0,
+          imageUrl: coin.image_url,
+          mintAddress: coin.solana_addr,
           priceHistory: null,
           usdMarketCap: coin.usd_market_cap,
           description: coin.description,
           twitter: coin.twitter_screen_name,
           website: coin.homepage,
-          volume24h: 0, // This data isn't provided by pump.fun
-          liquidity: coin.real_sol_reserves ? coin.real_sol_reserves / 1e9 : 0,
+          volume24h: coin.volume_24h || 0,
+          liquidity: coin.liquidity || 0,
           searchCount: 0
         }));
       } catch (error) {
@@ -68,7 +68,7 @@ export const useFeaturedCoins = () => {
         throw error;
       }
     },
-    refetchInterval: 3000 // Refetch every 3 seconds
+    refetchInterval: 3000
   });
 
   return { 

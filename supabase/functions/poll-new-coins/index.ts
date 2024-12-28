@@ -39,10 +39,10 @@ serve(async (req) => {
     }
 
     const mappedCoins = data.map(coin => ({
-      id: coin.mint, // Use mint as id
+      id: coin.mint,
       name: coin.name,
       symbol: coin.symbol,
-      price: coin.price,
+      price: coin.market_cap, // Use market_cap as price
       change_24h: 0,
       image_url: coin.image_uri,
       solana_addr: coin.mint,
@@ -51,7 +51,7 @@ serve(async (req) => {
       twitter_screen_name: coin.twitter_screen_name,
       homepage: coin.website,
       volume_24h: 0,
-      liquidity: coin.real_sol_reserves / 1e9,
+      liquidity: coin.real_sol_reserves ? coin.real_sol_reserves / 1e9 : 0,
       total_supply: coin.total_supply,
       usd_market_cap: coin.usd_market_cap,
       updated_at: new Date().toISOString()
@@ -59,7 +59,6 @@ serve(async (req) => {
 
     console.log('Mapped coins for database:', mappedCoins)
 
-    // First insert/update the coins
     const { error: insertError } = await supabaseClient
       .from('coins')
       .upsert(mappedCoins, {
