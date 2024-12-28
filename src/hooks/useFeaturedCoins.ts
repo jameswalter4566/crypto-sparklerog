@@ -35,9 +35,16 @@ export const useFeaturedCoins = () => {
 
       console.log('[useFeaturedCoins] Received coins:', trendingCoins);
 
-      // Poll the new coins endpoint
+      // Poll the new coins endpoint with authentication
       try {
-        const { error: pollError } = await supabase.functions.invoke('poll-new-coins');
+        const { error: pollError } = await supabase.functions.invoke('poll-new-coins', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`
+          }
+        });
+        
         if (pollError) {
           console.error('[useFeaturedCoins] Error polling new coins:', pollError);
         }
