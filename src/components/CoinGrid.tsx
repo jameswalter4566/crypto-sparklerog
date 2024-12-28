@@ -2,6 +2,7 @@ import { NewCoinCard } from "./NewCoinCard";
 import { CoinGridHeader } from "./coin/CoinGridHeader";
 import { useTrendingCoins } from "@/hooks/useTrendingCoins";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useMemo } from "react";
 
 interface CoinGridProps {
   title?: string;
@@ -17,14 +18,24 @@ interface CoinGridProps {
 
 export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading: propIsLoading }: CoinGridProps) {
   const { coins: fetchedCoins, isLoading: queryIsLoading } = useTrendingCoins();
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const isLoadingData = propIsLoading ?? queryIsLoading;
-  const displayCoins = propCoins ?? fetchedCoins;
+  const unsortedCoins = propCoins ?? fetchedCoins;
+
+  const sortedCoins = useMemo(() => {
+    if (!unsortedCoins) return [];
+    return [...unsortedCoins].sort((a, b) => {
+      const aMarketCap = a.usdMarketCap || 0;
+      const bMarketCap = b.usdMarketCap || 0;
+      return sortOrder === 'desc' ? bMarketCap - aMarketCap : aMarketCap - bMarketCap;
+    });
+  }, [unsortedCoins, sortOrder]);
 
   if (isLoadingData) {
     return (
       <div className="space-y-3 sm:space-y-5 px-2">
-        <CoinGridHeader title={title} />
+        <CoinGridHeader title={title} onSort={setSortOrder} />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(10)].map((_, index) => (
             <div key={index} className="h-[400px]">
@@ -36,10 +47,10 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
     );
   }
 
-  if (!displayCoins || displayCoins.length === 0) {
+  if (!sortedCoins || sortedCoins.length === 0) {
     return (
       <div className="space-y-3 sm:space-y-5 px-2">
-        <CoinGridHeader title={title} />
+        <CoinGridHeader title={title} onSort={setSortOrder} />
         <div className="text-center text-gray-500">No coins found</div>
       </div>
     );
@@ -47,9 +58,9 @@ export function CoinGrid({ title = "Trending Coins", coins: propCoins, isLoading
 
   return (
     <div className="space-y-3 sm:space-y-5 px-2">
-      <CoinGridHeader title={title} />
+      <CoinGridHeader title={title} onSort={setSortOrder} />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-        {displayCoins.map((coin) => {
+        {sortedCoins.map((coin) => {
           if (!coin || !coin.id) {
             console.warn('Invalid coin data:', coin);
             return null;
