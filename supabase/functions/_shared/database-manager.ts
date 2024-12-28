@@ -15,38 +15,51 @@ export class DatabaseManager {
     );
   }
 
-  async updateCoinData(update: {
-    id: string;
-    price: number;
-    change_24h: number;
-    market_cap: number;
-    volume_24h: number;
-    liquidity: number;
+  async upsertCoin(coinData: {
+    mint: string;
+    name: string;
+    symbol: string;
+    description?: string;
+    image_uri?: string;
+    price?: number;
+    price_change_24h?: number;
+    market_cap?: number;
+    volume_24h?: number;
+    virtual_sol_reserves?: number;
+    total_supply?: number;
   }) {
     try {
-      console.log('Processing update for coin:', update.id);
+      console.log('Processing coin data for upsert:', coinData);
       
       const { error } = await this.supabase
         .from('coins')
         .upsert({
-          id: update.id,
-          price: update.price,
-          change_24h: update.change_24h,
-          market_cap: update.market_cap,
-          volume_24h: update.volume_24h,
-          liquidity: update.liquidity,
+          id: coinData.mint,
+          name: coinData.name,
+          symbol: coinData.symbol,
+          description: coinData.description,
+          image_url: coinData.image_uri,
+          price: coinData.price,
+          change_24h: coinData.price_change_24h,
+          market_cap: coinData.market_cap,
+          volume_24h: coinData.volume_24h,
+          liquidity: coinData.virtual_sol_reserves,
+          total_supply: coinData.total_supply,
+          solana_addr: coinData.mint,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'id'
         });
 
       if (error) {
-        console.error('Error updating coin data:', error);
+        console.error('Error upserting coin:', error);
+        throw error;
       } else {
-        console.log('Successfully updated coin:', update.id);
+        console.log('Successfully upserted coin:', coinData.name);
       }
     } catch (error) {
-      console.error('Error in updateCoinData:', error);
+      console.error('Error in upsertCoin:', error);
+      throw error;
     }
   }
 }

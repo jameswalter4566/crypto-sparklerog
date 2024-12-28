@@ -23,7 +23,35 @@ export class WebSocketManager {
         // Send GraphQL connection init message
         this.ws?.send(JSON.stringify({
           type: 'connection_init',
-          payload: {}
+          payload: {
+            'x-api-key': this.headers?.['x-api-key']
+          }
+        }));
+
+        // Subscribe to new listings
+        this.ws?.send(JSON.stringify({
+          id: '1',
+          type: 'start',
+          payload: {
+            query: `
+              subscription NewListings {
+                newListing {
+                  mint
+                  name
+                  symbol
+                  description
+                  image_uri
+                  price
+                  price_change_24h
+                  market_cap
+                  volume_24h
+                  virtual_sol_reserves
+                  total_supply
+                  created_at
+                }
+              }
+            `
+          }
         }));
       };
 
@@ -39,6 +67,7 @@ export class WebSocketManager {
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        this.handleReconnect();
       };
 
       this.ws.onclose = () => {
@@ -47,42 +76,8 @@ export class WebSocketManager {
       };
     } catch (error) {
       console.error('Error in connect:', error);
+      this.handleReconnect();
     }
-  }
-
-  subscribe() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket not connected');
-      return;
-    }
-
-    // Subscribe to new listings
-    this.ws.send(JSON.stringify({
-      id: '1',
-      type: 'subscribe',
-      payload: {
-        query: `
-          subscription NewListings {
-            newListing {
-              mint
-              name
-              symbol
-              description
-              image_uri
-              price
-              price_change_24h
-              market_cap
-              volume_24h
-              virtual_sol_reserves
-              total_supply
-              created_at
-            }
-          }
-        `
-      }
-    }));
-
-    console.log('Subscribed to new listings');
   }
 
   private handleReconnect() {
