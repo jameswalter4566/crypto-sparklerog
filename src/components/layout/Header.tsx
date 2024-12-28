@@ -30,13 +30,13 @@ export const Header = ({ onSearch, isLoading }: {
 
   const menuItems: MenuItem[] = [
     {
-      title: "SWAP",
+      title: "SMART",
       icon: ArrowLeftRight,
       path: "/swap",
       isSpecial: true,
     },
     {
-      title: "Trending",
+      title: "New Coins",
       icon: Coins,
       path: "/",
     },
