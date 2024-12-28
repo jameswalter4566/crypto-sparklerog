@@ -30,7 +30,6 @@ export const useFeaturedCoins = () => {
       console.log('[useFeaturedCoins] Fetching featured coins from pump.fun');
       
       try {
-        // Call the edge function to get fresh data from pump.fun
         const { data: pumpData, error: pumpError } = await supabase.functions.invoke('poll-new-coins', {
           method: 'POST'
         });
@@ -47,9 +46,8 @@ export const useFeaturedCoins = () => {
 
         console.log('[useFeaturedCoins] Received coins from pump.fun:', pumpData.coins);
         
-        // Map the pump.fun data to our expected format
         return pumpData.coins.map((coin: any) => ({
-          id: coin.mint,
+          id: coin.mint, // Use mint as id
           name: coin.name,
           symbol: coin.symbol,
           price: coin.price || 0,
@@ -59,8 +57,8 @@ export const useFeaturedCoins = () => {
           priceHistory: null,
           usdMarketCap: coin.usd_market_cap,
           description: coin.description,
-          twitter: coin.twitter,
-          website: coin.website,
+          twitter: coin.twitter_screen_name,
+          website: coin.homepage,
           volume24h: 0, // This data isn't provided by pump.fun
           liquidity: coin.real_sol_reserves ? coin.real_sol_reserves / 1e9 : 0,
           searchCount: 0

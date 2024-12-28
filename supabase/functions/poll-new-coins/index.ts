@@ -39,16 +39,16 @@ serve(async (req) => {
     }
 
     const mappedCoins = data.map(coin => ({
-      id: coin.mint,
+      id: coin.mint, // Use mint as id
       name: coin.name,
       symbol: coin.symbol,
-      price: coin.market_cap,
+      price: coin.price,
       change_24h: 0,
       image_url: coin.image_uri,
       solana_addr: coin.mint,
       market_cap: coin.market_cap,
       description: coin.description,
-      twitter_screen_name: coin.twitter,
+      twitter_screen_name: coin.twitter_screen_name,
       homepage: coin.website,
       volume_24h: 0,
       liquidity: coin.real_sol_reserves / 1e9,
@@ -68,22 +68,6 @@ serve(async (req) => {
 
     if (insertError) {
       throw insertError
-    }
-
-    // Then update coin_searches for each coin
-    for (const coin of mappedCoins) {
-      const { error: searchError } = await supabaseClient
-        .from('coin_searches')
-        .upsert({
-          coin_id: coin.id,
-          search_count: 1
-        }, {
-          onConflict: 'coin_id'
-        })
-
-      if (searchError) {
-        console.error(`Error updating search count for coin ${coin.id}:`, searchError)
-      }
     }
 
     return new Response(
