@@ -1,8 +1,9 @@
 export class WebSocketManager {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private readonly MAX_RECONNECT_ATTEMPTS = 5;
   private readonly RECONNECT_INTERVAL = 3000;
+  private backoffInterval = 1000;
+  private heartbeatInterval: number | null = null;
 
   constructor(
     private readonly url: string,
@@ -19,6 +20,7 @@ export class WebSocketManager {
       this.ws.onopen = () => {
         console.log('WebSocket connection established');
         this.reconnectAttempts = 0;
+        this.backoffInterval = 1000;
         
         // Send GraphQL connection init message
         this.ws?.send(JSON.stringify({
@@ -28,14 +30,17 @@ export class WebSocketManager {
           }
         }));
 
-        // Subscribe to new listings
+        // Start heartbeat
+        this.startHeartbeat();
+
+        // Subscribe to new listings with correct field name
         this.ws?.send(JSON.stringify({
           id: '1',
           type: 'start',
           payload: {
             query: `
-              subscription NewListings {
-                newListing {
+              subscription NewCoins {
+                newCoinCreated {
                   mint
                   name
                   symbol
@@ -58,8 +63,36 @@ export class WebSocketManager {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('Received message:', data);
-          this.onMessage(data);
+          console.log('Received WebSocket message:', data);
+
+          switch (data.type) {
+            case 'connection_ack':
+              console.log('Connection acknowledged');
+              break;
+            
+            case 'ka':
+              // Keepalive message, respond if needed
+              break;
+            
+            case 'connection_error':
+              console.error('Connection error:', data.payload);
+              this.handleReconnect();
+              break;
+            
+            case 'data':
+              if (data.payload?.data?.newCoinCreated) {
+                console.log('New coin created:', data.payload.data.newCoinCreated);
+                this.onMessage(data);
+              }
+              break;
+            
+            case 'error':
+              console.error('Subscription error:', data.payload);
+              break;
+
+            default:
+              console.log('Unhandled message type:', data.type);
+          }
         } catch (error) {
           console.error('Error processing message:', error);
         }
@@ -72,6 +105,7 @@ export class WebSocketManager {
 
       this.ws.onclose = () => {
         console.log('WebSocket connection closed');
+        this.stopHeartbeat();
         this.handleReconnect();
       };
     } catch (error) {
@@ -80,17 +114,31 @@ export class WebSocketManager {
     }
   }
 
-  private handleReconnect() {
-    if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
-      this.reconnectAttempts++;
-      console.log(`Attempting to reconnect (attempt ${this.reconnectAttempts})...`);
-      
-      setTimeout(() => {
-        this.connect();
-      }, this.RECONNECT_INTERVAL);
-    } else {
-      console.error('Max reconnection attempts reached');
+  private startHeartbeat() {
+    this.heartbeatInterval = setInterval(() => {
+      if (this.isConnected()) {
+        this.ws?.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000) as unknown as number;
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
+  }
+
+  private handleReconnect() {
+    this.stopHeartbeat();
+    
+    const backoffDelay = Math.min(this.backoffInterval * Math.pow(2, this.reconnectAttempts), 300000); // Max 5 minutes
+    console.log(`Attempting to reconnect in ${backoffDelay}ms (attempt ${this.reconnectAttempts + 1})`);
+    
+    setTimeout(() => {
+      this.reconnectAttempts++;
+      this.connect();
+    }, backoffDelay);
   }
 
   isConnected() {
@@ -98,6 +146,7 @@ export class WebSocketManager {
   }
 
   disconnect() {
+    this.stopHeartbeat();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
