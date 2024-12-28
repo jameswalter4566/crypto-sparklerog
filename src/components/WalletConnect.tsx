@@ -7,8 +7,8 @@ import { ProfileAvatar } from "./wallet/ProfileAvatar";
 import { Settings } from "./wallet/Settings";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
-// Use Helius RPC endpoint
-const HELIUS_RPC = 'https://rpc.helius.xyz/?api-key=726140d8-6b0d-4719-8702-682d81e94a37';
+// Use environment variable for RPC URL
+const HELIUS_RPC = import.meta.env.VITE_SOLANA_RPC_URL;
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
