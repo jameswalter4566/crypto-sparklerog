@@ -4,7 +4,7 @@ import { MovingBanners } from "@/components/effects/MovingBanners";
 import { useFeaturedCoins } from "@/hooks/useFeaturedCoins";
 
 const Featured = () => {
-  const { data: coins, isLoading } = useFeaturedCoins();
+  const { coins, isLoading } = useFeaturedCoins();
 
   return (
     <>
