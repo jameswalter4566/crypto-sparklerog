@@ -3,12 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef } from "react";
 import { CoinData } from "@/types/coin";
 
-interface TrendingCoinResponse {
-  coin_id: string;
-  search_count: number;
-  coins: CoinData;
-}
-
 export function useTrendingCoins() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -42,17 +36,17 @@ export function useTrendingCoins() {
           id: coin.mint,
           name: coin.name,
           symbol: coin.symbol,
-          price: coin.price,
-          change_24h: coin.price_change_24h,
+          price: coin.market_cap,
+          change_24h: 0, // Not provided in API
           imageUrl: coin.image_uri,
           mintAddress: coin.mint,
-          priceHistory: coin.price_history,
+          priceHistory: [], // Not provided in API
           usdMarketCap: coin.usd_market_cap,
           description: coin.description,
           twitter: coin.twitter,
           website: coin.website,
-          volume24h: coin.volume_24h,
-          liquidity: coin.liquidity,
+          volume24h: coin.virtual_sol_reserves,
+          liquidity: coin.virtual_token_reserves,
           searchCount: 0, // Default since this comes from a different source
           coingecko_id: null,
           decimals: null,
