@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 const PUMP_GRAPHQL_WS_URL = "wss://prod.realtime.pump.fun/graphql/realtime";
-const API_KEY = "da2-xolgs5smfnfqtbevb3o2uo2rpi"; // This is a public API key used by pump.fun frontend
+const API_KEY = "da2-xolgs5smfnfqtbevb3o2uo2rpi";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,21 +25,54 @@ serve(async (req) => {
   try {
     const db = new DatabaseManager();
     
-    // Create WebSocket connection to Pump.fun
     const wsManager = new WebSocketManager(
       PUMP_GRAPHQL_WS_URL,
       ['graphql-ws'],
       async (data) => {
-        if (data.type === 'data' && data.payload?.data?.priceUpdate) {
-          const update = data.payload.data.priceUpdate;
-          await db.updateCoinData({
-            id: update.mint,
-            price: update.price,
-            change_24h: update.change24h,
-            market_cap: update.marketCap,
-            volume_24h: update.volume24h,
-            liquidity: 0 // Not provided in the GraphQL subscription
-          });
+        console.log('Received WebSocket message:', data);
+        
+        if (data.type === 'connection_ack') {
+          console.log('Connection acknowledged, subscribing to new listings');
+          wsManager.subscribe();
+        }
+        
+        if (data.type === 'data' && data.payload?.data?.newListing) {
+          const newCoin = data.payload.data.newListing;
+          console.log('New coin listing detected:', newCoin);
+          
+          try {
+            const coinData = {
+              id: newCoin.mint,
+              name: newCoin.name || 'Unknown Token',
+              symbol: newCoin.symbol || 'UNKNOWN',
+              image_url: newCoin.image_uri || null,
+              price: newCoin.price || null,
+              change_24h: newCoin.price_change_24h || null,
+              market_cap: newCoin.market_cap || null,
+              volume_24h: newCoin.volume_24h || null,
+              liquidity: newCoin.virtual_sol_reserves || null,
+              solana_addr: newCoin.mint,
+              total_supply: newCoin.total_supply || null,
+              description: newCoin.description || null,
+              updated_at: new Date().toISOString()
+            };
+
+            const { data: insertedCoin, error } = await db.supabase
+              .from('coins')
+              .upsert(coinData, {
+                onConflict: 'id'
+              })
+              .select()
+              .single();
+
+            if (error) {
+              console.error('Error inserting new coin:', error);
+            } else {
+              console.log('Successfully added new coin:', insertedCoin);
+            }
+          } catch (error) {
+            console.error('Error processing new coin:', error);
+          }
         }
       },
       {
@@ -49,11 +82,9 @@ serve(async (req) => {
     
     wsManager.connect();
     
-    // Use TransformStream to keep the function alive
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
     
-    // Keep the connection alive with periodic status updates
     setInterval(() => {
       const status = wsManager.isConnected();
       writer.write(new TextEncoder().encode(JSON.stringify({

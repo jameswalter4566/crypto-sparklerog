@@ -25,25 +25,6 @@ export class WebSocketManager {
           type: 'connection_init',
           payload: {}
         }));
-
-        // Subscribe to price updates
-        this.ws?.send(JSON.stringify({
-          id: '1',
-          type: 'subscribe',
-          payload: {
-            query: `
-              subscription PriceUpdates {
-                priceUpdate {
-                  mint
-                  price
-                  marketCap
-                  volume24h
-                  change24h
-                }
-              }
-            `
-          }
-        }));
       };
 
       this.ws.onmessage = (event) => {
@@ -67,6 +48,41 @@ export class WebSocketManager {
     } catch (error) {
       console.error('Error in connect:', error);
     }
+  }
+
+  subscribe() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket not connected');
+      return;
+    }
+
+    // Subscribe to new listings
+    this.ws.send(JSON.stringify({
+      id: '1',
+      type: 'subscribe',
+      payload: {
+        query: `
+          subscription NewListings {
+            newListing {
+              mint
+              name
+              symbol
+              description
+              image_uri
+              price
+              price_change_24h
+              market_cap
+              volume_24h
+              virtual_sol_reserves
+              total_supply
+              created_at
+            }
+          }
+        `
+      }
+    }));
+
+    console.log('Subscribed to new listings');
   }
 
   private handleReconnect() {

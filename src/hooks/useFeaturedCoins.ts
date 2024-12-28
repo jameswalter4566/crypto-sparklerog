@@ -27,6 +27,6 @@ export const useFeaturedCoins = () => {
         usdMarketCap: coin.usd_market_cap
       }));
     },
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 5000 // Refetch every 5 seconds to check for new coins
   });
 };
