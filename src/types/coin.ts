@@ -15,10 +15,15 @@ export interface CoinData {
   historic_data: Array<{ price: number; timestamp: string }> | null;
   circulating_supply: number | null;
   non_circulating_supply: number | null;
-  twitter_screen_name: string | null;  // Added this field
-  website: string | null;  // Added this field
+  twitter_screen_name: string | null;
+  website: string | null;
   coingecko_id: string | null;
   decimals: number | null;
+  homepage: string | null;
+  blockchain_site: string[] | null;
+  official_forum_url: string[] | null;
+  chat_url: string[] | null;
+  announcement_url: string[] | null;
 }
 
 export interface CoinDataResponse {
@@ -43,5 +48,8 @@ export interface CoinDataResponse {
   market_cap: number | null;
   usd_market_cap: number | null;
   change_24h: number | null;
-  website: string | null;  // Added this field
+  website: string | null;
+  blockchain_site: string[] | null;
+  official_forum_url: string[] | null;
+  coingecko_id: string | null;
 }
