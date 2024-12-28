@@ -27,72 +27,43 @@ export const useFeaturedCoins = () => {
   const { data: coins, isLoading, refetch } = useQuery({
     queryKey: ['featuredCoins'],
     queryFn: async () => {
-      console.log('[useFeaturedCoins] Fetching featured coins');
+      console.log('[useFeaturedCoins] Fetching featured coins from pump.fun');
       
       try {
-        // First try to fetch from coin_searches table with joined coin data
-        const { data: trendingCoins, error } = await supabase
-          .from('coin_searches')
-          .select(`
-            coin_id,
-            search_count,
-            coins (
-              id,
-              name,
-              symbol,
-              price,
-              change_24h,
-              image_url,
-              solana_addr,
-              historic_data,
-              usd_market_cap,
-              description,
-              twitter_screen_name,
-              homepage,
-              volume_24h,
-              liquidity
-            )
-          `)
-          .order('search_count', { ascending: false })
-          .limit(20);
+        // Call the edge function to get fresh data from pump.fun
+        const { data: pumpData, error: pumpError } = await supabase.functions.invoke('poll-new-coins', {
+          method: 'POST'
+        });
 
-        if (error) {
-          console.error('[useFeaturedCoins] Error fetching coins:', error);
-          throw error;
+        if (pumpError) {
+          console.error('[useFeaturedCoins] Error fetching from pump.fun:', pumpError);
+          throw pumpError;
         }
 
-        console.log('[useFeaturedCoins] Received coins:', trendingCoins);
-
-        // Poll the new coins endpoint
-        try {
-          const { error: pollError } = await supabase.functions.invoke('poll-new-coins', {
-            method: 'POST'
-          });
-          
-          if (pollError) {
-            console.error('[useFeaturedCoins] Error polling new coins:', pollError);
-          }
-        } catch (error) {
-          console.error('[useFeaturedCoins] Error polling new coins:', error);
+        if (!pumpData || !pumpData.coins) {
+          console.log('[useFeaturedCoins] No coins received from pump.fun');
+          return [];
         }
 
-        // Map the joined data to the expected format
-        return (trendingCoins as CoinSearchResult[]).map(trend => ({
-          id: trend.coins.id,
-          name: trend.coins.name,
-          symbol: trend.coins.symbol,
-          price: trend.coins.price,
-          change_24h: trend.coins.change_24h,
-          imageUrl: trend.coins.image_url,
-          mintAddress: trend.coins.solana_addr,
-          priceHistory: trend.coins.historic_data,
-          usdMarketCap: trend.coins.usd_market_cap,
-          description: trend.coins.description,
-          twitter: trend.coins.twitter_screen_name,
-          website: trend.coins.homepage,
-          volume24h: trend.coins.volume_24h,
-          liquidity: trend.coins.liquidity,
-          searchCount: trend.search_count
+        console.log('[useFeaturedCoins] Received coins from pump.fun:', pumpData.coins);
+        
+        // Map the pump.fun data to our expected format
+        return pumpData.coins.map((coin: any) => ({
+          id: coin.mint,
+          name: coin.name,
+          symbol: coin.symbol,
+          price: coin.price || 0,
+          change_24h: 0, // This data isn't provided by pump.fun
+          imageUrl: coin.image_uri,
+          mintAddress: coin.mint,
+          priceHistory: null,
+          usdMarketCap: coin.usd_market_cap,
+          description: coin.description,
+          twitter: coin.twitter,
+          website: coin.website,
+          volume24h: 0, // This data isn't provided by pump.fun
+          liquidity: coin.real_sol_reserves ? coin.real_sol_reserves / 1e9 : 0,
+          searchCount: 0
         }));
       } catch (error) {
         console.error('[useFeaturedCoins] Error in query function:', error);
@@ -102,28 +73,8 @@ export const useFeaturedCoins = () => {
     refetchInterval: 3000 // Refetch every 3 seconds
   });
 
-  useEffect(() => {
-    // Set up real-time subscription for coin updates
-    const channel = supabase
-      .channel('coin-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'coins'
-        },
-        (payload) => {
-          console.log('[useFeaturedCoins] Received real-time update:', payload);
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
-
-  return { coins: coins || [], isLoading };
+  return { 
+    coins: coins || [], 
+    isLoading 
+  };
 };
