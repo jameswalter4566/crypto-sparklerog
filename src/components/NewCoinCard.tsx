@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Coins } from "lucide-react";
+import { VoiceChatCounter } from "./coin/VoiceChatCounter";
 
 interface NewCoinCardProps {
   id: string;
@@ -137,6 +138,10 @@ export function NewCoinCard({
                 {description}
               </p>
             )}
+
+            <div className="mt-2">
+              <VoiceChatCounter coinId={id} />
+            </div>
           </div>
         </CardContent>
       </Card>
