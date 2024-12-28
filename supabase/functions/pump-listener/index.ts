@@ -4,9 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Security-Policy': "default-src 'self'; connect-src 'self' wss://*.pump.fun https://*.pump.fun;",
+  'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block'
 };
 
-const PUMP_FUN_WS_URL = "wss://frontend-ws.pump.fun/socket/websocket";
+const PUMP_API_WS_URL = "wss://frontend-api-v2.pump.fun/socket.io/?EIO=4&transport=websocket";
 const RECONNECT_INTERVAL = 3000; // 3 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
 
@@ -56,7 +61,7 @@ async function updateCoinData(supabase: any, update: CoinUpdate) {
 async function handleWebSocket() {
   try {
     console.log('Connecting to WebSocket...');
-    const ws = new WebSocket(PUMP_FUN_WS_URL);
+    const ws = new WebSocket(PUMP_API_WS_URL);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
