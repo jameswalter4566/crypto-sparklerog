@@ -1,20 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { StreamTile } from "@/components/stream/StreamTile";
-import { StreamView } from "@/components/stream/StreamView";
 import { Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Stream {
-  id: string;
-  username: string;
-  title: string;
-  viewerCount: number;
-  avatarUrl?: string | null;
-}
+import { StreamView } from "@/components/stream/StreamView";
+import { StreamGrid } from "@/components/stream/StreamGrid";
+import { useActiveStreams, type Stream } from "@/hooks/useActiveStreams";
 
 const LiveStream = () => {
   const { toast } = useToast();
@@ -22,66 +14,7 @@ const LiveStream = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
-  const [activeStreams, setActiveStreams] = useState<Stream[]>([]);
-
-  // Fetch active streams
-  useEffect(() => {
-    const fetchStreams = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("active_streams")
-          .select(`
-            id,
-            username,
-            title,
-            viewer_count,
-            profiles (
-              avatar_url
-            )
-          `);
-
-        if (error) throw error;
-
-        const streams: Stream[] = data.map((stream) => ({
-          id: stream.id,
-          username: stream.username,
-          title: stream.title,
-          viewerCount: stream.viewer_count,
-          avatarUrl: stream.profiles?.avatar_url,
-        }));
-
-        setActiveStreams(streams);
-      } catch (error) {
-        console.error("Error fetching streams:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load active streams",
-          variant: "destructive",
-        });
-      }
-    };
-
-    // Initial fetch
-    fetchStreams();
-
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel("active_streams_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "active_streams",
-        },
-        fetchStreams
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [toast]);
+  const { streams } = useActiveStreams();
 
   const handleStartStreamClick = () => {
     if (!connected) {
@@ -125,10 +58,6 @@ const LiveStream = () => {
     }
   };
 
-  const handleWatch = (stream: Stream) => {
-    setSelectedStream(stream);
-  };
-
   if (selectedStream) {
     return (
       <StreamView
@@ -152,24 +81,7 @@ const LiveStream = () => {
         </Button>
       </div>
 
-      {activeStreams.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          No active streams at the moment
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeStreams.map((stream) => (
-            <StreamTile
-              key={stream.id}
-              username={stream.username}
-              avatarUrl={stream.avatarUrl}
-              viewerCount={stream.viewerCount}
-              title={stream.title}
-              onWatch={() => handleWatch(stream)}
-            />
-          ))}
-        </div>
-      )}
+      <StreamGrid streams={streams} onWatch={setSelectedStream} />
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[80%] h-[80vh] flex flex-col">
