@@ -7,12 +7,10 @@ export const MouseTrailer = () => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setIsVisible(true);
-      // Adding a slight delay using requestAnimationFrame for smooth movement
-      requestAnimationFrame(() => {
-        setPosition({
-          x: e.clientX,
-          y: e.clientY
-        });
+      // Removed requestAnimationFrame for immediate response
+      setPosition({
+        x: e.clientX,
+        y: e.clientY
       });
     };
 
@@ -33,10 +31,10 @@ export const MouseTrailer = () => {
 
   return (
     <div
-      className="pointer-events-none fixed z-50 h-4 w-4 rounded-full bg-primary/30 transition-transform duration-200 animate-glow-pulse"
+      className="pointer-events-none fixed z-50 h-4 w-4 rounded-full bg-primary/40 transition-transform duration-75 animate-glow-pulse"
       style={{
         transform: `translate(${position.x - 8}px, ${position.y - 8}px)`,
-        boxShadow: '0 0 20px rgba(249,115,22,0.4), 0 0 40px rgba(249,115,22,0.2)'
+        boxShadow: '0 0 20px rgba(249,115,22,0.6), 0 0 40px rgba(249,115,22,0.3)'
       }}
     />
   );
