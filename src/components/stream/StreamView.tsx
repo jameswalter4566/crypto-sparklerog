@@ -68,7 +68,9 @@ export function StreamView({
           }
         };
 
-        endStream();
+        if (isStreamer) {
+          endStream();
+        }
       };
     }
   }, [streamId, username, title, isStreamer, isPreview]);
@@ -109,6 +111,18 @@ export function StreamView({
     setIsMuted(!isMuted);
   };
 
+  const handleClose = () => {
+    if (isStreamer) {
+      // Only show confirmation for streamers
+      if (window.confirm("Are you sure you want to end the stream?")) {
+        onClose();
+      }
+    } else {
+      // Regular viewers can just close without confirmation
+      onClose();
+    }
+  };
+
   return (
     <StreamLayout
       header={
@@ -117,8 +131,8 @@ export function StreamView({
           title={title}
           avatarUrl={avatarUrl}
           viewerCount={viewerCount}
-          onClose={onClose}
-          onEndStream={isStreamer ? onClose : undefined}
+          onClose={handleClose}
+          onEndStream={isStreamer ? handleClose : undefined}
           isStreamer={isStreamer}
         />
       }
