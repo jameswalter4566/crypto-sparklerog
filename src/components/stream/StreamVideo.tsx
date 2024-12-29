@@ -22,6 +22,7 @@ export function StreamVideo({
   const videoRef = useRef<HTMLDivElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [hasAudio, setHasAudio] = useState(false);
+  const clientRef = useRef(AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }));
   const localTracks = useRef<{
     videoTrack?: ICameraVideoTrack;
     audioTrack?: IMicrophoneAudioTrack;
@@ -41,11 +42,10 @@ export function StreamVideo({
       }
 
       if (!isPreview) {
-        const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
         const appId = "c6f7a2828b774baebabd8ece87268954";
         
-        await client.join(appId, channelName, null, null);
-        await client.publish([audioTrack, videoTrack]);
+        await clientRef.current.join(appId, channelName, null, null);
+        await clientRef.current.publish([audioTrack, videoTrack]);
 
         toast.success("Started streaming successfully!");
       }
@@ -59,16 +59,18 @@ export function StreamVideo({
   useEffect(() => {
     if (isStreamer) {
       setupLocalVideo();
-    } else {
-      const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    } else if (!isPreview) {
+      const client = clientRef.current;
       const appId = "c6f7a2828b774baebabd8ece87268954";
 
       const setupRemoteVideo = async () => {
         try {
           await client.join(appId, channelName, null, null);
+          console.log("[StreamVideo] Joined channel as viewer:", channelName);
 
           client.on("user-published", async (user, mediaType) => {
             await client.subscribe(user, mediaType);
+            console.log("[StreamVideo] Subscribed to remote user:", user.uid, mediaType);
             
             if (mediaType === "video" && videoRef.current) {
               user.videoTrack?.play(videoRef.current);
@@ -85,18 +87,39 @@ export function StreamVideo({
         }
       };
 
-      if (!isPreview) {
-        setupRemoteVideo();
-      }
+      setupRemoteVideo();
     }
 
+    // Cleanup function
     return () => {
-      if (localTracks.current.videoTrack) {
-        localTracks.current.videoTrack.close();
-      }
-      if (localTracks.current.audioTrack) {
-        localTracks.current.audioTrack.close();
-      }
+      console.log("[StreamVideo] Cleaning up stream resources");
+      const cleanup = async () => {
+        try {
+          // Stop and close local tracks
+          if (localTracks.current.videoTrack) {
+            localTracks.current.videoTrack.stop();
+            localTracks.current.videoTrack.close();
+          }
+          if (localTracks.current.audioTrack) {
+            localTracks.current.audioTrack.stop();
+            localTracks.current.audioTrack.close();
+          }
+
+          // Leave the channel and remove all event listeners
+          if (clientRef.current) {
+            clientRef.current.removeAllListeners();
+            await clientRef.current.leave();
+            console.log("[StreamVideo] Successfully left the channel");
+          }
+
+          setHasVideo(false);
+          setHasAudio(false);
+        } catch (error) {
+          console.error("[StreamVideo] Error during cleanup:", error);
+        }
+      };
+
+      cleanup();
     };
   }, [channelName, isStreamer, isPreview, onError]);
 
