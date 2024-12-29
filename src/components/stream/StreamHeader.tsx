@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Users, X } from "lucide-react";
+import { Users, X, Power } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface StreamHeaderProps {
@@ -8,9 +8,19 @@ interface StreamHeaderProps {
   avatarUrl?: string;
   viewerCount: number;
   onClose: () => void;
+  onEndStream?: () => void;
+  isStreamer?: boolean;
 }
 
-export function StreamHeader({ username, title, avatarUrl, viewerCount, onClose }: StreamHeaderProps) {
+export function StreamHeader({ 
+  username, 
+  title, 
+  avatarUrl, 
+  viewerCount, 
+  onClose,
+  onEndStream,
+  isStreamer 
+}: StreamHeaderProps) {
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-3">
@@ -28,9 +38,20 @@ export function StreamHeader({ username, title, avatarUrl, viewerCount, onClose 
           <Users className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{viewerCount}</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
+        {isStreamer ? (
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={onEndStream}
+          >
+            <Power className="h-4 w-4 mr-2" />
+            End Stream
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
     </div>
   );

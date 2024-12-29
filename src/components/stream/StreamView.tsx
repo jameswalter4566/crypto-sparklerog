@@ -118,6 +118,8 @@ export function StreamView({
           avatarUrl={avatarUrl}
           viewerCount={viewerCount}
           onClose={onClose}
+          onEndStream={isStreamer ? onClose : undefined}
+          isStreamer={isStreamer}
         />
       }
       video={
