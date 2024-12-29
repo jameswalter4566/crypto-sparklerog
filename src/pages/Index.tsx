@@ -18,6 +18,7 @@ interface CoinMetadata {
   price: number | null;
   change_24h: number | null;
   solana_addr?: string | null;
+  usd_market_cap: number | null;
 }
 
 const Index = () => {
@@ -26,6 +27,7 @@ const Index = () => {
   const { data: coins, isLoading } = useQuery({
     queryKey: ['trending-coins'],
     queryFn: async () => {
+      console.log('Fetching trending coins...');
       const { data, error } = await supabase
         .from('coins')
         .select('*')
@@ -37,9 +39,19 @@ const Index = () => {
         throw error;
       }
 
+      console.log('Received coins:', data);
       return data || [];
     }
   });
+
+  // Map database fields to CoinGrid expected format
+  const mappedCoins = coins?.map(coin => ({
+    id: coin.id,
+    name: coin.name,
+    imageUrl: coin.image_url || '/placeholder.svg',
+    usdMarketCap: coin.usd_market_cap || 0,
+    description: coin.description
+  }));
 
   return (
     <>
@@ -59,7 +71,7 @@ const Index = () => {
             ))}
           </div>
         )}
-        <CoinGrid coins={coins} isLoading={isLoading} title="Trending Coins" />
+        <CoinGrid coins={mappedCoins} isLoading={isLoading} title="Trending Coins" />
       </div>
     </>
   );
