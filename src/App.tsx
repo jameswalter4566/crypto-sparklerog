@@ -24,6 +24,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 30000,
+      refetchOnWindowFocus: false, // Add this to prevent unnecessary refetches
     },
   },
 });
@@ -106,15 +107,16 @@ const App = () => {
 
       if (!coinMetadata) {
         // If coin doesn't exist, call the edge function to add it
-        const response = await supabase.functions.invoke('add-coin', {
+        const { data, error } = await supabase.functions.invoke('add-coin', {
           body: { solana_addr: mintAddress }
         });
 
-        if (!response.data) {
-          throw new Error('Failed to fetch token information from edge function');
+        if (error) {
+          console.error("Edge function error:", error);
+          throw new Error('Failed to fetch token information');
         }
 
-        coinMetadata = response.data;
+        coinMetadata = data;
       }
 
       if (coinMetadata) {
