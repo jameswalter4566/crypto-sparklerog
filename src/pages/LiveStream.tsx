@@ -17,41 +17,53 @@ const LiveStream = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
   const { streams } = useActiveStreams();
-  const [session, setSession] = useState<any>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check and set initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const loadProfile = async () => {
+      if (walletAddress) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('wallet_address', walletAddress)
+          .single();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+        if (!error && data) {
+          setDisplayName(data.display_name);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
-  }, []);
+    loadProfile();
+  }, [walletAddress]);
 
   const handleStartStreamClick = () => {
-    if (!connected || !session) {
+    if (!connected) {
       toast({
-        title: "Authentication Required",
-        description: "Please connect your wallet and sign in to start streaming",
+        title: "Connect Wallet",
+        description: "Please connect your wallet to start streaming",
         variant: "destructive",
       });
       return;
     }
+
+    if (!displayName) {
+      toast({
+        title: "Profile Required",
+        description: "Please set up your profile before streaming",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsPreviewOpen(true);
   };
 
   const handleStartActualStream = async () => {
-    if (!session) {
+    if (!walletAddress || !displayName) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to start streaming",
+        title: "Profile Required",
+        description: "Please ensure your wallet is connected and profile is set up",
         variant: "destructive",
       });
       return;
@@ -65,8 +77,8 @@ const LiveStream = () => {
         .from('active_streams')
         .insert({
           id: streamId,
-          wallet_address: session.user.id,
-          username: walletAddress?.slice(0, 8) || "Anonymous",
+          wallet_address: walletAddress,
+          username: displayName,
           title: "Live Trading Session",
           viewer_count: 0
         });
@@ -78,7 +90,7 @@ const LiveStream = () => {
 
       const newStream = {
         id: streamId,
-        username: walletAddress?.slice(0, 8) || "Anonymous",
+        username: displayName,
         title: "Live Trading Session",
         viewerCount: 0,
       };
@@ -103,10 +115,10 @@ const LiveStream = () => {
   };
 
   const handleStreamEnd = async () => {
-    if (!session) {
+    if (!walletAddress) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to end the stream",
+        title: "Connect Wallet",
+        description: "Please connect your wallet to end the stream",
         variant: "destructive",
       });
       return;
@@ -118,7 +130,7 @@ const LiveStream = () => {
           .from('active_streams')
           .delete()
           .eq('id', selectedStream.id)
-          .eq('wallet_address', session.user.id);
+          .eq('wallet_address', walletAddress);
 
         if (error) throw error;
 
@@ -146,7 +158,7 @@ const LiveStream = () => {
         title={selectedStream.title}
         avatarUrl={selectedStream.avatarUrl}
         onClose={handleStreamEnd}
-        isStreamer={selectedStream.username === walletAddress?.slice(0, 8)}
+        isStreamer={selectedStream.username === displayName}
       />
     );
   }
@@ -171,7 +183,7 @@ const LiveStream = () => {
           <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
             <StreamView
               streamId={`preview_${walletAddress}`}
-              username={walletAddress?.slice(0, 8) || "Anonymous"}
+              username={displayName || "Anonymous"}
               title="Stream Preview"
               isStreamer={true}
               isPreview={true}
