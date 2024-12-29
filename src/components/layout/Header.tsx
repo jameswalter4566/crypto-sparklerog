@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MenuItem {
   title: string;
@@ -21,6 +22,7 @@ export const Header = ({ onSearch, isLoading }: {
   const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogoClick = () => {
     setIsSpinning(true);
@@ -106,8 +108,8 @@ export const Header = ({ onSearch, isLoading }: {
   );
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-24 bg-black/50 backdrop-blur-sm z-20">
-      <div className="flex flex-col gap-4 h-full px-4 py-2">
+    <div className="fixed top-0 left-0 right-0 h-24 md:h-24 bg-black/50 backdrop-blur-sm z-20">
+      <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
@@ -161,7 +163,9 @@ export const Header = ({ onSearch, isLoading }: {
           <WalletConnect />
         </div>
         <div className="w-full max-w-4xl mx-auto">
-          <TokenSearchForm onSearch={onSearch} isLoading={isLoading} />
+          {isMobile ? (
+            <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader />
+          ) : null}
         </div>
       </div>
     </div>

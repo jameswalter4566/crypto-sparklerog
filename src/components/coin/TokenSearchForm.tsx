@@ -5,10 +5,12 @@ import { Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TokenSearchFormProps {
   onSearch: (mintAddress: string) => Promise<any>;
   isLoading: boolean;
+  isMobileHeader?: boolean;
 }
 
 interface CoinPreview {
@@ -19,11 +21,12 @@ interface CoinPreview {
   price: number | null;
 }
 
-export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) => {
+export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSearchFormProps) => {
   const [mintAddress, setMintAddress] = useState("");
   const [previewCoin, setPreviewCoin] = useState<CoinPreview | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,11 @@ export const TokenSearchForm = ({ onSearch, isLoading }: TokenSearchFormProps) =
     if (price === null || isNaN(Number(price))) return "Price not available";
     return `SOL ${Number(price).toFixed(6)}`;
   };
+
+  // Don't render on mobile if not in header, and don't render on desktop if in header
+  if ((isMobile && !isMobileHeader) || (!isMobile && isMobileHeader)) {
+    return null;
+  }
 
   return (
     <div className="relative w-full max-w-xl mx-auto px-2 sm:px-4">
