@@ -19,7 +19,7 @@ export const StreamTile = ({ username, avatarUrl, viewerCount, title, onWatch }:
           <Eye className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{viewerCount}</span>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
           <div className="flex items-center gap-3">
             <div className="animate-pulse">
               <div className="w-2 h-2 bg-red-500 rounded-full" />
@@ -28,13 +28,13 @@ export const StreamTile = ({ username, avatarUrl, viewerCount, title, onWatch }:
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-3 sm:p-4">
+      <CardContent className="p-4">
         <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+          <Avatar>
             <AvatarImage src={avatarUrl} />
             <AvatarFallback>{username[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1">
             <h3 className="font-semibold truncate">{username}</h3>
             <p className="text-sm text-muted-foreground truncate">{title}</p>
           </div>
@@ -43,7 +43,6 @@ export const StreamTile = ({ username, avatarUrl, viewerCount, title, onWatch }:
           onClick={onWatch} 
           className="w-full"
           variant="secondary"
-          size="sm"
         >
           <Play className="w-4 h-4 mr-2" />
           Watch Stream
