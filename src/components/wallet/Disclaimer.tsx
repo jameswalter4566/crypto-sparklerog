@@ -8,7 +8,7 @@ export const Disclaimer = () => {
   if (!isVisible) return null;
 
   return (
-    <Alert className="mt-2 bg-yellow-500/10 border-yellow-500/20">
+    <Alert className="hidden md:flex mt-2 bg-yellow-500/10 border-yellow-500/20">
       <AlertCircle className="h-4 w-4 text-yellow-500" />
       <AlertDescription className="text-yellow-500 flex items-center justify-between">
         Note: If you are unable to join voice chat after creating your profile... Refresh!
