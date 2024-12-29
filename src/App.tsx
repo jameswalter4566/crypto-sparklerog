@@ -13,11 +13,16 @@ import Explore from "@/pages/Explore";
 import LaunchCoin from "@/pages/LaunchCoin";
 
 const App = () => {
+  const handleSearch = async (mintAddress: string): Promise<any> => {
+    // This is a placeholder implementation that returns a Promise
+    return Promise.resolve();
+  };
+
   return (
     <Router>
       <AnimatedBackground />
       <MovingBanners />
-      <Header onSearch={() => {}} isLoading={false} />
+      <Header onSearch={handleSearch} isLoading={false} />
       <main className="pt-24">
         <Routes>
           <Route path="/" element={<Index />} />
