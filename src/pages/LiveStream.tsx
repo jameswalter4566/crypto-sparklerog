@@ -2,46 +2,78 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StreamTile } from "@/components/stream/StreamTile";
 import { StreamView } from "@/components/stream/StreamView";
-import { Video } from "lucide-react";
+import { Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 
-// Mock data for streams
-const mockStreams = [
-  {
-    id: "1",
-    username: "CryptoTrader",
-    title: "Live Trading Session - Market Analysis",
-    viewerCount: 156,
-    avatarUrl: "/player1.png"
-  },
-  {
-    id: "2",
-    username: "TokenMaster",
-    title: "New Token Launch Discussion",
-    viewerCount: 89,
-    avatarUrl: null
-  },
-  {
-    id: "3",
-    username: "BlockchainGuru",
-    title: "Technical Analysis & Price Predictions",
-    viewerCount: 234,
-    avatarUrl: "/penguin.jpg"
-  }
-];
+interface Stream {
+  id: string;
+  username: string;
+  title: string;
+  viewerCount: number;
+  avatarUrl?: string | null;
+}
 
 const LiveStream = () => {
   const { toast } = useToast();
-  const [selectedStream, setSelectedStream] = useState<typeof mockStreams[0] | null>(null);
+  const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
+  const [activeStreams, setActiveStreams] = useState<Stream[]>([]);
 
-  const handleStartStream = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Streaming feature will be available in the next update!",
-    });
+  const handleStartStreamClick = () => {
+    if (!connected) {
+      toast({
+        title: "Connect Wallet",
+        description: "Please connect your wallet to start streaming",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsPreviewOpen(true);
   };
 
-  const handleWatch = (stream: typeof mockStreams[0]) => {
+  const handleStartActualStream = async () => {
+    setIsLoading(true);
+    try {
+      // Create a new stream record
+      const streamId = `stream_${Date.now()}`;
+      const newStream = {
+        id: streamId,
+        username: walletAddress?.slice(0, 8) || 'Anonymous',
+        title: "Live Trading Session",
+        viewerCount: 0,
+      };
+
+      // Add to active streams
+      setActiveStreams(prev => [...prev, newStream]);
+      
+      // Close preview dialog
+      setIsPreviewOpen(false);
+      
+      // Open stream view as streamer
+      setSelectedStream(newStream);
+
+      toast({
+        title: "Stream Started",
+        description: "Your stream is now live!",
+      });
+    } catch (error) {
+      console.error("Error starting stream:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start stream. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWatch = (stream: Stream) => {
     setSelectedStream(stream);
   };
 
@@ -53,6 +85,7 @@ const LiveStream = () => {
         title={selectedStream.title}
         avatarUrl={selectedStream.avatarUrl}
         onClose={() => setSelectedStream(null)}
+        isStreamer={selectedStream.username === walletAddress?.slice(0, 8)}
       />
     );
   }
@@ -61,19 +94,19 @@ const LiveStream = () => {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Live Streams</h1>
-        <Button onClick={handleStartStream} size="lg">
+        <Button onClick={handleStartStreamClick} size="lg">
           <Video className="w-5 h-5 mr-2" />
           Start Streaming
         </Button>
       </div>
 
-      {mockStreams.length === 0 ? (
+      {activeStreams.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">
           No active streams at the moment
         </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockStreams.map((stream) => (
+          {activeStreams.map((stream) => (
             <StreamTile
               key={stream.id}
               username={stream.username}
@@ -85,6 +118,36 @@ const LiveStream = () => {
           ))}
         </div>
       )}
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Stream Preview</DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+            <StreamView
+              streamId={`preview_${walletAddress}`}
+              username={walletAddress?.slice(0, 8) || 'Anonymous'}
+              title="Stream Preview"
+              isStreamer={true}
+              isPreview={true}
+              onClose={() => setIsPreviewOpen(false)}
+            />
+          </div>
+          <div className="flex justify-end gap-4 mt-4">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleStartActualStream}
+              disabled={isLoading}
+            >
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Start Stream
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
