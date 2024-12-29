@@ -19,7 +19,7 @@ const LiveStream = () => {
   const {
     isLoading,
     selectedStream,
-    setSelectedStream: setStreamState,
+    setSelectedStream,
     startStream,
     endStream,
   } = useStreamManagement(walletAddress, displayName);
@@ -44,16 +44,12 @@ const LiveStream = () => {
 
   const handleStartStreamClick = () => {
     if (!connected) {
-      toast("Connect Wallet", {
-        description: "Please connect your wallet to start streaming",
-      });
+      toast.error("Please connect your wallet to start streaming");
       return;
     }
 
     if (!displayName) {
-      toast("Profile Required", {
-        description: "Please set up your profile before streaming",
-      });
+      toast.error("Please set up your profile before streaming");
       return;
     }
 
@@ -83,7 +79,7 @@ const LiveStream = () => {
         </Button>
       </div>
 
-      <StreamGrid streams={streams} onWatch={setStreamState} />
+      <StreamGrid streams={streams} onWatch={setSelectedStream} />
 
       <StreamPreview
         isOpen={isPreviewOpen}
