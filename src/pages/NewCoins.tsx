@@ -4,6 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
 
+interface CoinData {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number | null;
+  change_24h: number | null;
+  image_url: string | null;
+  solana_addr: string | null;
+  historic_data: Array<{ price: number; timestamp: string }> | null;
+  usd_market_cap: number | null;
+}
+
 const NewCoins = () => {
   const { toast } = useToast();
 
@@ -57,20 +69,17 @@ const NewCoins = () => {
             }
             return true;
           })
-          .map(item => {
-            console.log('Processing coin:', item.coins);
-            return {
-              id: item.coins.id,
-              name: item.coins.name,
-              symbol: item.coins.symbol,
-              price: item.coins.price,
-              change_24h: item.coins.change_24h,
-              imageUrl: item.coins.image_url || "/placeholder.svg",
-              mintAddress: item.coins.solana_addr || "",
-              priceHistory: item.coins.historic_data,
-              usdMarketCap: item.coins.usd_market_cap
-            };
-          });
+          .map(item => ({
+            id: item.coins.id,
+            name: item.coins.name,
+            symbol: item.coins.symbol,
+            price: item.coins.price,
+            change_24h: item.coins.change_24h,
+            imageUrl: item.coins.image_url || "/placeholder.svg",
+            mintAddress: item.coins.solana_addr || "",
+            priceHistory: item.coins.historic_data,
+            usdMarketCap: item.coins.usd_market_cap
+          }));
 
         console.log('Mapped coins:', mappedCoins);
         return mappedCoins;

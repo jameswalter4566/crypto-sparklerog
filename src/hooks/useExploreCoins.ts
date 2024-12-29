@@ -1,7 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { CoinData } from "@/types/coin";
+
+interface CoinData {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number | null;
+  change_24h: number | null;
+  image_url: string | null;
+  solana_addr: string | null;
+  historic_data: Array<{ price: number; timestamp: string }> | null;
+  usd_market_cap: number | null;
+}
 
 interface ExploreCoinResponse {
   coin_id: string;
@@ -30,7 +41,6 @@ export function useExploreCoins() {
               image_url,
               solana_addr,
               historic_data,
-              market_cap,
               usd_market_cap
             )
           `)
@@ -55,10 +65,10 @@ export function useExploreCoins() {
           symbol: explore.coins.symbol,
           price: explore.coins.price,
           change_24h: explore.coins.change_24h,
-          imageUrl: explore.coins.image_url, // Mapped from image_url to imageUrl
-          mintAddress: explore.coins.solana_addr, // Mapped from solana_addr to mintAddress
+          imageUrl: explore.coins.image_url,
+          mintAddress: explore.coins.solana_addr,
           priceHistory: explore.coins.historic_data,
-          usdMarketCap: explore.coins.usd_market_cap, // Mapped from usd_market_cap to usdMarketCap
+          usdMarketCap: explore.coins.usd_market_cap,
           searchCount: explore.search_count
         }));
       } catch (error) {
