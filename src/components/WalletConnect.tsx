@@ -17,6 +17,15 @@ export const WalletConnect = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
 
+  const isMobileDevice = () => {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  };
+
+  const openPhantomApp = () => {
+    const phantomDeepLink = `https://phantom.app/ul/browse/${window.location.href}`;
+    window.location.href = phantomDeepLink;
+  };
+
   const fetchBalance = async (address: string) => {
     try {
       // @ts-ignore
@@ -69,7 +78,11 @@ export const WalletConnect = () => {
 
       if (!solana?.isPhantom) {
         toast.error("Please install Phantom wallet");
-        window.open("https://phantom.app/", "_blank");
+        if (isMobileDevice()) {
+          openPhantomApp();
+        } else {
+          window.open("https://phantom.app/", "_blank");
+        }
         return;
       }
 
