@@ -66,14 +66,14 @@ export const TokenHeader = ({
   return (
     <div className="flex flex-col gap-4 p-6 border-b border-border">
       <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
+        <Avatar className="h-24 w-24">
           <AvatarImage src={image || ""} alt={name} />
           <AvatarFallback>{symbol[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{name}</h1>
-            <span className="text-sm text-muted-foreground">({symbol})</span>
+            <h1 className="text-3xl font-bold">{name}</h1>
+            <span className="text-lg text-muted-foreground">({symbol})</span>
           </div>
           {description && (
             <p className="text-sm text-muted-foreground mt-1">{description}</p>
