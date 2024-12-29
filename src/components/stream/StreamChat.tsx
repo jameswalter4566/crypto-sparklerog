@@ -22,6 +22,7 @@ interface StreamChatProps {
 export function StreamChat({ streamId, username, walletAddress }: StreamChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatMessage, setChatMessage] = useState("");
+  const [displayNames, setDisplayNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Fetch existing messages
@@ -36,6 +37,19 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
         console.error('[StreamChat] Error fetching messages:', error);
         return;
       }
+
+      // Fetch display names for all unique wallet addresses
+      const uniqueWallets = [...new Set((data || []).map(msg => msg.wallet_address))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('wallet_address, display_name')
+        .in('wallet_address', uniqueWallets);
+
+      const nameMap: Record<string, string> = {};
+      profiles?.forEach(profile => {
+        nameMap[profile.wallet_address] = profile.display_name || 'Anonymous';
+      });
+      setDisplayNames(nameMap);
 
       setMessages(data || []);
     };
@@ -53,9 +67,27 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
           table: 'stream_messages',
           filter: `stream_id=eq.${streamId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('[StreamChat] New message received:', payload.new);
-          setMessages(current => [...current, payload.new as ChatMessage]);
+          const newMessage = payload.new as ChatMessage;
+
+          // Fetch display name for new message if not already in our map
+          if (!displayNames[newMessage.wallet_address]) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('wallet_address', newMessage.wallet_address)
+              .single();
+
+            if (profile) {
+              setDisplayNames(prev => ({
+                ...prev,
+                [newMessage.wallet_address]: profile.display_name || 'Anonymous'
+              }));
+            }
+          }
+
+          setMessages(current => [...current, newMessage]);
         }
       )
       .subscribe();
@@ -70,12 +102,11 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
     if (!chatMessage.trim()) return;
 
     try {
-      // Insert message with the current user's username
       const { error } = await supabase
         .from('stream_messages')
         .insert({
           stream_id: streamId,
-          username: username, // This is the current user's username
+          username: username, // This will be overridden by the display name when displaying
           message: chatMessage,
           wallet_address: walletAddress,
         });
@@ -105,7 +136,7 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-sm text-primary">
-                  {msg.username}
+                  {displayNames[msg.wallet_address] || msg.username}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {new Date(msg.created_at).toLocaleTimeString()}
