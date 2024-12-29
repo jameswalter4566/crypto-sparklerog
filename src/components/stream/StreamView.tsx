@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StreamHeader } from "./StreamHeader";
 import { StreamVideo } from "./StreamVideo";
 import { StreamChat, type ChatMessage } from "./StreamChat";
 import { StreamControls } from "./StreamControls";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface StreamViewProps {
   streamId: string;
@@ -25,7 +27,73 @@ export function StreamView({
 }: StreamViewProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [viewerCount] = useState(Math.floor(Math.random() * 100) + 1);
+  const [viewerCount, setViewerCount] = useState(0);
+
+  useEffect(() => {
+    if (isStreamer && !isPreview) {
+      const createStream = async () => {
+        try {
+          const { error } = await supabase.from("active_streams").insert({
+            id: streamId,
+            wallet_address: username, // Using the wallet address as username
+            username: username,
+            title: title,
+            viewer_count: 0,
+          });
+
+          if (error) throw error;
+          toast.success("Stream started successfully!");
+        } catch (error) {
+          console.error("Error creating stream:", error);
+          toast.error("Failed to start stream");
+        }
+      };
+
+      createStream();
+
+      // Cleanup when streamer ends stream
+      return () => {
+        const endStream = async () => {
+          try {
+            const { error } = await supabase
+              .from("active_streams")
+              .delete()
+              .eq("id", streamId);
+
+            if (error) throw error;
+            toast.success("Stream ended");
+          } catch (error) {
+            console.error("Error ending stream:", error);
+            toast.error("Failed to end stream properly");
+          }
+        };
+
+        endStream();
+      };
+    }
+  }, [streamId, username, title, isStreamer, isPreview]);
+
+  // Update viewer count periodically
+  useEffect(() => {
+    if (!isPreview) {
+      const interval = setInterval(async () => {
+        try {
+          const { data, error } = await supabase
+            .from("active_streams")
+            .select("viewer_count")
+            .eq("id", streamId)
+            .single();
+
+          if (error) throw error;
+          if (data) setViewerCount(data.viewer_count);
+        } catch (error) {
+          console.error("Error fetching viewer count:", error);
+        }
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [streamId, isPreview]);
 
   const handleSendMessage = (message: string) => {
     const newMessage: ChatMessage = {
@@ -43,7 +111,7 @@ export function StreamView({
   };
 
   return (
-    <div className={`${isPreview ? '' : 'fixed inset-0'} bg-background z-50 flex flex-col`}>
+    <div className={`${isPreview ? "" : "fixed inset-0"} bg-background z-50 flex flex-col`}>
       <StreamHeader
         username={username}
         title={title}

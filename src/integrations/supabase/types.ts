@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      active_streams: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string
+          username: string
+          viewer_count: number | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          title: string
+          username: string
+          viewer_count?: number | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string
+          username?: string
+          viewer_count?: number | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_streams_wallet_address_fkey"
+            columns: ["wallet_address"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["wallet_address"]
+          },
+        ]
+      }
       coin_comments: {
         Row: {
           coin_id: string

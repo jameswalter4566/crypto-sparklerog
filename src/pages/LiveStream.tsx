@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { StreamTile } from "@/components/stream/StreamTile";
 import { StreamView } from "@/components/stream/StreamView";
@@ -6,6 +6,7 @@ import { Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Stream {
   id: string;
@@ -22,6 +23,65 @@ const LiveStream = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
   const [activeStreams, setActiveStreams] = useState<Stream[]>([]);
+
+  // Fetch active streams
+  useEffect(() => {
+    const fetchStreams = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("active_streams")
+          .select(`
+            id,
+            username,
+            title,
+            viewer_count,
+            profiles (
+              avatar_url
+            )
+          `);
+
+        if (error) throw error;
+
+        const streams: Stream[] = data.map((stream) => ({
+          id: stream.id,
+          username: stream.username,
+          title: stream.title,
+          viewerCount: stream.viewer_count,
+          avatarUrl: stream.profiles?.avatar_url,
+        }));
+
+        setActiveStreams(streams);
+      } catch (error) {
+        console.error("Error fetching streams:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load active streams",
+          variant: "destructive",
+        });
+      }
+    };
+
+    // Initial fetch
+    fetchStreams();
+
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel("active_streams_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "active_streams",
+        },
+        fetchStreams
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const handleStartStreamClick = () => {
     if (!connected) {
@@ -41,12 +101,11 @@ const LiveStream = () => {
       const streamId = `stream_${Date.now()}`;
       const newStream = {
         id: streamId,
-        username: walletAddress?.slice(0, 8) || 'Anonymous',
+        username: walletAddress?.slice(0, 8) || "Anonymous",
         title: "Live Trading Session",
         viewerCount: 0,
       };
 
-      setActiveStreams(prev => [...prev, newStream]);
       setIsPreviewOpen(false);
       setSelectedStream(newStream);
 
@@ -120,7 +179,7 @@ const LiveStream = () => {
           <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
             <StreamView
               streamId={`preview_${walletAddress}`}
-              username={walletAddress?.slice(0, 8) || 'Anonymous'}
+              username={walletAddress?.slice(0, 8) || "Anonymous"}
               title="Stream Preview"
               isStreamer={true}
               isPreview={true}
@@ -128,14 +187,10 @@ const LiveStream = () => {
             />
           </div>
           <div className="flex justify-end gap-4 mt-4">
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => setIsPreviewOpen(false)}
-            >
+            <Button variant="outline" size="lg" onClick={() => setIsPreviewOpen(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               size="lg"
               onClick={handleStartActualStream}
               disabled={isLoading}
