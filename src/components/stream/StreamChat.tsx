@@ -20,7 +20,7 @@ interface StreamChatProps {
   username: string;
 }
 
-export function StreamChat({ messages, onSendMessage, streamId, username }: StreamChatProps) {
+export function StreamChat({ streamId, username }: StreamChatProps) {
   const [chatMessage, setChatMessage] = useState("");
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -31,29 +31,6 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
     if (storedWalletAddress) {
       setWalletAddress(storedWalletAddress);
     }
-
-    // Subscribe to new messages
-    const channel = supabase
-      .channel('stream-messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'stream_messages',
-          filter: `stream_id=eq.${streamId}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as any;
-          setLocalMessages((prev) => [...prev, {
-            id: newMessage.id,
-            username: newMessage.username,
-            message: newMessage.message,
-            timestamp: new Date(newMessage.created_at),
-          }]);
-        }
-      )
-      .subscribe();
 
     // Load existing messages
     const loadMessages = async () => {
@@ -80,6 +57,30 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
     };
 
     loadMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('stream-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'stream_messages',
+          filter: `stream_id=eq.${streamId}`,
+        },
+        (payload) => {
+          console.log('New message received:', payload);
+          const newMessage = payload.new as any;
+          setLocalMessages((prev) => [...prev, {
+            id: newMessage.id,
+            username: newMessage.username,
+            message: newMessage.message,
+            timestamp: new Date(newMessage.created_at),
+          }]);
+        }
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -114,7 +115,7 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
   };
 
   const ChatMessages = () => (
-    <div className="space-y-4 p-4">
+    <div className="flex flex-col-reverse space-y-reverse space-y-4 p-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
       {localMessages.map((msg) => (
         <div
           key={msg.id}
@@ -123,9 +124,14 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
             animationFillMode: "forwards",
           }}
         >
-          <div className="flex items-start gap-2 bg-card/60 p-2 rounded-lg">
-            <p className="font-medium text-sm text-primary">{msg.username}:</p>
-            <p className="text-sm text-foreground">{msg.message}</p>
+          <div className="flex flex-col gap-1 bg-card/60 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
+              <p className="font-semibold text-sm text-primary">{msg.username}</p>
+              <span className="text-xs text-gray-400">
+                {new Date(msg.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
+            <p className="text-sm text-foreground break-words">{msg.message}</p>
           </div>
         </div>
       ))}
@@ -155,10 +161,8 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
             <MessageSquare className="w-4 h-4" /> Stream Chat
           </h3>
         </div>
-        <div className="flex-1 relative overflow-hidden">
-          <div className="absolute inset-0 flex flex-col-reverse">
-            <ChatMessages />
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <ChatMessages />
         </div>
         <ChatForm />
       </div>
@@ -178,10 +182,8 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
           <SheetHeader className="p-4 border-b">
             <SheetTitle>Stream Chat</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 relative overflow-hidden h-[calc(100vh-10rem)]">
-            <div className="absolute inset-0 flex flex-col-reverse">
-              <ChatMessages />
-            </div>
+          <div className="flex-1 overflow-hidden h-[calc(100vh-10rem)]">
+            <ChatMessages />
           </div>
           <ChatForm />
         </SheetContent>
