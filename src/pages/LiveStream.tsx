@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Video } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
@@ -12,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const LiveStream = () => {
-  const { toast } = useToast();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
   const { streams } = useActiveStreams();
@@ -21,6 +19,7 @@ const LiveStream = () => {
   const {
     isLoading,
     selectedStream,
+    setSelectedStream: setStreamState,
     startStream,
     endStream,
   } = useStreamManagement(walletAddress, displayName);
@@ -45,19 +44,15 @@ const LiveStream = () => {
 
   const handleStartStreamClick = () => {
     if (!connected) {
-      toast({
-        title: "Connect Wallet",
+      toast("Connect Wallet", {
         description: "Please connect your wallet to start streaming",
-        variant: "destructive",
       });
       return;
     }
 
     if (!displayName) {
-      toast({
-        title: "Profile Required",
+      toast("Profile Required", {
         description: "Please set up your profile before streaming",
-        variant: "destructive",
       });
       return;
     }
@@ -88,7 +83,7 @@ const LiveStream = () => {
         </Button>
       </div>
 
-      <StreamGrid streams={streams} onWatch={setSelectedStream} />
+      <StreamGrid streams={streams} onWatch={setStreamState} />
 
       <StreamPreview
         isOpen={isPreviewOpen}

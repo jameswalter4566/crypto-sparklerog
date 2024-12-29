@@ -9,10 +9,8 @@ export const useStreamManagement = (walletAddress: string | null, displayName: s
 
   const startStream = async () => {
     if (!walletAddress || !displayName) {
-      toast({
-        title: "Profile Required",
+      toast("Profile Required", {
         description: "Please ensure your wallet is connected and profile is set up",
-        variant: "destructive",
       });
       return;
     }
@@ -45,16 +43,13 @@ export const useStreamManagement = (walletAddress: string | null, displayName: s
 
       setSelectedStream(newStream);
 
-      toast({
-        title: "Stream Started",
+      toast("Stream Started", {
         description: "Your stream is now live!",
       });
     } catch (error) {
       console.error("Error starting stream:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to start stream. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -63,10 +58,8 @@ export const useStreamManagement = (walletAddress: string | null, displayName: s
 
   const endStream = async () => {
     if (!walletAddress) {
-      toast({
-        title: "Connect Wallet",
+      toast("Connect Wallet", {
         description: "Please connect your wallet to end the stream",
-        variant: "destructive",
       });
       return;
     }
@@ -82,16 +75,13 @@ export const useStreamManagement = (walletAddress: string | null, displayName: s
         if (error) throw error;
 
         setSelectedStream(null);
-        toast({
-          title: "Stream Ended",
+        toast("Stream Ended", {
           description: "Your stream has been ended successfully.",
         });
       } catch (error) {
         console.error("Error ending stream:", error);
-        toast({
-          title: "Error",
+        toast("Error", {
           description: "Failed to end stream properly. Please try again.",
-          variant: "destructive",
         });
       }
     }
