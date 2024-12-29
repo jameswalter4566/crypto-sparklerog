@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
 import { ProfileSetup } from "./wallet/ProfileSetup";
-import { ProfileAvatar } from "./wallet/ProfileAvatar";
 import { Settings } from "./wallet/Settings";
+import { ConnectButton } from "./wallet/ConnectButton";
+import { Disclaimer } from "./wallet/Disclaimer";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
-// Use environment variable for RPC URL
 const HELIUS_RPC = import.meta.env.VITE_SOLANA_RPC_URL;
 
 export const WalletConnect = () => {
@@ -27,7 +26,6 @@ export const WalletConnect = () => {
       const connection = new Connection(HELIUS_RPC, "confirmed");
       const publicKey = new PublicKey(address);
       const balance = await connection.getBalance(publicKey);
-      console.log("Fetched balance:", balance / LAMPORTS_PER_SOL); // Debug log
       setBalance(balance / LAMPORTS_PER_SOL);
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -52,7 +50,6 @@ export const WalletConnect = () => {
         setDisplayName(data.display_name);
         setAvatarUrl(data.avatar_url);
         setShowProfileSetup(false);
-
         localStorage.setItem(
           "userProfile",
           JSON.stringify({ displayName: data.display_name, avatarUrl: data.avatar_url })
@@ -80,11 +77,7 @@ export const WalletConnect = () => {
       const address = response.publicKey.toString();
       setWalletAddress(address);
       setConnected(true);
-      
-      // Fetch balance immediately after connection
       await fetchBalance(address);
-      console.log("Connected with address:", address); // Debug log
-
       toast.success("Wallet connected!");
       await loadProfile(address);
 
@@ -149,7 +142,6 @@ export const WalletConnect = () => {
           setWalletAddress(address);
           setConnected(true);
           await fetchBalance(address);
-          console.log("Reconnected with address:", address); // Debug log
 
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
@@ -171,64 +163,39 @@ export const WalletConnect = () => {
 
     initializeWallet();
 
-    // Set up balance refresh interval
     const balanceInterval = setInterval(() => {
       if (walletAddress) {
         fetchBalance(walletAddress);
       }
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
 
     return () => clearInterval(balanceInterval);
   }, [walletAddress]);
 
   return (
-    <>
-      {connected ? (
-        <div className="fixed top-4 right-4 flex items-center gap-4">
-          {balance !== null && (
-            <div className="text-purple-500 font-medium text-lg">
-              {balance.toFixed(2)} SOL
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <ProfileAvatar displayName={displayName} avatarUrl={avatarUrl} size="sm" />
-            <span className="text-white">{displayName || "Unknown User"}</span>
-          </div>
-          {walletAddress && (
-            <Settings
-              walletAddress={walletAddress}
-              currentDisplayName={displayName}
-              onProfileUpdate={handleProfileSaved}
-            />
-          )}
-          <button
-            onClick={disconnectWallet}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Disconnect
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={connectWallet}
-          className="fixed top-4 right-4 hover:opacity-80 transition-opacity"
-        >
-          <img
-            src="/1200x1200.png"
-            alt="Phantom Wallet"
-            className="w-10 h-10 rounded-full"
-          />
-          <span className="sr-only">Connect Phantom Wallet</span>
-        </button>
+    <div className="fixed top-4 right-4">
+      <ConnectButton
+        connected={connected}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        balance={balance}
+        onConnect={connectWallet}
+        onDisconnect={disconnectWallet}
+      />
+      {!connected && <Disclaimer />}
+      {walletAddress && (
+        <Settings
+          walletAddress={walletAddress}
+          currentDisplayName={displayName}
+          onProfileUpdate={handleProfileSaved}
+        />
       )}
-
       <ProfileSetup
         open={showProfileSetup}
         onOpenChange={setShowProfileSetup}
         walletAddress={walletAddress}
         onProfileSaved={handleProfileSaved}
       />
-    </>
+    </div>
   );
 };
