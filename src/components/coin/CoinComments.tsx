@@ -80,12 +80,25 @@ export function CoinComments({ coinId }: CoinCommentsProps) {
     if (!newComment.trim()) return;
 
     setIsLoading(true);
-    const { error } = await supabase.from("coin_comments").insert([
-      {
-        coin_id: coinId,
-        content: newComment.trim(),
-      },
-    ]);
+    
+    // Get the current user's session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session?.user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to comment.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.from("coin_comments").insert({
+      coin_id: coinId,
+      content: newComment.trim(),
+      wallet_address: session.user.id,
+    });
 
     setIsLoading(false);
 
