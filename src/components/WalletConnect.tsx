@@ -5,9 +5,7 @@ import { ProfileSetup } from "./wallet/ProfileSetup";
 import { Settings } from "./wallet/Settings";
 import { ConnectButton } from "./wallet/ConnectButton";
 import { Disclaimer } from "./wallet/Disclaimer";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-
-const HELIUS_RPC = import.meta.env.VITE_SOLANA_RPC_URL;
+import { getBalance } from "@/utils/solana";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -16,22 +14,6 @@ export const WalletConnect = () => {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
-
-  const fetchBalance = async (address: string) => {
-    try {
-      // @ts-ignore
-      const { solana } = window;
-      if (!solana?.isPhantom) return;
-
-      const connection = new Connection(HELIUS_RPC, "confirmed");
-      const publicKey = new PublicKey(address);
-      const balance = await connection.getBalance(publicKey);
-      setBalance(balance / LAMPORTS_PER_SOL);
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-      setBalance(null);
-    }
-  };
 
   const loadProfile = async (address: string) => {
     try {
@@ -77,7 +59,12 @@ export const WalletConnect = () => {
       const address = response.publicKey.toString();
       setWalletAddress(address);
       setConnected(true);
-      await fetchBalance(address);
+      
+      const balanceAmount = await getBalance(address);
+      if (balanceAmount !== null) {
+        setBalance(balanceAmount);
+      }
+      
       toast.success("Wallet connected!");
       await loadProfile(address);
 
@@ -141,7 +128,11 @@ export const WalletConnect = () => {
           const address = response.publicKey.toString();
           setWalletAddress(address);
           setConnected(true);
-          await fetchBalance(address);
+          
+          const balanceAmount = await getBalance(address);
+          if (balanceAmount !== null) {
+            setBalance(balanceAmount);
+          }
 
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
@@ -165,7 +156,11 @@ export const WalletConnect = () => {
 
     const balanceInterval = setInterval(() => {
       if (walletAddress) {
-        fetchBalance(walletAddress);
+        getBalance(walletAddress).then(newBalance => {
+          if (newBalance !== null) {
+            setBalance(newBalance);
+          }
+        });
       }
     }, 30000);
 
