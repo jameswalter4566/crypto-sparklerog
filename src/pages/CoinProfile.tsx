@@ -8,6 +8,7 @@ import { PriceChart } from "@/components/coin/PriceChart";
 import { VoiceChat } from "@/components/coin/VoiceChat";
 import { SwapInterface } from "@/components/SwapInterface";
 import { useCoinData } from "@/hooks/useCoinData";
+import { CoinComments } from "@/components/coin/CoinComments";
 
 const CoinProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,6 +77,10 @@ const CoinProfile = () => {
           coinId={coin.id}
         />
         <SwapInterface defaultTokenAddress={coin.solana_addr} />
+      </div>
+
+      <div className="mt-6">
+        <CoinComments coinId={coin.id} />
       </div>
 
       <VoiceChat coinId={coin.id} />
