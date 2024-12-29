@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GridOverlay } from './GridOverlay';
 
 export const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -65,6 +66,7 @@ export const AnimatedBackground = () => {
           />
         ))}
       </div>
+      <GridOverlay />
     </>
   );
 };
