@@ -15,7 +15,7 @@ interface StreamViewProps {
   onClose: () => void;
   isStreamer?: boolean;
   isPreview?: boolean;
-  walletAddress: string; // Add this prop
+  walletAddress: string;
 }
 
 export function StreamView({
@@ -31,31 +31,46 @@ export function StreamView({
   const [isMuted, setIsMuted] = useState(true);
   const [viewerCount, setViewerCount] = useState(0);
 
+  // Initialize stream or join as viewer
   useEffect(() => {
-    if (isStreamer && !isPreview) {
-      const createStream = async () => {
-        try {
+    if (isPreview) return;
+
+    const initializeStream = async () => {
+      try {
+        if (isStreamer) {
+          // Create new stream
           const { error } = await supabase.from("active_streams").insert({
             id: streamId,
             username: username,
             title: title,
             viewer_count: 0,
-            wallet_address: walletAddress, // Add wallet_address
+            wallet_address: walletAddress,
           });
 
           if (error) throw error;
           toast.success("Stream started successfully!");
-        } catch (error) {
-          console.error("Error creating stream:", error);
-          toast.error("Failed to start stream");
+        } else {
+          // Increment viewer count when joining
+          const { error } = await supabase.rpc('increment_viewer_count', {
+            stream_id_param: streamId
+          });
+
+          if (error) throw error;
         }
-      };
+      } catch (error) {
+        console.error("Error initializing stream:", error);
+        toast.error(isStreamer ? "Failed to start stream" : "Failed to join stream");
+      }
+    };
 
-      createStream();
+    initializeStream();
 
-      return () => {
-        const endStream = async () => {
-          try {
+    // Cleanup function
+    return () => {
+      const cleanupStream = async () => {
+        try {
+          if (isStreamer) {
+            // Delete stream when streamer ends it
             const { error } = await supabase
               .from("active_streams")
               .delete()
@@ -63,38 +78,49 @@ export function StreamView({
 
             if (error) throw error;
             toast.success("Stream ended");
-          } catch (error) {
-            console.error("Error ending stream:", error);
-            toast.error("Failed to end stream properly");
-          }
-        };
+          } else {
+            // Decrement viewer count when leaving
+            const { error } = await supabase.rpc('decrement_viewer_count', {
+              stream_id_param: streamId
+            });
 
-        if (isStreamer) {
-          endStream();
+            if (error) throw error;
+          }
+        } catch (error) {
+          console.error("Error cleaning up stream:", error);
+          toast.error(isStreamer ? "Failed to end stream properly" : "Failed to leave stream properly");
         }
       };
-    }
+
+      cleanupStream();
+    };
   }, [streamId, username, title, isStreamer, isPreview, walletAddress]);
 
+  // Subscribe to viewer count updates
   useEffect(() => {
-    if (!isPreview) {
-      const interval = setInterval(async () => {
-        try {
-          const { data, error } = await supabase
-            .from("active_streams")
-            .select("viewer_count")
-            .eq("id", streamId)
-            .single();
+    if (isPreview) return;
 
-          if (error) throw error;
-          if (data) setViewerCount(data.viewer_count);
-        } catch (error) {
-          console.error("Error fetching viewer count:", error);
+    const channel = supabase
+      .channel(`stream_${streamId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_streams',
+          filter: `id=eq.${streamId}`
+        },
+        (payload) => {
+          if (payload.new) {
+            setViewerCount(payload.new.viewer_count);
+          }
         }
-      }, 5000);
+      )
+      .subscribe();
 
-      return () => clearInterval(interval);
-    }
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [streamId, isPreview]);
 
   const handleClose = () => {
