@@ -229,6 +229,48 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          stream_id: string
+          username: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          stream_id: string
+          username: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          stream_id?: string
+          username?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "active_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_messages_wallet_address_fkey"
+            columns: ["wallet_address"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["wallet_address"]
+          },
+        ]
+      }
       voice_chat_users: {
         Row: {
           created_at: string | null

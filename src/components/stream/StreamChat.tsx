@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface ChatMessage {
   id: string;
@@ -14,21 +16,94 @@ export interface ChatMessage {
 interface StreamChatProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
+  streamId: string;
+  username: string;
 }
 
-export function StreamChat({ messages, onSendMessage }: StreamChatProps) {
+export function StreamChat({ messages, onSendMessage, streamId, username }: StreamChatProps) {
   const [chatMessage, setChatMessage] = useState("");
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('stream-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'stream_messages',
+          filter: `stream_id=eq.${streamId}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as any;
+          setLocalMessages((prev) => [...prev, {
+            id: newMessage.id,
+            username: newMessage.username,
+            message: newMessage.message,
+            timestamp: new Date(newMessage.created_at),
+          }]);
+        }
+      )
+      .subscribe();
+
+    // Load existing messages
+    const loadMessages = async () => {
+      const { data, error } = await supabase
+        .from('stream_messages')
+        .select('*')
+        .eq('stream_id', streamId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        toast.error("Failed to load chat messages");
+        return;
+      }
+
+      if (data) {
+        setLocalMessages(data.map(msg => ({
+          id: msg.id,
+          username: msg.username,
+          message: msg.message,
+          timestamp: new Date(msg.created_at),
+        })));
+      }
+    };
+
+    loadMessages();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [streamId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
-    onSendMessage(chatMessage);
-    setChatMessage("");
+
+    try {
+      const { error } = await supabase
+        .from('stream_messages')
+        .insert({
+          stream_id: streamId,
+          username: username,
+          message: chatMessage,
+          wallet_address: await supabase.auth.getUser().then(res => res.data.user?.id) || '',
+        });
+
+      if (error) throw error;
+      setChatMessage("");
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error("Failed to send message");
+    }
   };
 
   const ChatMessages = () => (
     <div className="space-y-4 p-4">
-      {messages.map((msg) => (
+      {localMessages.map((msg) => (
         <div
           key={msg.id}
           className="animate-slide-up opacity-0"

@@ -27,7 +27,6 @@ export function StreamView({
   isPreview = false,
 }: StreamViewProps) {
   const [isMuted, setIsMuted] = useState(true);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
 
   useEffect(() => {
@@ -96,21 +95,6 @@ export function StreamView({
     }
   }, [streamId, isPreview]);
 
-  const handleSendMessage = (message: string) => {
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      username: "You",
-      message: message,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev.slice(-49), newMessage]);
-  };
-
-  const handleToggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
   const handleClose = () => {
     if (isStreamer) {
       // Only show confirmation for streamers
@@ -121,6 +105,10 @@ export function StreamView({
       // Regular viewers can just close without confirmation
       onClose();
     }
+  };
+
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   return (
@@ -146,8 +134,10 @@ export function StreamView({
       }
       chat={!isPreview && (
         <StreamChat
-          messages={messages}
-          onSendMessage={handleSendMessage}
+          messages={[]}
+          onSendMessage={() => {}}
+          streamId={streamId}
+          username={username}
         />
       )}
       controls={
