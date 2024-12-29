@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { StreamHeader } from "./StreamHeader";
 import { StreamVideo } from "./StreamVideo";
-import { StreamChat, type ChatMessage } from "./StreamChat";
 import { StreamControls } from "./StreamControls";
 import { StreamLayout } from "./StreamLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,12 +96,10 @@ export function StreamView({
 
   const handleClose = () => {
     if (isStreamer) {
-      // Only show confirmation for streamers
       if (window.confirm("Are you sure you want to end the stream?")) {
         onClose();
       }
     } else {
-      // Regular viewers can just close without confirmation
       onClose();
     }
   };
@@ -132,14 +129,6 @@ export function StreamView({
           isPreview={isPreview}
         />
       }
-      chat={!isPreview && (
-        <StreamChat
-          messages={[]}
-          onSendMessage={() => {}}
-          streamId={streamId}
-          username={username}
-        />
-      )}
       controls={
         <StreamControls
           isMuted={isMuted}
