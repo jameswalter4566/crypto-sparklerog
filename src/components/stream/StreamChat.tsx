@@ -26,13 +26,11 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get the wallet address from localStorage
     const storedWalletAddress = localStorage.getItem("walletAddress");
     if (storedWalletAddress) {
       setWalletAddress(storedWalletAddress);
     }
 
-    // Load existing messages
     const loadMessages = async () => {
       const { data, error } = await supabase
         .from('stream_messages')
@@ -58,7 +56,6 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
 
     loadMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('stream-messages')
       .on(
@@ -114,6 +111,10 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setChatMessage(e.target.value);
+  };
+
   const ChatMessages = () => (
     <div className="flex flex-col-reverse space-y-reverse space-y-4 p-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
       {localMessages.map((msg) => (
@@ -143,10 +144,10 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
       <div className="flex gap-2">
         <Input
           value={chatMessage}
-          onChange={(e) => setChatMessage(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Send a message..."
           className="flex-1"
-          autoComplete="off"
+          type="text"
         />
         <Button type="submit">Send</Button>
       </div>
@@ -155,7 +156,6 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
 
   return (
     <>
-      {/* Desktop Chat */}
       <div className="w-80 border-l hidden md:flex flex-col bg-card/50 backdrop-blur-sm">
         <div className="p-4 border-b">
           <h3 className="font-semibold flex items-center gap-2">
@@ -168,7 +168,6 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
         <ChatForm />
       </div>
 
-      {/* Mobile Chat Sheet */}
       <Sheet>
         <SheetTrigger asChild>
           <Button
