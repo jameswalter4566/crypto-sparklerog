@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { MouseTrailer } from "@/components/effects/MouseTrailer";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Featured from "./pages/Featured";
@@ -151,6 +152,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="relative">
+          <MouseTrailer />
           <Toaster />
           <Sonner position="top-right" />
         </div>
