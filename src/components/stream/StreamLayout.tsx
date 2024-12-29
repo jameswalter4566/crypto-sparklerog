@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StreamLayoutProps {
   header: React.ReactNode;
@@ -15,14 +16,22 @@ export function StreamLayout({
   controls,
   isPreview = false 
 }: StreamLayoutProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div className={cn(
       "bg-background flex flex-col",
       isPreview ? "h-full" : "fixed inset-0 z-50"
     )}>
       {header}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0">
-        <div className="flex-1 flex flex-col min-h-0 md:max-w-[75%]">
+      <div className={cn(
+        "flex-1 flex min-h-0",
+        isMobile ? "flex-col" : "flex-row"
+      )}>
+        <div className={cn(
+          "flex-1 flex flex-col min-h-0",
+          !isMobile && "md:max-w-[75%]"
+        )}>
           <div className="flex-1 min-h-0">
             {video}
           </div>
@@ -33,7 +42,10 @@ export function StreamLayout({
           )}
         </div>
         {chat && (
-          <div className="md:w-[25%] border-t md:border-t-0 md:border-l border-border">
+          <div className={cn(
+            "border-t md:border-t-0 md:border-l border-border",
+            isMobile ? "h-[300px]" : "md:w-[25%]"
+          )}>
             {chat}
           </div>
         )}
