@@ -16,7 +16,7 @@ export interface ChatMessage {
 interface StreamChatProps {
   streamId: string;
   username: string;
-  walletAddress: string; // Add this prop
+  walletAddress: string;
 }
 
 export function StreamChat({ streamId, username, walletAddress }: StreamChatProps) {
@@ -33,7 +33,7 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('[StreamChat] Error fetching messages:', error);
         return;
       }
 
@@ -54,6 +54,7 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
           filter: `stream_id=eq.${streamId}`
         },
         (payload) => {
+          console.log('[StreamChat] New message received:', payload.new);
           setMessages(current => [...current, payload.new as ChatMessage]);
         }
       )
@@ -73,15 +74,16 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
         .from('stream_messages')
         .insert({
           stream_id: streamId,
-          username: username,
+          username: username, // Using the passed username prop
           message: chatMessage,
-          wallet_address: walletAddress, // Add wallet_address
+          wallet_address: walletAddress,
         });
 
       if (error) throw error;
+      console.log('[StreamChat] Message sent successfully by:', username);
       setChatMessage("");
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[StreamChat] Error sending message:', error);
       toast.error("Failed to send message");
     }
   };
