@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Trophy, Search, Rocket, Compass, ArrowLeftRight, Twitter, Star } from "lucide-react";
+import { Coins, Search, Rocket, Compass, ArrowLeftRight, Twitter, Star, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -61,9 +61,9 @@ export const Header = ({ onSearch, isLoading }: {
       path: "/launch",
     },
     {
-      title: "Leaderboard",
-      icon: Trophy,
-      path: "/leaderboard",
+      title: "Live Stream",
+      icon: Video,
+      path: "/live-stream",
     },
     {
       title: "Community Updates",

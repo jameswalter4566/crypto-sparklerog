@@ -12,6 +12,7 @@ import CoinSearch from "./pages/CoinSearch";
 import LaunchCoin from "./pages/LaunchCoin";
 import RocketLaunch from "./pages/RocketLaunch";
 import NewCoins from "./pages/NewCoins";
+import LiveStream from "./pages/LiveStream";
 import { useToast } from "./hooks/use-toast";
 import { supabase } from "./integrations/supabase/client";
 import { useState } from "react";
@@ -166,7 +167,7 @@ const App = () => {
                 <Route path="/search" element={<CoinSearch />} />
                 <Route path="/launch" element={<LaunchCoin />} />
                 <Route path="/rocket-launch" element={<RocketLaunch />} />
-                <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
+                <Route path="/live-stream" element={<LiveStream />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
