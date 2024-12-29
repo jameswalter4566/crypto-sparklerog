@@ -10,18 +10,6 @@ export interface Stream {
   avatarUrl?: string | null;
 }
 
-interface ProfileData {
-  avatar_url: string | null;
-}
-
-interface StreamData {
-  id: string;
-  username: string;
-  title: string;
-  viewer_count: number;
-  profiles: ProfileData;
-}
-
 export function useActiveStreams() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [realtimeStreams, setRealtimeStreams] = useState<Stream[]>([]);
@@ -49,7 +37,7 @@ export function useActiveStreams() {
           throw error;
         }
 
-        const formattedStreams = (data as unknown as StreamData[]).map((stream) => ({
+        const formattedStreams = data.map((stream) => ({
           id: stream.id,
           username: stream.username,
           title: stream.title,
@@ -86,6 +74,7 @@ export function useActiveStreams() {
         async (payload) => {
           console.log('[useActiveStreams] Received real-time update:', payload);
           
+          // Fetch the complete updated data
           const { data: updatedData, error } = await supabase
             .from("active_streams")
             .select(`
@@ -103,7 +92,7 @@ export function useActiveStreams() {
             return;
           }
 
-          const formattedStreams = (updatedData as unknown as StreamData[]).map((stream) => ({
+          const formattedStreams = updatedData.map((stream) => ({
             id: stream.id,
             username: stream.username,
             title: stream.title,

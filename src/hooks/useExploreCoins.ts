@@ -1,18 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-
-interface CoinData {
-  id: string;
-  name: string;
-  symbol: string;
-  price: number | null;
-  change_24h: number | null;
-  image_url: string | null;
-  solana_addr: string | null;
-  historic_data: Array<{ price: number; timestamp: string }> | null;
-  usd_market_cap: number | null;
-}
+import { CoinData } from "@/types/coin";
 
 interface ExploreCoinResponse {
   coin_id: string;
@@ -41,6 +30,7 @@ export function useExploreCoins() {
               image_url,
               solana_addr,
               historic_data,
+              market_cap,
               usd_market_cap
             )
           `)
@@ -59,16 +49,16 @@ export function useExploreCoins() {
 
         console.log('[useExploreCoins] Received explore coins:', exploreCoins);
 
-        return (exploreCoins as unknown as ExploreCoinResponse[]).map((explore) => ({
+        return exploreCoins.map((explore: ExploreCoinResponse) => ({
           id: explore.coins.id,
           name: explore.coins.name,
           symbol: explore.coins.symbol,
           price: explore.coins.price,
           change_24h: explore.coins.change_24h,
-          imageUrl: explore.coins.image_url,
-          mintAddress: explore.coins.solana_addr,
+          imageUrl: explore.coins.image_url, // Mapped from image_url to imageUrl
+          mintAddress: explore.coins.solana_addr, // Mapped from solana_addr to mintAddress
           priceHistory: explore.coins.historic_data,
-          usdMarketCap: explore.coins.usd_market_cap,
+          usdMarketCap: explore.coins.usd_market_cap, // Mapped from usd_market_cap to usdMarketCap
           searchCount: explore.search_count
         }));
       } catch (error) {
