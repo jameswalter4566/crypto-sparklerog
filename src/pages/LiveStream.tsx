@@ -5,7 +5,6 @@ import { StreamView } from "@/components/stream/StreamView";
 import { Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 
 interface Stream {
@@ -39,7 +38,6 @@ const LiveStream = () => {
   const handleStartActualStream = async () => {
     setIsLoading(true);
     try {
-      // Create a new stream record
       const streamId = `stream_${Date.now()}`;
       const newStream = {
         id: streamId,
@@ -48,13 +46,8 @@ const LiveStream = () => {
         viewerCount: 0,
       };
 
-      // Add to active streams
       setActiveStreams(prev => [...prev, newStream]);
-      
-      // Close preview dialog
       setIsPreviewOpen(false);
-      
-      // Open stream view as streamer
       setSelectedStream(newStream);
 
       toast({
@@ -120,11 +113,11 @@ const LiveStream = () => {
       )}
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[800px]">
+        <DialogContent className="sm:max-w-[80%] h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Stream Preview</DialogTitle>
+            <DialogTitle className="text-2xl">Stream Preview</DialogTitle>
           </DialogHeader>
-          <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+          <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
             <StreamView
               streamId={`preview_${walletAddress}`}
               username={walletAddress?.slice(0, 8) || 'Anonymous'}
@@ -135,15 +128,21 @@ const LiveStream = () => {
             />
           </div>
           <div className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => setIsPreviewOpen(false)}
+            >
               Cancel
             </Button>
             <Button 
+              size="lg"
               onClick={handleStartActualStream}
               disabled={isLoading}
+              className="bg-primary hover:bg-primary/90"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Start Stream
+              Begin Stream
             </Button>
           </div>
         </DialogContent>

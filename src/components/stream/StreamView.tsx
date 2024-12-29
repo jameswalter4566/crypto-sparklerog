@@ -43,7 +43,7 @@ export function StreamView({
   };
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col">
+    <div className={`${isPreview ? '' : 'fixed inset-0'} bg-background z-50 flex flex-col`}>
       <StreamHeader
         username={username}
         title={title}
@@ -59,7 +59,7 @@ export function StreamView({
           channelName={streamId}
           isPreview={isPreview}
         />
-        <StreamChat messages={messages} onSendMessage={handleSendMessage} />
+        {!isPreview && <StreamChat messages={messages} onSendMessage={handleSendMessage} />}
       </div>
 
       <StreamControls
