@@ -3,6 +3,8 @@ import { CoinGrid } from "@/components/CoinGrid";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { AnimatedBackground } from "@/components/effects/AnimatedBackground";
 import { MovingBanners } from "@/components/effects/MovingBanners";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CoinMetadata {
   id: string;
@@ -20,6 +22,24 @@ interface CoinMetadata {
 
 const Index = () => {
   const [searchResults, setSearchResults] = useState<CoinMetadata[]>([]);
+
+  const { data: coins, isLoading } = useQuery({
+    queryKey: ['trending-coins'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('coins')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(12);
+
+      if (error) {
+        console.error('Error fetching coins:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
+  });
 
   return (
     <>
@@ -39,7 +59,7 @@ const Index = () => {
             ))}
           </div>
         )}
-        <CoinGrid />
+        <CoinGrid coins={coins} isLoading={isLoading} title="Trending Coins" />
       </div>
     </>
   );
