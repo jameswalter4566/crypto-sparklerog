@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 interface StreamLayoutProps {
   header: React.ReactNode;
   video: React.ReactNode;
+  chat?: React.ReactNode;
   controls?: React.ReactNode;
   isPreview?: boolean;
 }
@@ -10,6 +11,7 @@ interface StreamLayoutProps {
 export function StreamLayout({ 
   header, 
   video, 
+  chat, 
   controls,
   isPreview = false 
 }: StreamLayoutProps) {
@@ -19,13 +21,20 @@ export function StreamLayout({
       isPreview ? "h-full" : "fixed inset-0 z-50"
     )}>
       {header}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 min-h-0">
-          {video}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 md:max-w-[75%]">
+          <div className="flex-1 min-h-0">
+            {video}
+          </div>
+          {controls && (
+            <div className="border-t border-border">
+              {controls}
+            </div>
+          )}
         </div>
-        {controls && (
-          <div className="border-t border-border">
-            {controls}
+        {chat && (
+          <div className="md:w-[25%] border-t md:border-t-0 md:border-l border-border">
+            {chat}
           </div>
         )}
       </div>

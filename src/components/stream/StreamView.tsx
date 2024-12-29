@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { StreamHeader } from "./StreamHeader";
 import { StreamVideo } from "./StreamVideo";
+import { StreamChat } from "./StreamChat";
 import { StreamControls } from "./StreamControls";
 import { StreamLayout } from "./StreamLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +35,6 @@ export function StreamView({
         try {
           const { error } = await supabase.from("active_streams").insert({
             id: streamId,
-            wallet_address: username,
             username: username,
             title: title,
             viewer_count: 0,
@@ -129,6 +129,12 @@ export function StreamView({
           isPreview={isPreview}
         />
       }
+      chat={!isPreview && (
+        <StreamChat
+          streamId={streamId}
+          username={username}
+        />
+      )}
       controls={
         <StreamControls
           isMuted={isMuted}
