@@ -70,11 +70,12 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
     if (!chatMessage.trim()) return;
 
     try {
+      // Insert message with the current user's username
       const { error } = await supabase
         .from('stream_messages')
         .insert({
           stream_id: streamId,
-          username: username, // Using the passed username prop
+          username: username, // This is the current user's username
           message: chatMessage,
           wallet_address: walletAddress,
         });
@@ -98,7 +99,9 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className="bg-card/50 rounded-lg p-3 animate-fade-in"
+              className={`bg-card/50 rounded-lg p-3 animate-fade-in ${
+                msg.wallet_address === walletAddress ? 'bg-primary/10' : ''
+              }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-sm text-primary">
