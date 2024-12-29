@@ -10,14 +10,16 @@ export interface ChatMessage {
   username: string;
   message: string;
   created_at: string;
+  wallet_address: string;
 }
 
 interface StreamChatProps {
   streamId: string;
   username: string;
+  walletAddress: string; // Add this prop
 }
 
-export function StreamChat({ streamId, username }: StreamChatProps) {
+export function StreamChat({ streamId, username, walletAddress }: StreamChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatMessage, setChatMessage] = useState("");
 
@@ -73,6 +75,7 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
           stream_id: streamId,
           username: username,
           message: chatMessage,
+          wallet_address: walletAddress, // Add wallet_address
         });
 
       if (error) throw error;

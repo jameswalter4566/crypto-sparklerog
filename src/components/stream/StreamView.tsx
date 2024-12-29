@@ -15,6 +15,7 @@ interface StreamViewProps {
   onClose: () => void;
   isStreamer?: boolean;
   isPreview?: boolean;
+  walletAddress: string; // Add this prop
 }
 
 export function StreamView({
@@ -25,6 +26,7 @@ export function StreamView({
   onClose,
   isStreamer = false,
   isPreview = false,
+  walletAddress,
 }: StreamViewProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [viewerCount, setViewerCount] = useState(0);
@@ -38,6 +40,7 @@ export function StreamView({
             username: username,
             title: title,
             viewer_count: 0,
+            wallet_address: walletAddress, // Add wallet_address
           });
 
           if (error) throw error;
@@ -71,7 +74,7 @@ export function StreamView({
         }
       };
     }
-  }, [streamId, username, title, isStreamer, isPreview]);
+  }, [streamId, username, title, isStreamer, isPreview, walletAddress]);
 
   useEffect(() => {
     if (!isPreview) {
@@ -133,6 +136,7 @@ export function StreamView({
         <StreamChat
           streamId={streamId}
           username={username}
+          walletAddress={walletAddress}
         />
       )}
       controls={
