@@ -150,10 +150,10 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <GridOverlay />
         <div className="relative">
           <Toaster />
           <Sonner position="top-right" />
-          <GridOverlay />
         </div>
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">

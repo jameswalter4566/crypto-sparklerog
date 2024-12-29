@@ -22,7 +22,7 @@ export const GridOverlay = () => {
   return (
     <div 
       ref={gridRef}
-      className="fixed inset-0 pointer-events-none z-[1]"
+      className="fixed inset-0 pointer-events-none -z-10"
       style={{
         backgroundImage: `
           linear-gradient(to right, rgba(249, 115, 22, 0.2) 1px, transparent 1px),
