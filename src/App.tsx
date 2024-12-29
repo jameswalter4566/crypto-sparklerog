@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { GridOverlay } from "@/components/effects/GridOverlay";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Featured from "./pages/Featured";
@@ -152,6 +153,7 @@ const App = () => {
         <div className="relative">
           <Toaster />
           <Sonner position="top-right" />
+          <GridOverlay />
         </div>
         <BrowserRouter>
           <div className="min-h-screen flex w-full bg-black text-white">
