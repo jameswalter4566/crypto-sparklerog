@@ -82,14 +82,6 @@ export default {
             boxShadow: "0 0 30px rgba(249,115,22,0.6), 0 0 60px rgba(249,115,22,0.3)"
           }
         },
-        "laser-glow": {
-          "0%, 100%": { 
-            boxShadow: "0 0 15px rgba(249,115,22,0.3), 0 0 30px rgba(249,115,22,0.2), 0 0 45px rgba(249,115,22,0.1)"
-          },
-          "50%": { 
-            boxShadow: "0 0 20px rgba(249,115,22,0.5), 0 0 40px rgba(249,115,22,0.3), 0 0 60px rgba(249,115,22,0.2)"
-          }
-        },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },

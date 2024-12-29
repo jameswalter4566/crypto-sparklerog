@@ -67,7 +67,7 @@ export function CommentForm({ coinId, onCommentPosted }: CommentFormProps) {
       <Button 
         onClick={handleSubmitComment} 
         disabled={isLoading || !newComment.trim()}
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto animate-glow-pulse bg-primary hover:bg-primary/90 transition-all duration-300"
       >
         {isLoading ? "Posting..." : "Post Comment"}
       </Button>
