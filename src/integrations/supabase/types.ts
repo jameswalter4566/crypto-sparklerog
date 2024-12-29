@@ -302,6 +302,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_viewer_count: {
+        Args: {
+          stream_id_param: string
+        }
+        Returns: undefined
+      }
       get_secret: {
         Args: {
           secret_name: string
@@ -309,6 +315,12 @@ export type Database = {
         Returns: {
           secret: string
         }[]
+      }
+      increment_viewer_count: {
+        Args: {
+          stream_id_param: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

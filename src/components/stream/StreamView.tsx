@@ -6,6 +6,8 @@ import { StreamControls } from "./StreamControls";
 import { StreamLayout } from "./StreamLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 interface StreamViewProps {
   streamId: string;
@@ -17,6 +19,8 @@ interface StreamViewProps {
   isPreview?: boolean;
   walletAddress: string;
 }
+
+type ActiveStream = Database["public"]["Tables"]["active_streams"]["Row"];
 
 export function StreamView({
   streamId,
@@ -110,8 +114,8 @@ export function StreamView({
           table: 'active_streams',
           filter: `id=eq.${streamId}`
         },
-        (payload) => {
-          if (payload.new) {
+        (payload: RealtimePostgresChangesPayload<ActiveStream>) => {
+          if (payload.new && typeof payload.new.viewer_count === 'number') {
             setViewerCount(payload.new.viewer_count);
           }
         }
