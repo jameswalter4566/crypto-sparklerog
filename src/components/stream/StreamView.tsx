@@ -45,7 +45,8 @@ export const StreamView = ({
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    // Keep only the last 50 messages
+    setMessages((prev) => [...prev.slice(-49), newMessage]);
     setChatMessage("");
   };
 
@@ -86,20 +87,30 @@ export const StreamView = ({
         </div>
 
         {/* Chat sidebar for larger screens */}
-        <div className="w-80 border-l hidden md:flex flex-col">
+        <div className="w-80 border-l hidden md:flex flex-col bg-card/50 backdrop-blur-sm">
           <div className="p-4 border-b">
             <h3 className="font-semibold">Stream Chat</h3>
           </div>
-          <ScrollArea className="flex-1 p-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className="mb-4">
-                <div className="flex items-start gap-2">
-                  <p className="font-medium text-sm">{msg.username}:</p>
-                  <p className="text-sm text-muted-foreground">{msg.message}</p>
-                </div>
+          <div className="flex-1 relative overflow-hidden">
+            <div className="absolute inset-0 flex flex-col-reverse">
+              <div className="space-y-4 p-4">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className="animate-slide-up opacity-0"
+                    style={{
+                      animationFillMode: "forwards",
+                    }}
+                  >
+                    <div className="flex items-start gap-2 bg-card/60 p-2 rounded-lg">
+                      <p className="font-medium text-sm text-primary">{msg.username}:</p>
+                      <p className="text-sm text-foreground">{msg.message}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </ScrollArea>
+            </div>
+          </div>
           <form onSubmit={handleSendMessage} className="p-4 border-t">
             <div className="flex gap-2">
               <Input
@@ -128,16 +139,26 @@ export const StreamView = ({
             <SheetHeader className="p-4 border-b">
               <SheetTitle>Stream Chat</SheetTitle>
             </SheetHeader>
-            <ScrollArea className="flex-1 p-4 h-[calc(100vh-10rem)]">
-              {messages.map((msg) => (
-                <div key={msg.id} className="mb-4">
-                  <div className="flex items-start gap-2">
-                    <p className="font-medium text-sm">{msg.username}:</p>
-                    <p className="text-sm text-muted-foreground">{msg.message}</p>
-                  </div>
+            <div className="flex-1 relative overflow-hidden h-[calc(100vh-10rem)]">
+              <div className="absolute inset-0 flex flex-col-reverse">
+                <div className="space-y-4 p-4">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="animate-slide-up opacity-0"
+                      style={{
+                        animationFillMode: "forwards",
+                      }}
+                    >
+                      <div className="flex items-start gap-2 bg-card/60 p-2 rounded-lg">
+                        <p className="font-medium text-sm text-primary">{msg.username}:</p>
+                        <p className="text-sm text-foreground">{msg.message}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </ScrollArea>
+              </div>
+            </div>
             <form onSubmit={handleSendMessage} className="p-4 border-t">
               <div className="flex gap-2">
                 <Input
