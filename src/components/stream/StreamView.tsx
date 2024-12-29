@@ -11,6 +11,7 @@ interface StreamViewProps {
   avatarUrl?: string;
   onClose: () => void;
   isStreamer?: boolean;
+  isPreview?: boolean;
 }
 
 export function StreamView({
@@ -20,6 +21,7 @@ export function StreamView({
   avatarUrl,
   onClose,
   isStreamer = false,
+  isPreview = false,
 }: StreamViewProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -55,6 +57,7 @@ export function StreamView({
           username={username}
           isStreamer={isStreamer}
           channelName={streamId}
+          isPreview={isPreview}
         />
         <StreamChat messages={messages} onSendMessage={handleSendMessage} />
       </div>
