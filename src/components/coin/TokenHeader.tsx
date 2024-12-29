@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TokenActions } from "./TokenActions";
 import { Button } from "@/components/ui/button";
-import { Clock, ExternalLink, RefreshCw, Telegram, Twitter } from "lucide-react";
+import { Clock, ExternalLink, RefreshCw, MessageCircle, Twitter } from "lucide-react";
 import { CopyAddressButton } from "./CopyAddressButton";
 
 interface TokenHeaderProps {
@@ -122,7 +122,7 @@ export const TokenHeader = ({
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-primary transition-colors"
                       >
-                        <Telegram className="h-5 w-5" />
+                        <MessageCircle className="h-5 w-5" />
                       </a>
                     </TooltipTrigger>
                     <TooltipContent>
