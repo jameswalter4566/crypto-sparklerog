@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
-import { GridOverlay } from "@/components/effects/GridOverlay";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Featured from "./pages/Featured";
@@ -150,32 +149,29 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="relative min-h-screen bg-black">
-          <div className="relative z-10">
-            <Toaster />
-            <Sonner position="top-right" />
-            <BrowserRouter>
-              <div className="min-h-screen flex w-full text-white">
-                <main className="flex-1 overflow-x-hidden">
-                  <Header onSearch={handleSearch} isLoading={isLoading} />
-                  <div className="h-24"></div>
-                  <Routes>
-                    <Route path="/" element={<NewCoins />} />
-                    <Route path="/explore" element={<Explore />} />
-                    <Route path="/featured" element={<Featured />} />
-                    <Route path="/coin/:id" element={<CoinProfile />} />
-                    <Route path="/search" element={<CoinSearch />} />
-                    <Route path="/launch" element={<LaunchCoin />} />
-                    <Route path="/rocket-launch" element={<RocketLaunch />} />
-                    <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </main>
-              </div>
-            </BrowserRouter>
-          </div>
-          <GridOverlay />
+        <div className="relative">
+          <Toaster />
+          <Sonner position="top-right" />
         </div>
+        <BrowserRouter>
+          <div className="min-h-screen flex w-full bg-black text-white">
+            <main className="flex-1 overflow-x-hidden">
+              <Header onSearch={handleSearch} isLoading={isLoading} />
+              <div className="h-24"></div>
+              <Routes>
+                <Route path="/" element={<NewCoins />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/featured" element={<Featured />} />
+                <Route path="/coin/:id" element={<CoinProfile />} />
+                <Route path="/search" element={<CoinSearch />} />
+                <Route path="/launch" element={<LaunchCoin />} />
+                <Route path="/rocket-launch" element={<RocketLaunch />} />
+                <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );

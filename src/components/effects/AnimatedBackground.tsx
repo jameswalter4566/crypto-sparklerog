@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { GridOverlay } from './GridOverlay';
 
 export const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -23,7 +22,7 @@ export const AnimatedBackground = () => {
 
     window.addEventListener('mousemove', handleMouseMove);
     updateTimeOfDay();
-    const interval = setInterval(updateTimeOfDay, 60000);
+    const interval = setInterval(updateTimeOfDay, 60000); // Update every minute
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -66,7 +65,6 @@ export const AnimatedBackground = () => {
           />
         ))}
       </div>
-      <GridOverlay />
     </>
   );
 };
