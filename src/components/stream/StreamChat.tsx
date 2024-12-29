@@ -26,14 +26,11 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get the current user's wallet address
-    const getWalletAddress = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        setWalletAddress(session.user.id);
-      }
-    };
-    getWalletAddress();
+    // Get the wallet address from localStorage
+    const storedWalletAddress = localStorage.getItem("walletAddress");
+    if (storedWalletAddress) {
+      setWalletAddress(storedWalletAddress);
+    }
 
     // Subscribe to new messages
     const channel = supabase
