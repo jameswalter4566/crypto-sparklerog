@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StreamTile } from "@/components/stream/StreamTile";
+import { StreamView } from "@/components/stream/StreamView";
 import { Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,13 +32,7 @@ const mockStreams = [
 
 const LiveStream = () => {
   const { toast } = useToast();
-
-  const handleWatch = (streamId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Stream viewing will be available in the next update!",
-    });
-  };
+  const [selectedStream, setSelectedStream] = useState<typeof mockStreams[0] | null>(null);
 
   const handleStartStream = () => {
     toast({
@@ -44,6 +40,22 @@ const LiveStream = () => {
       description: "Streaming feature will be available in the next update!",
     });
   };
+
+  const handleWatch = (stream: typeof mockStreams[0]) => {
+    setSelectedStream(stream);
+  };
+
+  if (selectedStream) {
+    return (
+      <StreamView
+        streamId={selectedStream.id}
+        username={selectedStream.username}
+        title={selectedStream.title}
+        avatarUrl={selectedStream.avatarUrl}
+        onClose={() => setSelectedStream(null)}
+      />
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -68,7 +80,7 @@ const LiveStream = () => {
               avatarUrl={stream.avatarUrl}
               viewerCount={stream.viewerCount}
               title={stream.title}
-              onWatch={() => handleWatch(stream.id)}
+              onWatch={() => handleWatch(stream)}
             />
           ))}
         </div>
