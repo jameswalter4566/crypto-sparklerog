@@ -146,6 +146,7 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
           onChange={(e) => setChatMessage(e.target.value)}
           placeholder="Send a message..."
           className="flex-1"
+          autoComplete="off"
         />
         <Button type="submit">Send</Button>
       </div>
