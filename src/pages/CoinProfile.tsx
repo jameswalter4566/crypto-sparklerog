@@ -53,6 +53,9 @@ const CoinProfile = () => {
         onRefresh={() => refresh(true)}
         refreshing={refreshing}
         solanaAddr={coin.solana_addr}
+        twitterHandle={coin.twitter_screen_name}
+        telegramUrl={coin.chat_url?.[0]}
+        websiteUrl={coin.homepage}
       />
       
       <TokenStats

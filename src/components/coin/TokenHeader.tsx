@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TokenActions } from "./TokenActions";
 import { Button } from "@/components/ui/button";
-import { Clock, RefreshCw } from "lucide-react";
+import { Clock, ExternalLink, RefreshCw, Telegram, Twitter } from "lucide-react";
 import { CopyAddressButton } from "./CopyAddressButton";
 
 interface TokenHeaderProps {
@@ -18,6 +18,9 @@ interface TokenHeaderProps {
   onRefresh: () => void;
   refreshing: boolean;
   solanaAddr?: string;
+  twitterHandle?: string | null;
+  telegramUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export const TokenHeader = ({ 
@@ -31,7 +34,10 @@ export const TokenHeader = ({
   solanaAddr,
   updatedAt,
   onRefresh,
-  refreshing
+  refreshing,
+  twitterHandle,
+  telegramUrl,
+  websiteUrl
 }: TokenHeaderProps) => {
   const formattedUpdatedAt = new Date(updatedAt).toLocaleString();
   
@@ -84,6 +90,68 @@ export const TokenHeader = ({
                 </Tooltip>
               </TooltipProvider>
             )}
+
+            <div className="flex items-center gap-2 ml-2">
+              {twitterHandle && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={`https://twitter.com/${twitterHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Twitter className="h-5 w-5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Twitter</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {telegramUrl && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={telegramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Telegram className="h-5 w-5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Telegram</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {websiteUrl && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Website</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
           <p className="text-2xl font-bold">
             {formatPrice(price)}
