@@ -19,24 +19,6 @@ interface StreamChatProps {
   walletAddress: string;
 }
 
-// Simple profanity filter - this should be expanded with a more comprehensive list
-const containsInappropriateContent = (text: string): boolean => {
-  const inappropriateWords = [
-    'nigga', 'butt', // Add more words to filter
-  ];
-  return inappropriateWords.some(word => 
-    text.toLowerCase().includes(word.toLowerCase())
-  );
-};
-
-const filterUsername = (username: string): string => {
-  return containsInappropriateContent(username) ? '[Moderated]' : username;
-};
-
-const filterMessage = (message: string): string => {
-  return containsInappropriateContent(message) ? '[Message removed for inappropriate content]' : message;
-};
-
 export function StreamChat({ streamId, username, walletAddress }: StreamChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatMessage, setChatMessage] = useState("");
@@ -55,14 +37,7 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
         return;
       }
 
-      // Filter messages before setting them
-      const filteredData = data?.map(msg => ({
-        ...msg,
-        username: filterUsername(msg.username),
-        message: filterMessage(msg.message)
-      }));
-
-      setMessages(filteredData || []);
+      setMessages(data || []);
     };
 
     fetchMessages();
@@ -80,13 +55,7 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
         },
         (payload) => {
           console.log('[StreamChat] New message received:', payload.new);
-          const newMessage = payload.new as ChatMessage;
-          // Filter new message before adding it
-          setMessages(current => [...current, {
-            ...newMessage,
-            username: filterUsername(newMessage.username),
-            message: filterMessage(newMessage.message)
-          }]);
+          setMessages(current => [...current, payload.new as ChatMessage]);
         }
       )
       .subscribe();
@@ -100,18 +69,13 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
     e.preventDefault();
     if (!chatMessage.trim()) return;
 
-    // Check for inappropriate content before sending
-    if (containsInappropriateContent(chatMessage)) {
-      toast.error("Your message contains inappropriate content");
-      return;
-    }
-
     try {
+      // Insert message with the current user's username
       const { error } = await supabase
         .from('stream_messages')
         .insert({
           stream_id: streamId,
-          username: username,
+          username: username, // This is the current user's username
           message: chatMessage,
           wallet_address: walletAddress,
         });
@@ -141,13 +105,13 @@ export function StreamChat({ streamId, username, walletAddress }: StreamChatProp
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-sm text-primary">
-                  {filterUsername(msg.username)}
+                  {msg.username}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {new Date(msg.created_at).toLocaleTimeString()}
                 </span>
               </div>
-              <p className="text-sm">{filterMessage(msg.message)}</p>
+              <p className="text-sm">{msg.message}</p>
             </div>
           ))}
         </div>
