@@ -39,6 +39,7 @@ const LiveStream = () => {
   const handleStartActualStream = async () => {
     setIsLoading(true);
     try {
+      // Create a new stream record
       const streamId = `stream_${Date.now()}`;
       const newStream = {
         id: streamId,
@@ -47,8 +48,13 @@ const LiveStream = () => {
         viewerCount: 0,
       };
 
+      // Add to active streams
       setActiveStreams(prev => [...prev, newStream]);
+      
+      // Close preview dialog
       setIsPreviewOpen(false);
+      
+      // Open stream view as streamer
       setSelectedStream(newStream);
 
       toast({
@@ -114,11 +120,11 @@ const LiveStream = () => {
       )}
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="w-full max-w-[90vw] h-[90vh] p-6">
+        <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl mb-4">Stream Preview</DialogTitle>
+            <DialogTitle>Stream Preview</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 h-[calc(100%-10rem)] bg-black rounded-lg overflow-hidden relative">
+          <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
             <StreamView
               streamId={`preview_${walletAddress}`}
               username={walletAddress?.slice(0, 8) || 'Anonymous'}
@@ -128,14 +134,13 @@ const LiveStream = () => {
               onClose={() => setIsPreviewOpen(false)}
             />
           </div>
-          <div className="flex justify-end gap-4 mt-6">
-            <Button variant="outline" onClick={() => setIsPreviewOpen(false)} size="lg">
+          <div className="flex justify-end gap-4 mt-4">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
               Cancel
             </Button>
             <Button 
               onClick={handleStartActualStream}
               disabled={isLoading}
-              size="lg"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start Stream
