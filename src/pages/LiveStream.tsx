@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { StreamTile } from "@/components/stream/StreamTile";
 import { Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 // Mock data for streams
 const mockStreams = [
@@ -30,12 +31,10 @@ const mockStreams = [
 
 const LiveStream = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleWatch = (streamId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Stream viewing will be available in the next update!",
-    });
+    navigate(`/stream/${streamId}`);
   };
 
   const handleStartStream = () => {
