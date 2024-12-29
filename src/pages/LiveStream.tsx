@@ -7,6 +7,7 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
 import { useActiveStreams, type Stream } from "@/hooks/useActiveStreams";
+import { supabase } from "@/integrations/supabase/client";
 
 const LiveStream = () => {
   const { toast } = useToast();
@@ -32,6 +33,22 @@ const LiveStream = () => {
     setIsLoading(true);
     try {
       const streamId = `stream_${Date.now()}`;
+      
+      // Create the stream record in the database
+      const { error: insertError } = await supabase
+        .from('active_streams')
+        .insert({
+          id: streamId,
+          wallet_address: walletAddress,
+          username: walletAddress?.slice(0, 8) || "Anonymous",
+          title: "Live Trading Session",
+          viewer_count: 0
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
       const newStream = {
         id: streamId,
         username: walletAddress?.slice(0, 8) || "Anonymous",
@@ -58,6 +75,32 @@ const LiveStream = () => {
     }
   };
 
+  const handleStreamEnd = async () => {
+    if (selectedStream) {
+      try {
+        const { error } = await supabase
+          .from('active_streams')
+          .delete()
+          .eq('id', selectedStream.id);
+
+        if (error) throw error;
+
+        setSelectedStream(null);
+        toast({
+          title: "Stream Ended",
+          description: "Your stream has been ended successfully.",
+        });
+      } catch (error) {
+        console.error("Error ending stream:", error);
+        toast({
+          title: "Error",
+          description: "Failed to end stream properly. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   if (selectedStream) {
     return (
       <StreamView
@@ -65,7 +108,7 @@ const LiveStream = () => {
         username={selectedStream.username}
         title={selectedStream.title}
         avatarUrl={selectedStream.avatarUrl}
-        onClose={() => setSelectedStream(null)}
+        onClose={handleStreamEnd}
         isStreamer={selectedStream.username === walletAddress?.slice(0, 8)}
       />
     );
