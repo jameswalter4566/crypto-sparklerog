@@ -1,23 +1,29 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Video, Loader2 } from "lucide-react";
+import { Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
-import { useActiveStreams, type Stream } from "@/hooks/useActiveStreams";
+import { useActiveStreams } from "@/hooks/useActiveStreams";
+import { StreamPreview } from "@/components/stream/StreamPreview";
+import { useStreamManagement } from "@/hooks/useStreamManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const LiveStream = () => {
   const { toast } = useToast();
-  const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
   const { streams } = useActiveStreams();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  
+  const {
+    isLoading,
+    selectedStream,
+    startStream,
+    endStream,
+  } = useStreamManagement(walletAddress, displayName);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -59,97 +65,6 @@ const LiveStream = () => {
     setIsPreviewOpen(true);
   };
 
-  const handleStartActualStream = async () => {
-    if (!walletAddress || !displayName) {
-      toast({
-        title: "Profile Required",
-        description: "Please ensure your wallet is connected and profile is set up",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const streamId = `stream_${Date.now()}`;
-      
-      const { error: insertError } = await supabase
-        .from('active_streams')
-        .insert({
-          id: streamId,
-          wallet_address: walletAddress,
-          username: displayName,
-          title: "Live Trading Session",
-          viewer_count: 0
-        });
-
-      if (insertError) {
-        console.error("Insert Error:", insertError);
-        throw insertError;
-      }
-
-      const newStream = {
-        id: streamId,
-        username: displayName,
-        title: "Live Trading Session",
-        viewerCount: 0,
-      };
-
-      setIsPreviewOpen(false);
-      setSelectedStream(newStream);
-
-      toast({
-        title: "Stream Started",
-        description: "Your stream is now live!",
-      });
-    } catch (error) {
-      console.error("Error starting stream:", error);
-      toast({
-        title: "Error",
-        description: "Failed to start stream. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStreamEnd = async () => {
-    if (!walletAddress) {
-      toast({
-        title: "Connect Wallet",
-        description: "Please connect your wallet to end the stream",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedStream) {
-      try {
-        const { error } = await supabase
-          .from('active_streams')
-          .delete()
-          .eq('id', selectedStream.id)
-          .eq('wallet_address', walletAddress);
-
-        if (error) throw error;
-
-        setSelectedStream(null);
-        toast({
-          title: "Stream Ended",
-          description: "Your stream has been ended successfully.",
-        });
-      } catch (error) {
-        console.error("Error ending stream:", error);
-        toast({
-          title: "Error",
-          description: "Failed to end stream properly. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   if (selectedStream) {
     return (
       <StreamView
@@ -157,7 +72,7 @@ const LiveStream = () => {
         username={selectedStream.username}
         title={selectedStream.title}
         avatarUrl={selectedStream.avatarUrl}
-        onClose={handleStreamEnd}
+        onClose={endStream}
         isStreamer={selectedStream.username === displayName}
       />
     );
@@ -175,37 +90,14 @@ const LiveStream = () => {
 
       <StreamGrid streams={streams} onWatch={setSelectedStream} />
 
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[80%] h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Stream Preview</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
-            <StreamView
-              streamId={`preview_${walletAddress}`}
-              username={displayName || "Anonymous"}
-              title="Stream Preview"
-              isStreamer={true}
-              isPreview={true}
-              onClose={() => setIsPreviewOpen(false)}
-            />
-          </div>
-          <div className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" size="lg" onClick={() => setIsPreviewOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              size="lg"
-              onClick={handleStartActualStream}
-              disabled={isLoading}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Begin Stream
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <StreamPreview
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onStartStream={startStream}
+        isLoading={isLoading}
+        walletAddress={walletAddress}
+        displayName={displayName}
+      />
     </div>
   );
 };
