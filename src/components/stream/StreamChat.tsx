@@ -21,7 +21,7 @@ interface StreamChatProps {
 }
 
 export function StreamChat({ streamId, username }: StreamChatProps) {
-  const [chatMessage, setChatMessage] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -84,9 +84,10 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
     };
   }, [streamId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!chatMessage.trim()) return;
+    
+    if (!inputValue.trim()) return;
 
     if (!walletAddress) {
       toast.error("Please connect your wallet to chat");
@@ -99,20 +100,16 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
         .insert({
           stream_id: streamId,
           username: username,
-          message: chatMessage,
+          message: inputValue.trim(),
           wallet_address: walletAddress,
         });
 
       if (error) throw error;
-      setChatMessage("");
+      setInputValue("");
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error("Failed to send message");
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChatMessage(e.target.value);
   };
 
   const ChatMessages = () => (
@@ -142,12 +139,12 @@ export function StreamChat({ streamId, username }: StreamChatProps) {
   const ChatForm = () => (
     <form onSubmit={handleSubmit} className="p-4 border-t">
       <div className="flex gap-2">
-        <Input
-          value={chatMessage}
-          onChange={handleInputChange}
-          placeholder="Send a message..."
-          className="flex-1"
+        <input
           type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Send a message..."
+          className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Button type="submit">Send</Button>
       </div>
