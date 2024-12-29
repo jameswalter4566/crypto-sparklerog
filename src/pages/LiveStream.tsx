@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Video, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
 import { useActiveStreams, type Stream } from "@/hooks/useActiveStreams";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const LiveStream = () => {
   const { toast } = useToast();
@@ -16,12 +17,29 @@ const LiveStream = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { walletAddress, connected } = useWalletConnection(() => Promise.resolve());
   const { streams } = useActiveStreams();
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    // Check and set initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleStartStreamClick = () => {
-    if (!connected) {
+    if (!connected || !session) {
       toast({
-        title: "Connect Wallet",
-        description: "Please connect your wallet to start streaming",
+        title: "Authentication Required",
+        description: "Please connect your wallet and sign in to start streaming",
         variant: "destructive",
       });
       return;
@@ -30,22 +48,31 @@ const LiveStream = () => {
   };
 
   const handleStartActualStream = async () => {
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to start streaming",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const streamId = `stream_${Date.now()}`;
       
-      // Create the stream record in the database
       const { error: insertError } = await supabase
         .from('active_streams')
         .insert({
           id: streamId,
-          wallet_address: walletAddress,
+          wallet_address: session.user.id,
           username: walletAddress?.slice(0, 8) || "Anonymous",
           title: "Live Trading Session",
           viewer_count: 0
         });
 
       if (insertError) {
+        console.error("Insert Error:", insertError);
         throw insertError;
       }
 
@@ -76,12 +103,22 @@ const LiveStream = () => {
   };
 
   const handleStreamEnd = async () => {
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to end the stream",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedStream) {
       try {
         const { error } = await supabase
           .from('active_streams')
           .delete()
-          .eq('id', selectedStream.id);
+          .eq('id', selectedStream.id)
+          .eq('wallet_address', session.user.id);
 
         if (error) throw error;
 
