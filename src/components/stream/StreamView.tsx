@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Mic, MicOff, Users, MessageSquare, X } from "lucide-react";
+import { Mic, MicOff, Users, MessageSquare, X, Video, User } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -32,7 +31,7 @@ export const StreamView = ({
   const [isMuted, setIsMuted] = useState(true);
   const [chatMessage, setChatMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [viewerCount, setViewerCount] = useState(0);
+  const [viewerCount, setViewerCount] = useState(Math.floor(Math.random() * 100) + 1);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +44,6 @@ export const StreamView = ({
       timestamp: new Date(),
     };
 
-    // Keep only the last 50 messages
     setMessages((prev) => [...prev.slice(-49), newMessage]);
     setChatMessage("");
   };
@@ -80,16 +78,27 @@ export const StreamView = ({
 
       <div className="flex-1 flex">
         {/* Main stream content */}
-        <div className="flex-1 bg-card">
-          <div className="aspect-video bg-black/90 w-full h-full flex items-center justify-center">
-            <p className="text-muted-foreground">Stream preview coming soon</p>
+        <div className="flex-1 bg-card p-4">
+          <div className="aspect-video bg-black/90 w-full h-full flex flex-col items-center justify-center rounded-lg relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
+            <Video className="w-16 h-16 text-primary mb-4 animate-pulse" />
+            <div className="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-sm font-medium">LIVE</span>
+            </div>
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-full">
+              <User className="w-4 h-4 text-primary" />
+              <span className="text-xs font-medium">{username} is streaming</span>
+            </div>
           </div>
         </div>
 
         {/* Chat sidebar for larger screens */}
         <div className="w-80 border-l hidden md:flex flex-col bg-card/50 backdrop-blur-sm">
           <div className="p-4 border-b">
-            <h3 className="font-semibold">Stream Chat</h3>
+            <h3 className="font-semibold flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" /> Stream Chat
+            </h3>
           </div>
           <div className="flex-1 relative overflow-hidden">
             <div className="absolute inset-0 flex flex-col-reverse">
