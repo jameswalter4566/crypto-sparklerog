@@ -79,11 +79,11 @@ export const TokenHeader = ({
             <p className="text-sm text-muted-foreground mt-1">{description}</p>
           )}
         </div>
-        <TokenActions />
+        <TokenActions symbol={symbol} solanaAddr={solanaAddr} />
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-        {solanaAddr && <CopyAddressButton address={solanaAddr} />}
+        {solanaAddr && <CopyAddressButton solanaAddr={solanaAddr} />}
         
         <TooltipProvider>
           <div className="flex items-center gap-2">
