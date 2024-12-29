@@ -8,10 +8,10 @@ export default defineConfig(({ mode }) => ({
     host: true,
     port: 8080,
     hmr: {
-      protocol: 'wss',
-      clientPort: 443,
+      protocol: 'ws',
       host: '1ad7b388-a6db-42c6-928c-9d4e057fbc2b.lovableproject.com',
-      path: '/'
+      port: 8080,
+      clientPort: 443
     }
   },
   plugins: [
