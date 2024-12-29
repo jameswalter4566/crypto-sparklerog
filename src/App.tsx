@@ -150,31 +150,31 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="relative min-h-screen">
-          <GridOverlay />
+        <div className="relative min-h-screen bg-black">
           <div className="relative z-10">
             <Toaster />
             <Sonner position="top-right" />
+            <BrowserRouter>
+              <div className="min-h-screen flex w-full text-white">
+                <main className="flex-1 overflow-x-hidden">
+                  <Header onSearch={handleSearch} isLoading={isLoading} />
+                  <div className="h-24"></div>
+                  <Routes>
+                    <Route path="/" element={<NewCoins />} />
+                    <Route path="/explore" element={<Explore />} />
+                    <Route path="/featured" element={<Featured />} />
+                    <Route path="/coin/:id" element={<CoinProfile />} />
+                    <Route path="/search" element={<CoinSearch />} />
+                    <Route path="/launch" element={<LaunchCoin />} />
+                    <Route path="/rocket-launch" element={<RocketLaunch />} />
+                    <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </main>
+              </div>
+            </BrowserRouter>
           </div>
-          <BrowserRouter>
-            <div className="min-h-screen flex w-full bg-black text-white">
-              <main className="flex-1 overflow-x-hidden">
-                <Header onSearch={handleSearch} isLoading={isLoading} />
-                <div className="h-24"></div>
-                <Routes>
-                  <Route path="/" element={<NewCoins />} />
-                  <Route path="/explore" element={<Explore />} />
-                  <Route path="/featured" element={<Featured />} />
-                  <Route path="/coin/:id" element={<CoinProfile />} />
-                  <Route path="/search" element={<CoinSearch />} />
-                  <Route path="/launch" element={<LaunchCoin />} />
-                  <Route path="/rocket-launch" element={<RocketLaunch />} />
-                  <Route path="/leaderboard" element={<div className="p-4 sm:p-6">Leaderboard Coming Soon</div>} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </main>
-            </div>
-          </BrowserRouter>
+          <GridOverlay />
         </div>
       </TooltipProvider>
     </QueryClientProvider>
