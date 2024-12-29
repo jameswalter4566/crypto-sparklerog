@@ -3,6 +3,7 @@ import { StreamHeader } from "./StreamHeader";
 import { StreamVideo } from "./StreamVideo";
 import { StreamChat, type ChatMessage } from "./StreamChat";
 import { StreamControls } from "./StreamControls";
+import { StreamLayout } from "./StreamLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -35,7 +36,7 @@ export function StreamView({
         try {
           const { error } = await supabase.from("active_streams").insert({
             id: streamId,
-            wallet_address: username, // Using the wallet address as username
+            wallet_address: username,
             username: username,
             title: title,
             viewer_count: 0,
@@ -51,7 +52,6 @@ export function StreamView({
 
       createStream();
 
-      // Cleanup when streamer ends stream
       return () => {
         const endStream = async () => {
           try {
@@ -73,7 +73,6 @@ export function StreamView({
     }
   }, [streamId, username, title, isStreamer, isPreview]);
 
-  // Update viewer count periodically
   useEffect(() => {
     if (!isPreview) {
       const interval = setInterval(async () => {
@@ -111,30 +110,38 @@ export function StreamView({
   };
 
   return (
-    <div className={`${isPreview ? "" : "fixed inset-0"} bg-background z-50 flex flex-col`}>
-      <StreamHeader
-        username={username}
-        title={title}
-        avatarUrl={avatarUrl}
-        viewerCount={viewerCount}
-        onClose={onClose}
-      />
-
-      <div className="flex-1 flex">
+    <StreamLayout
+      header={
+        <StreamHeader
+          username={username}
+          title={title}
+          avatarUrl={avatarUrl}
+          viewerCount={viewerCount}
+          onClose={onClose}
+        />
+      }
+      video={
         <StreamVideo
           username={username}
           isStreamer={isStreamer}
           channelName={streamId}
           isPreview={isPreview}
         />
-        {!isPreview && <StreamChat messages={messages} onSendMessage={handleSendMessage} />}
-      </div>
-
-      <StreamControls
-        isMuted={isMuted}
-        onToggleMute={handleToggleMute}
-        isStreamer={isStreamer}
-      />
-    </div>
+      }
+      chat={!isPreview && (
+        <StreamChat
+          messages={messages}
+          onSendMessage={handleSendMessage}
+        />
+      )}
+      controls={
+        <StreamControls
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          isStreamer={isStreamer}
+        />
+      }
+      isPreview={isPreview}
+    />
   );
 }

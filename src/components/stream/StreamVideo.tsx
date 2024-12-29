@@ -101,12 +101,11 @@ export function StreamVideo({
   }, [channelName, isStreamer, isPreview, onError]);
 
   return (
-    <div className="flex-1 bg-card p-4">
+    <div className="h-full p-4">
       <div 
         ref={videoRef}
-        className="aspect-video bg-black/90 w-full h-full flex flex-col items-center justify-center rounded-lg relative overflow-hidden"
+        className="w-full h-full bg-black/90 rounded-lg relative overflow-hidden flex items-center justify-center"
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
         {!hasVideo && isStreamer && (
           <div className="flex flex-col items-center gap-4">
             <Video className="w-16 h-16 text-primary mb-4 animate-pulse" />
