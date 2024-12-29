@@ -7,17 +7,23 @@ import { CoinData } from "../_shared/types.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Only allow GET requests
+    if (req.method !== 'GET') {
+      throw new Error('Method not allowed');
+    }
+
     const url = new URL(req.url);
     const tokenAddress = url.searchParams.get('id');
-    const captchaToken = url.searchParams.get('captchaToken');
 
     if (!tokenAddress) {
       throw new Error('Token ID is required');
@@ -55,8 +61,7 @@ serve(async (req) => {
         limit: 50,
         sort: 'market_cap',
         order: 'DESC',
-        includeNsfw: false,
-        captchaToken
+        includeNsfw: false
       });
 
       if (!Array.isArray(searchData)) {
@@ -98,19 +103,6 @@ serve(async (req) => {
       if (upsertError) {
         console.error('Error upserting data to Supabase:', upsertError);
         throw upsertError;
-      }
-
-      // Verify the data was stored correctly
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('coins')
-        .select('*')
-        .eq('id', coinData.id)
-        .single();
-
-      if (verifyError) {
-        console.error('Error verifying stored data:', verifyError);
-      } else {
-        console.log('Verified stored data:', JSON.stringify(verifyData, null, 2));
       }
 
       return new Response(
