@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TokenActions } from "./TokenActions";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,9 @@ interface TokenHeaderProps {
   symbol: string;
   image: string | null;
   price: number | null;
-  description?: string | null;
-  tokenStandard?: string | null;
-  decimals?: number;
+  description: string | null;
+  tokenStandard: string | null;
+  decimals: number | undefined;
   updatedAt: string;
   onRefresh: () => void;
   refreshing: boolean;
@@ -23,184 +22,156 @@ interface TokenHeaderProps {
   websiteUrl?: string | null;
 }
 
-export const TokenHeader = ({ 
-  name, 
-  symbol, 
-  image, 
+export const TokenHeader = ({
+  name,
+  symbol,
+  image,
   price,
   description,
   tokenStandard,
   decimals,
-  solanaAddr,
   updatedAt,
   onRefresh,
   refreshing,
+  solanaAddr,
   twitterHandle,
   telegramUrl,
-  websiteUrl
+  websiteUrl,
 }: TokenHeaderProps) => {
-  const formattedUpdatedAt = new Date(updatedAt).toLocaleString();
-  
-  const formatPrice = (value: number | null): string => {
-    if (typeof value !== "number" || isNaN(value)) {
-      return "Price not available";
-    }
-    return `$${value.toFixed(4)}`;
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
+  // Helper function to ensure valid URLs
+  const ensureValidUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    try {
+      // Remove any trailing colons and ensure proper protocol
+      const cleanUrl = url.replace(/:+$/, '').trim();
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        return `https://${cleanUrl}`;
+      }
+      return cleanUrl;
+    } catch (e) {
+      console.error('Invalid URL:', url, e);
+      return null;
+    }
+  };
+
+  const twitterUrl = twitterHandle ? `https://twitter.com/${twitterHandle.replace('@', '')}` : null;
+  const validTelegramUrl = ensureValidUrl(telegramUrl);
+  const validWebsiteUrl = ensureValidUrl(websiteUrl);
+
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="flex flex-col gap-4 p-6 border-b border-border">
       <div className="flex items-center gap-4">
-        <Avatar className="w-12 h-12">
-          <AvatarImage 
-            src={image || ""} 
-            alt={name} 
-            onError={(e) => {
-              const img = e.target as HTMLImageElement;
-              img.src = "/placeholder.svg";
-            }}
-          />
-          <AvatarFallback>{symbol?.[0] || "?"}</AvatarFallback>
+        <Avatar className="h-16 w-16">
+          <AvatarImage src={image || ""} alt={name} />
+          <AvatarFallback>{symbol[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              {name || "Unknown Token"} ({symbol || "???"})
-            </h1>
-            <CopyAddressButton solanaAddr={solanaAddr} />
-            
-            <TokenActions symbol={symbol} solanaAddr={solanaAddr} />
-
-            {tokenStandard && (
-              <Badge variant="outline" className="h-6">
-                {tokenStandard}
-              </Badge>
-            )}
-            {typeof decimals === 'number' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge variant="secondary" className="h-6">
-                      d{decimals}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{decimals} decimals</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
-            <div className="flex items-center gap-2 ml-2">
-              {twitterHandle && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={`https://twitter.com/${twitterHandle}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Twitter className="h-5 w-5" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Twitter</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              {telegramUrl && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={telegramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <MessageCircle className="h-5 w-5" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Telegram</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              {websiteUrl && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={websiteUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Website</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+            <h1 className="text-2xl font-bold">{name}</h1>
+            <span className="text-sm text-muted-foreground">({symbol})</span>
           </div>
-          <p className="text-2xl font-bold">
-            {formatPrice(price)}
-          </p>
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Last updated: {formattedUpdatedAt}</span>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          )}
+        </div>
+        <TokenActions />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
+        {solanaAddr && <CopyAddressButton address={solanaAddr} />}
+        
+        <TooltipProvider>
+          <div className="flex items-center gap-2">
+            {twitterUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={twitterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Twitter className="h-5 w-5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Twitter</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {validTelegramUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={validTelegramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Telegram</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {validWebsiteUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={validWebsiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Website</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
-          <Button 
-            onClick={onRefresh} 
-            variant="ghost" 
-            size="sm" 
-            className="ml-auto flex items-center gap-1"
-            aria-label="Refresh coin data"
+        </TooltipProvider>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            Updated: {formatDate(updatedAt)}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`ml-2 ${refreshing ? "animate-spin" : ""}`}
+            onClick={onRefresh}
             disabled={refreshing}
           >
-            {refreshing ? (
-              <svg 
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24"
-              >
-                <circle 
-                  className="opacity-25" 
-                  cx="12" 
-                  cy="12" 
-                  r="10" 
-                  stroke="currentColor" 
-                  strokeWidth="4"
-                ></circle>
-                <path 
-                  className="opacity-75" 
-                  fill="currentColor" 
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                ></path>
-              </svg>
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-            {refreshing ? "Refreshing..." : "Refresh"}
+            <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      {description && (
-        <p className="text-muted-foreground max-w-3xl">
-          {description}
-        </p>
-      )}
+
+      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+        {tokenStandard && (
+          <div>
+            <span className="font-medium">Token Standard:</span> {tokenStandard}
+          </div>
+        )}
+        {decimals !== undefined && (
+          <div>
+            <span className="font-medium">Decimals:</span> {decimals}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
