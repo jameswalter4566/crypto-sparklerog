@@ -19,7 +19,7 @@ interface StreamData {
   username: string;
   title: string;
   viewer_count: number;
-  profiles?: ProfileData;
+  profiles: ProfileData;
 }
 
 export function useActiveStreams() {
@@ -49,7 +49,7 @@ export function useActiveStreams() {
           throw error;
         }
 
-        const formattedStreams = (data as StreamData[]).map((stream) => ({
+        const formattedStreams = (data as unknown as StreamData[]).map((stream) => ({
           id: stream.id,
           username: stream.username,
           title: stream.title,
@@ -103,7 +103,7 @@ export function useActiveStreams() {
             return;
           }
 
-          const formattedStreams = (updatedData as StreamData[]).map((stream) => ({
+          const formattedStreams = (updatedData as unknown as StreamData[]).map((stream) => ({
             id: stream.id,
             username: stream.username,
             title: stream.title,

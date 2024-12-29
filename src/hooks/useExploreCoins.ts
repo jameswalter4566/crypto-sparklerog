@@ -59,7 +59,7 @@ export function useExploreCoins() {
 
         console.log('[useExploreCoins] Received explore coins:', exploreCoins);
 
-        return exploreCoins.map((explore: ExploreCoinResponse) => ({
+        return (exploreCoins as unknown as ExploreCoinResponse[]).map((explore) => ({
           id: explore.coins.id,
           name: explore.coins.name,
           symbol: explore.coins.symbol,

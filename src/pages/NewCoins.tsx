@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CoinGrid } from "@/components/CoinGrid";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 interface CoinData {
@@ -14,6 +14,12 @@ interface CoinData {
   solana_addr: string | null;
   historic_data: Array<{ price: number; timestamp: string }> | null;
   usd_market_cap: number | null;
+}
+
+interface SearchData {
+  coin_id: string;
+  last_searched_at: string;
+  coins: CoinData;
 }
 
 const NewCoins = () => {
@@ -61,7 +67,7 @@ const NewCoins = () => {
 
         console.log('Raw search data received:', searchData);
 
-        const mappedCoins = searchData
+        const mappedCoins = (searchData as unknown as SearchData[])
           .filter(item => {
             if (!item.coins) {
               console.log('Filtered out item with no coins data:', item);
