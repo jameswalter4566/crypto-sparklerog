@@ -30,28 +30,35 @@ export function CoinComments({ coinId }: CoinCommentsProps) {
 
   useEffect(() => {
     fetchComments();
-    subscribeToComments();
+    const unsubscribe = subscribeToComments();
+    return () => {
+      unsubscribe();
+    };
   }, [coinId]);
 
   const fetchComments = async () => {
-    const { data, error } = await supabase
-      .from("coin_comments")
-      .select(`
-        *,
-        profiles (
-          display_name,
-          avatar_url
-        )
-      `)
-      .eq("coin_id", coinId)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("coin_comments")
+        .select(`
+          *,
+          profiles (
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq("coin_id", coinId)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching comments:", error);
-      return;
+      if (error) {
+        console.error("Error fetching comments:", error);
+        return;
+      }
+
+      setComments(data || []);
+    } catch (error) {
+      console.error("Error in fetchComments:", error);
     }
-
-    setComments(data);
   };
 
   const subscribeToComments = () => {
@@ -82,30 +89,31 @@ export function CoinComments({ coinId }: CoinCommentsProps) {
 
     setIsLoading(true);
     
-    // Get the wallet address from Phantom
-    // @ts-ignore
-    const { solana } = window;
-    
-    if (!solana?.isPhantom || !solana.isConnected) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please connect your Phantom wallet to comment.",
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const walletAddress = solana.publicKey.toString();
+      // @ts-ignore
+      const { solana } = window;
       
-      const { error } = await supabase.from("coin_comments").insert({
-        coin_id: coinId,
-        content: newComment.trim(),
-        wallet_address: walletAddress,
-      });
+      if (!solana?.isPhantom || !solana.isConnected) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please connect your Phantom wallet to comment.",
+        });
+        setIsLoading(false);
+        return;
+      }
 
-      setIsLoading(false);
+      const walletAddress = solana.publicKey.toString();
+      console.log("Using wallet address:", walletAddress);
+
+      const { error } = await supabase
+        .from("coin_comments")
+        .insert({
+          coin_id: coinId,
+          content: newComment.trim(),
+          wallet_address: walletAddress,
+          created_at: new Date().toISOString(),
+        });
 
       if (error) {
         console.error("Error submitting comment:", error);
@@ -123,12 +131,13 @@ export function CoinComments({ coinId }: CoinCommentsProps) {
         description: "Comment posted successfully!",
       });
     } catch (error) {
-      console.error("Error getting wallet address:", error);
+      console.error("Error in handleSubmitComment:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to get wallet address. Please try again.",
+        description: "Failed to submit comment. Please try again.",
       });
+    } finally {
       setIsLoading(false);
     }
   };
