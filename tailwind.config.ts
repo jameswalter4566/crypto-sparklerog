@@ -74,12 +74,22 @@ export default {
             boxShadow: "0 0 30px rgba(249,115,22,0.6), 0 0 60px rgba(249,115,22,0.3)"
           }
         },
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' }
+        },
+        marquee2: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0%)' }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "marquee": 'marquee 40s linear infinite',
+        "marquee2": 'marquee2 40s linear infinite',
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

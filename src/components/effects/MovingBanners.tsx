@@ -21,16 +21,33 @@ export const MovingBanners = () => {
 
   return (
     <div className="fixed top-24 left-0 right-0 z-10 overflow-hidden pointer-events-none">
-      <div className="whitespace-nowrap animate-[slide-left_40s_linear_infinite] flex gap-8">
-        {messages.map((message, index) => (
-          <span 
-            key={index}
-            className="text-sm font-medium transition-colors duration-500"
-            style={{ color: colors[index] || priceColors[0] }}
-          >
-            {message} • 
-          </span>
-        ))}
+      <div className="relative flex whitespace-nowrap">
+        <div className="animate-marquee flex gap-8">
+          {[...Array(3)].map((_, i) => (
+            messages.map((message, index) => (
+              <span 
+                key={`${i}-${index}`}
+                className="text-sm font-medium transition-colors duration-500"
+                style={{ color: colors[index] || priceColors[0] }}
+              >
+                {message} • 
+              </span>
+            ))
+          ))}
+        </div>
+        <div className="absolute top-0 animate-marquee2 flex gap-8">
+          {[...Array(3)].map((_, i) => (
+            messages.map((message, index) => (
+              <span 
+                key={`${i}-${index}`}
+                className="text-sm font-medium transition-colors duration-500"
+                style={{ color: colors[index] || priceColors[0] }}
+              >
+                {message} • 
+              </span>
+            ))
+          ))}
+        </div>
       </div>
     </div>
   );
