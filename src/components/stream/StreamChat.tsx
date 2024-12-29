@@ -23,8 +23,18 @@ interface StreamChatProps {
 export function StreamChat({ messages, onSendMessage, streamId, username }: StreamChatProps) {
   const [chatMessage, setChatMessage] = useState("");
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get the current user's wallet address
+    const getWalletAddress = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setWalletAddress(session.user.id);
+      }
+    };
+    getWalletAddress();
+
     // Subscribe to new messages
     const channel = supabase
       .channel('stream-messages')
@@ -83,6 +93,11 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
     e.preventDefault();
     if (!chatMessage.trim()) return;
 
+    if (!walletAddress) {
+      toast.error("Please connect your wallet to chat");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('stream_messages')
@@ -90,7 +105,7 @@ export function StreamChat({ messages, onSendMessage, streamId, username }: Stre
           stream_id: streamId,
           username: username,
           message: chatMessage,
-          wallet_address: await supabase.auth.getUser().then(res => res.data.user?.id) || '',
+          wallet_address: walletAddress,
         });
 
       if (error) throw error;
