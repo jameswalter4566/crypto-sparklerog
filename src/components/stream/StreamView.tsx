@@ -115,8 +115,9 @@ export function StreamView({
           filter: `id=eq.${streamId}`
         },
         (payload: RealtimePostgresChangesPayload<ActiveStream>) => {
-          if (payload.new && typeof payload.new.viewer_count === 'number') {
-            setViewerCount(payload.new.viewer_count);
+          // Check if payload.new exists and has the expected shape
+          if (payload.new && 'viewer_count' in payload.new) {
+            setViewerCount(payload.new.viewer_count ?? 0);
           }
         }
       )
