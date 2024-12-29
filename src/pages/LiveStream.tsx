@@ -56,7 +56,7 @@ const LiveStream = () => {
     setIsPreviewOpen(true);
   };
 
-  if (selectedStream) {
+  if (selectedStream && walletAddress) {
     return (
       <StreamView
         streamId={selectedStream.id}
@@ -65,6 +65,7 @@ const LiveStream = () => {
         avatarUrl={selectedStream.avatarUrl}
         onClose={endStream}
         isStreamer={selectedStream.username === displayName}
+        walletAddress={walletAddress}
       />
     );
   }

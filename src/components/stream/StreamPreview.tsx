@@ -20,6 +20,8 @@ export const StreamPreview = ({
   walletAddress,
   displayName,
 }: StreamPreviewProps) => {
+  if (!walletAddress) return null;
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[80%] h-[80vh] flex flex-col">
@@ -34,6 +36,7 @@ export const StreamPreview = ({
             isStreamer={true}
             isPreview={true}
             onClose={onClose}
+            walletAddress={walletAddress}
           />
         </div>
         <div className="flex justify-end gap-4 mt-4">
