@@ -80,7 +80,7 @@ export const Header = ({ onSearch, isLoading }: {
       window.open(path, '_blank');
     } else {
       navigate(path);
-      setIsOpen(false); // Close sheet after navigation
+      setIsOpen(false);
     }
   };
 
@@ -128,33 +128,35 @@ export const Header = ({ onSearch, isLoading }: {
             </div>
 
             {/* Mobile Menu */}
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black/90 backdrop-blur-lg border-r border-primary/20">
-                <nav className="flex flex-col gap-4 mt-8">
-                  {menuItems.map((item) => (
-                    <Button
-                      key={item.title}
-                      variant="ghost"
-                      size="lg"
-                      onClick={() => handleNavigation(item.path, item.isExternal)}
-                      className={`w-full justify-start gap-4 font-bold tracking-wide text-lg ${
-                        item.isSpecial 
-                          ? 'text-primary font-["3D_Cyborg"] tracking-[0.25em] animate-laser-glow uppercase' 
-                          : ''
-                      }`}
-                    >
-                      <item.icon className={`${item.isSpecial ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                      {item.title}
-                    </Button>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
+            <div className="md:hidden">
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black/90 backdrop-blur-lg border-r border-primary/20">
+                  <nav className="flex flex-col gap-4 mt-8">
+                    {menuItems.map((item) => (
+                      <Button
+                        key={item.title}
+                        variant="ghost"
+                        size="lg"
+                        onClick={() => handleNavigation(item.path, item.isExternal)}
+                        className={`w-full justify-start gap-4 font-bold tracking-wide text-lg ${
+                          item.isSpecial 
+                            ? 'text-primary font-["3D_Cyborg"] tracking-[0.25em] animate-laser-glow uppercase' 
+                            : ''
+                        }`}
+                      >
+                        <item.icon className={`${item.isSpecial ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                        {item.title}
+                      </Button>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
           <WalletConnect />
         </div>
