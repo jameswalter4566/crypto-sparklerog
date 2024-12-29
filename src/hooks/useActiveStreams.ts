@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface Stream {
   id: string;
@@ -12,8 +12,9 @@ export interface Stream {
 
 export function useActiveStreams() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [realtimeStreams, setRealtimeStreams] = useState<Stream[]>([]);
 
-  const { data: streams, refetch } = useQuery({
+  const { data: initialStreams, refetch } = useQuery({
     queryKey: ['active-streams'],
     queryFn: async () => {
       console.log('[useActiveStreams] Fetching active streams');
@@ -36,15 +37,17 @@ export function useActiveStreams() {
           throw error;
         }
 
-        console.log('[useActiveStreams] Fetched streams:', data);
-        
-        return data.map((stream) => ({
+        const formattedStreams = data.map((stream) => ({
           id: stream.id,
           username: stream.username,
           title: stream.title,
           viewerCount: stream.viewer_count,
           avatarUrl: stream.profiles?.avatar_url,
         }));
+
+        console.log('[useActiveStreams] Fetched streams:', formattedStreams);
+        setRealtimeStreams(formattedStreams);
+        return formattedStreams;
       } catch (error) {
         console.error('[useActiveStreams] Error in query function:', error);
         throw error;
@@ -68,9 +71,37 @@ export function useActiveStreams() {
           schema: 'public',
           table: 'active_streams'
         },
-        (payload) => {
+        async (payload) => {
           console.log('[useActiveStreams] Received real-time update:', payload);
-          refetch();
+          
+          // Fetch the complete updated data
+          const { data: updatedData, error } = await supabase
+            .from("active_streams")
+            .select(`
+              id,
+              username,
+              title,
+              viewer_count,
+              profiles (
+                avatar_url
+              )
+            `);
+
+          if (error) {
+            console.error('[useActiveStreams] Error fetching updated streams:', error);
+            return;
+          }
+
+          const formattedStreams = updatedData.map((stream) => ({
+            id: stream.id,
+            username: stream.username,
+            title: stream.title,
+            viewerCount: stream.viewer_count,
+            avatarUrl: stream.profiles?.avatar_url,
+          }));
+
+          console.log('[useActiveStreams] Updated streams list:', formattedStreams);
+          setRealtimeStreams(formattedStreams);
         }
       )
       .subscribe((status) => {
@@ -84,10 +115,10 @@ export function useActiveStreams() {
         channelRef.current = null;
       }
     };
-  }, [refetch]);
+  }, []);
 
   return { 
-    streams: streams || [], 
-    isLoading: !streams 
+    streams: realtimeStreams.length > 0 ? realtimeStreams : (initialStreams || []), 
+    isLoading: !initialStreams 
   };
 }

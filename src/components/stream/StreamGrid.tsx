@@ -7,6 +7,8 @@ interface StreamGridProps {
 }
 
 export const StreamGrid = ({ streams, onWatch }: StreamGridProps) => {
+  console.log('[StreamGrid] Rendering with streams:', streams);
+
   if (streams.length === 0) {
     return (
       <p className="text-muted-foreground text-center py-8">
