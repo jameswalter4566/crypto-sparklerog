@@ -22,21 +22,22 @@ export const GridOverlay = () => {
   return (
     <div 
       ref={gridRef}
-      className="fixed inset-0 pointer-events-none"
+      className="fixed inset-0 pointer-events-none z-10"
       style={{
         backgroundImage: `
-          linear-gradient(to right, rgba(249, 115, 22, 0.1) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(249, 115, 22, 0.1) 1px, transparent 1px)
+          linear-gradient(to right, rgba(249, 115, 22, 0.15) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(249, 115, 22, 0.15) 1px, transparent 1px)
         `,
-        backgroundSize: '40px 40px',
-        mask: `radial-gradient(circle 150px at ${mousePosition.x}px ${mousePosition.y}px, 
-               rgba(255, 255, 255, 0.7) 0%,
-               rgba(255, 255, 255, 0.5) 30%,
+        backgroundSize: '30px 30px',
+        mask: `radial-gradient(circle 200px at ${mousePosition.x}px ${mousePosition.y}px, 
+               rgba(255, 255, 255, 1) 0%,
+               rgba(255, 255, 255, 0.8) 30%,
                rgba(255, 255, 255, 0) 70%)`,
-        WebkitMask: `radial-gradient(circle 150px at ${mousePosition.x}px ${mousePosition.y}px, 
-                    rgba(255, 255, 255, 0.7) 0%,
-                    rgba(255, 255, 255, 0.5) 30%,
+        WebkitMask: `radial-gradient(circle 200px at ${mousePosition.x}px ${mousePosition.y}px, 
+                    rgba(255, 255, 255, 1) 0%,
+                    rgba(255, 255, 255, 0.8) 30%,
                     rgba(255, 255, 255, 0) 70%)`,
+        boxShadow: 'inset 0 0 30px rgba(249, 115, 22, 0.2)',
       }}
     />
   );

@@ -23,7 +23,7 @@ export const AnimatedBackground = () => {
 
     window.addEventListener('mousemove', handleMouseMove);
     updateTimeOfDay();
-    const interval = setInterval(updateTimeOfDay, 60000); // Update every minute
+    const interval = setInterval(updateTimeOfDay, 60000);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
