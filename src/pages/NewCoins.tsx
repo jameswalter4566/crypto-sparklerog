@@ -120,7 +120,19 @@ const NewCoins = () => {
 
   return (
     <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
-      <div className="p-4 sm:p-6">
+      {/* Grid background decoration */}
+      <div className="fixed inset-0 pointer-events-none" 
+           style={{
+             backgroundImage: `
+               linear-gradient(#FEC6A115 1px, transparent 1px),
+               linear-gradient(90deg, #FEC6A115 1px, transparent 1px)
+             `,
+             backgroundSize: '40px 40px',
+             filter: 'blur(0.5px)',
+             zIndex: 0
+           }} 
+      />
+      <div className="relative z-10 p-4 sm:p-6">
         <CoinGrid coins={coins} isLoading={isLoading} title="New Coins" />
       </div>
     </div>
