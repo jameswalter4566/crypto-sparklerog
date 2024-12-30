@@ -100,6 +100,9 @@ export const Header = ({ onSearch, isLoading }: {
           <span className="hidden sm:inline">{item.title}</span>
         </Button>
       ))}
+      <div className="ml-4 w-[300px]">
+        <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
+      </div>
     </div>
   );
 
@@ -166,11 +169,6 @@ export const Header = ({ onSearch, isLoading }: {
             </div>
           </div>
           <WalletConnect />
-        </div>
-        <div className="fixed top-[4.5rem] left-0 right-0 z-[9999] px-4">
-          <div className="w-full max-w-4xl mx-auto">
-            <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
-          </div>
         </div>
       </div>
     </header>
