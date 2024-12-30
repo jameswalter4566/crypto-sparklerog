@@ -33,17 +33,16 @@ export default function LaunchCoin() {
         go back
       </Link>
 
-      {/* Stars */}
+      {/* Static Stars */}
       {[...Array(50)].map((_, i) => (
         <div
           key={i}
-          className="absolute bg-white rounded-full animate-pulse"
+          className="absolute bg-white rounded-full"
           style={{
             width: Math.random() * 3 + 1 + 'px',
             height: Math.random() * 3 + 1 + 'px',
             top: Math.random() * 100 + '%',
             left: Math.random() * 100 + '%',
-            animationDelay: `${Math.random() * 2}s`,
             opacity: Math.random() * 0.7 + 0.3
           }}
         />
