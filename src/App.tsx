@@ -157,10 +157,9 @@ const App = () => {
           <Sonner position="top-right" />
         </div>
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col w-full bg-black text-white">
-            <main className="flex-1 overflow-x-hidden">
-              <Header onSearch={handleSearch} isLoading={isLoading} />
-              <div className="h-24"></div>
+          <div className="flex flex-col min-h-screen bg-black text-white">
+            <Header onSearch={handleSearch} isLoading={isLoading} />
+            <main className="flex-1 mt-24">
               <Routes>
                 <Route path="/" element={<NewCoins />} />
                 <Route path="/explore" element={<Explore />} />
