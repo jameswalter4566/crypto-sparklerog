@@ -85,7 +85,7 @@ export const Header = ({ onSearch, isLoading }: {
       <img 
         src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
         alt="Smart Logo"
-        className="w-32 h-32 object-contain cursor-pointer"
+        className="w-40 h-40 object-contain cursor-pointer"
         onClick={() => navigate('/swap')}
       />
       {menuItems.map((item) => (
@@ -144,7 +144,7 @@ export const Header = ({ onSearch, isLoading }: {
                       <img 
                         src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
                         alt="Smart Logo"
-                        className="w-32 h-32 object-contain"
+                        className="w-40 h-40 object-contain"
                       />
                       SMART
                     </Button>
