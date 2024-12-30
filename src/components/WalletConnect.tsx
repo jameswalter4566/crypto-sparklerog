@@ -55,11 +55,7 @@ export const WalletConnect = () => {
       if (!solana?.isPhantom) {
         toast.error("Please install Phantom wallet");
         if (isMobileDevice()) {
-          const response = await openPhantomApp();
-          if (response) {
-            const address = response.publicKey.toString();
-            handleSuccessfulConnection(address);
-          }
+          await openPhantomApp();
           return;
         } else {
           window.open("https://phantom.app/", "_blank");
@@ -174,7 +170,7 @@ export const WalletConnect = () => {
         displayName={displayName}
         avatarUrl={avatarUrl}
         balance={balance}
-        onConnect={isMobileDevice() ? openPhantomApp : connectWallet}
+        onConnect={connectWallet}
         onDisconnect={disconnectWallet}
       />
       {!connected && <Disclaimer />}
