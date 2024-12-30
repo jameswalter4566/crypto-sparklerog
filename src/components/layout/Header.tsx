@@ -34,18 +34,6 @@ export const Header = ({ onSearch, isLoading }: {
 
   const menuItems: MenuItem[] = [
     {
-      title: "SMART",
-      icon: () => (
-        <img 
-          src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
-          alt="Smart Menu"
-          className="w-6 h-6 object-contain"
-        />
-      ),
-      path: "/swap",
-      isSpecial: true,
-    },
-    {
       title: "New Coins",
       icon: Coins,
       path: "/",
@@ -94,20 +82,28 @@ export const Header = ({ onSearch, isLoading }: {
 
   const MenuContent = () => (
     <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/swap')}
+        className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
+      >
+        <img 
+          src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+          alt="Smart Menu"
+          className="w-6 h-6 object-contain"
+        />
+      </Button>
       {menuItems.map((item) => (
         <Button
           key={item.title}
           variant="ghost"
           size="sm"
           onClick={() => handleNavigation(item.path, item.isExternal)}
-          className={`flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary ${
-            item.isSpecial 
-              ? 'text-primary font-["3D_Cyborg"] text-xl tracking-[0.25em] scale-125 animate-laser-glow uppercase' 
-              : ''
-          }`}
+          className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
         >
-          <item.icon className={`${item.isSpecial ? 'h-6 w-6' : 'h-4 w-4'}`} />
-          <span className={`${!item.isSpecial && 'hidden sm:inline'}`}>{item.title}</span>
+          <item.icon className="h-4 w-4" />
+          <span className="hidden sm:inline">{item.title}</span>
         </Button>
       ))}
     </div>
@@ -145,19 +141,28 @@ export const Header = ({ onSearch, isLoading }: {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black/90 backdrop-blur-lg border-r border-primary/20">
                   <nav className="flex flex-col gap-4 mt-8">
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      onClick={() => handleNavigation('/swap')}
+                      className="w-full justify-start gap-4 font-bold tracking-wide text-lg"
+                    >
+                      <img 
+                        src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+                        alt="Smart Menu"
+                        className="w-6 h-6 object-contain"
+                      />
+                      SMART
+                    </Button>
                     {menuItems.map((item) => (
                       <Button
                         key={item.title}
                         variant="ghost"
                         size="lg"
                         onClick={() => handleNavigation(item.path, item.isExternal)}
-                        className={`w-full justify-start gap-4 font-bold tracking-wide text-lg ${
-                          item.isSpecial 
-                            ? 'text-primary font-["3D_Cyborg"] tracking-[0.25em] animate-laser-glow uppercase' 
-                            : ''
-                        }`}
+                        className="w-full justify-start gap-4 font-bold tracking-wide text-lg"
                       >
-                        <item.icon className={`${item.isSpecial ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                        <item.icon className="h-5 w-5" />
                         {item.title}
                       </Button>
                     ))}
