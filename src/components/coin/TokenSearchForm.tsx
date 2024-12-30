@@ -57,8 +57,8 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
     return `SOL ${Number(price).toFixed(6)}`;
   };
 
-  // Don't render on mobile if not in header, and don't render on desktop if in header
-  if ((isMobile && !isMobileHeader) || (!isMobile && isMobileHeader)) {
+  // Only hide on mobile if specifically in header
+  if (isMobile && isMobileHeader) {
     return null;
   }
 
