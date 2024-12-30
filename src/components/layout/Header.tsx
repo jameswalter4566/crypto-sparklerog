@@ -82,18 +82,12 @@ export const Header = ({ onSearch, isLoading }: {
 
   const MenuContent = () => (
     <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
+      <img 
+        src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+        alt="Smart Logo"
+        className="w-6 h-6 object-contain cursor-pointer"
         onClick={() => navigate('/swap')}
-        className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
-      >
-        <img 
-          src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
-          alt="Smart Menu"
-          className="w-6 h-6 object-contain"
-        />
-      </Button>
+      />
       {menuItems.map((item) => (
         <Button
           key={item.title}
@@ -149,7 +143,7 @@ export const Header = ({ onSearch, isLoading }: {
                     >
                       <img 
                         src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
-                        alt="Smart Menu"
+                        alt="Smart Logo"
                         className="w-6 h-6 object-contain"
                       />
                       SMART
