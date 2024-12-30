@@ -81,7 +81,7 @@ export const Header = ({ onSearch, isLoading }: {
   };
 
   const MenuContent = () => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <img 
         src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
         alt="Smart Logo"
@@ -107,7 +107,7 @@ export const Header = ({ onSearch, isLoading }: {
     <div className="fixed top-0 left-0 right-0 h-24 md:h-24 bg-black/50 backdrop-blur-sm z-20">
       <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
               <img 
                 src="/swaplogoofficial.jpg" 
@@ -139,7 +139,7 @@ export const Header = ({ onSearch, isLoading }: {
                       variant="ghost"
                       size="lg"
                       onClick={() => handleNavigation('/swap')}
-                      className="w-full justify-start gap-4 font-bold tracking-wide text-lg"
+                      className="w-full justify-start gap-2 font-bold tracking-wide text-lg"
                     >
                       <img 
                         src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
