@@ -68,10 +68,10 @@ export default {
         },
         "glow-pulse": {
           "0%, 100%": { 
-            boxShadow: "0 0 20px rgba(249,115,22,0.4), 0 0 40px rgba(249,115,22,0.2)"
+            textShadow: "0 0 7px #F97316, 0 0 10px #F97316, 0 0 21px #F97316"
           },
           "50%": { 
-            boxShadow: "0 0 30px rgba(249,115,22,0.6), 0 0 60px rgba(249,115,22,0.3)"
+            textShadow: "0 0 14px #F97316, 0 0 20px #F97316, 0 0 42px #F97316"
           }
         },
         marquee: {

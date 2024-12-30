@@ -80,6 +80,26 @@ export const Header = ({ onSearch, isLoading }: {
     }
   };
 
+  const SmartLogo = () => (
+    <div className="flex items-center space-x-1 font-bold text-2xl">
+      {['S', 'M', 'A', 'R', 'T'].map((letter, index) => (
+        <span
+          key={index}
+          className="animate-glow-pulse text-white"
+          style={{
+            textShadow: `
+              0 0 7px #F97316,
+              0 0 10px #F97316,
+              0 0 21px #F97316
+            `
+          }}
+        >
+          {letter}
+        </span>
+      ))}
+    </div>
+  );
+
   const MenuContent = () => (
     <div className="flex items-center gap-1">
       <img 
@@ -88,6 +108,7 @@ export const Header = ({ onSearch, isLoading }: {
         className="w-24 h-24 object-contain cursor-pointer"
         onClick={() => navigate('/swap')}
       />
+      <SmartLogo />
       {menuItems.map((item) => (
         <Button
           key={item.title}
@@ -149,7 +170,7 @@ export const Header = ({ onSearch, isLoading }: {
                         alt="Smart Logo"
                         className="w-24 h-24 object-contain"
                       />
-                      SMART
+                      <SmartLogo />
                     </Button>
                     {menuItems.map((item) => (
                       <Button
