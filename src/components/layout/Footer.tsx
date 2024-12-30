@@ -11,13 +11,13 @@ export const Footer = () => {
       <div className="container mx-auto py-8 px-4">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
-            <Link to="/privacy" className="text-gray-400 hover:text-primary transition-colors">
+            <Link to="/legal" className="text-gray-400 hover:text-primary transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="text-gray-400 hover:text-primary transition-colors">
+            <Link to="/legal" className="text-gray-400 hover:text-primary transition-colors">
               Terms & Conditions
             </Link>
-            <Link to="/risk" className="text-gray-400 hover:text-primary transition-colors">
+            <Link to="/legal" className="text-gray-400 hover:text-primary transition-colors">
               Risk Disclosures
             </Link>
           </div>

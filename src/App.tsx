@@ -15,6 +15,7 @@ import LaunchCoin from "./pages/LaunchCoin";
 import RocketLaunch from "./pages/RocketLaunch";
 import NewCoins from "./pages/NewCoins";
 import LiveStream from "./pages/LiveStream";
+import Legal from "./pages/Legal";
 import { useToast } from "./hooks/use-toast";
 import { supabase } from "./integrations/supabase/client";
 import { useState } from "react";
@@ -91,7 +92,6 @@ const App = () => {
 
     setIsLoading(true);
     try {
-      // First check if the coin exists in our database
       const { data: existingCoin, error: selectError } = await supabase
         .from("coins")
         .select("*")
@@ -106,7 +106,6 @@ const App = () => {
       let coinMetadata = existingCoin;
 
       if (!coinMetadata) {
-        // If coin doesn't exist, call the edge function to add it
         const response = await supabase.functions.invoke('add-coin', {
           body: { solana_addr: mintAddress }
         });
@@ -171,6 +170,7 @@ const App = () => {
                 <Route path="/launch" element={<LaunchCoin />} />
                 <Route path="/rocket-launch" element={<RocketLaunch />} />
                 <Route path="/live-stream" element={<LiveStream />} />
+                <Route path="/legal" element={<Legal />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
