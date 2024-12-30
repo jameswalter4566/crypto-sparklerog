@@ -20,7 +20,7 @@ export const MovingBanners = () => {
   }, []);
 
   return (
-    <div className="fixed top-24 left-0 right-0 z-10 overflow-hidden pointer-events-none">
+    <div className="fixed top-24 left-0 right-0 z-50 overflow-hidden pointer-events-none">
       <div className="relative flex whitespace-nowrap">
         <div className="animate-marquee flex gap-8">
           {[...Array(3)].map((_, i) => (
