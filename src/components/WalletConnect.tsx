@@ -5,9 +5,8 @@ import { ProfileSetup } from "./wallet/ProfileSetup";
 import { Settings } from "./wallet/Settings";
 import { ConnectButton } from "./wallet/ConnectButton";
 import { Disclaimer } from "./wallet/Disclaimer";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-
-const HELIUS_RPC = import.meta.env.VITE_SOLANA_RPC_URL;
+import { usePhantomMobile } from "@/hooks/usePhantomMobile";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -15,41 +14,9 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
-
-  const isMobileDevice = () => {
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  };
-
-  const openPhantomApp = async () => {
-    const currentURL = encodeURIComponent(window.location.href);
-    const phantomDeepLink = `https://phantom.app/ul/browse/${currentURL}`;
-    
-    // Check if Phantom is already installed
-    // @ts-ignore
-    if (window.solana?.isPhantom) {
-      await connectWallet();
-    } else {
-      // If not installed, open deep link
-      window.location.href = phantomDeepLink;
-    }
-  };
-
-  const fetchBalance = async (address: string) => {
-    try {
-      // @ts-ignore
-      const { solana } = window;
-      if (!solana?.isPhantom) return;
-
-      const connection = new Connection(HELIUS_RPC, "confirmed");
-      const publicKey = new PublicKey(address);
-      const balance = await connection.getBalance(publicKey);
-      setBalance(balance / LAMPORTS_PER_SOL);
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-      setBalance(null);
-    }
-  };
+  
+  const { isMobileDevice, openPhantomApp } = usePhantomMobile();
+  const { balance, fetchBalance } = useWalletBalance();
 
   const loadProfile = async (address: string) => {
     try {
@@ -88,7 +55,11 @@ export const WalletConnect = () => {
       if (!solana?.isPhantom) {
         toast.error("Please install Phantom wallet");
         if (isMobileDevice()) {
-          await openPhantomApp();
+          const response = await openPhantomApp();
+          if (response) {
+            const address = response.publicKey.toString();
+            handleSuccessfulConnection(address);
+          }
           return;
         } else {
           window.open("https://phantom.app/", "_blank");
@@ -98,18 +69,22 @@ export const WalletConnect = () => {
 
       const response = await solana.connect({ onlyIfTrusted: false });
       const address = response.publicKey.toString();
-      setWalletAddress(address);
-      setConnected(true);
-      await fetchBalance(address);
-      toast.success("Wallet connected!");
-      await loadProfile(address);
-
-      localStorage.setItem("phantomConnected", "true");
-      localStorage.setItem("walletAddress", address);
+      handleSuccessfulConnection(address);
     } catch (error) {
       console.error("[WalletConnect] Error connecting wallet:", error);
       toast.error("Error connecting wallet");
     }
+  };
+
+  const handleSuccessfulConnection = async (address: string) => {
+    setWalletAddress(address);
+    setConnected(true);
+    await fetchBalance(address);
+    toast.success("Wallet connected!");
+    await loadProfile(address);
+
+    localStorage.setItem("phantomConnected", "true");
+    localStorage.setItem("walletAddress", address);
   };
 
   const disconnectWallet = async () => {
@@ -124,7 +99,6 @@ export const WalletConnect = () => {
         setShowProfileSetup(false);
         setDisplayName(null);
         setAvatarUrl(null);
-        setBalance(null);
 
         localStorage.removeItem("phantomConnected");
         localStorage.removeItem("walletAddress");
@@ -162,9 +136,7 @@ export const WalletConnect = () => {
         try {
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
-          setWalletAddress(address);
-          setConnected(true);
-          await fetchBalance(address);
+          handleSuccessfulConnection(address);
 
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
