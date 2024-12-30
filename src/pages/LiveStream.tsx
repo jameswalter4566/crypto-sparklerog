@@ -4,6 +4,7 @@ import { Video } from "lucide-react";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
+import { useActiveStreams } from "@/hooks/useActiveStreams";
 import { StreamPreview } from "@/components/stream/StreamPreview";
 import { useStreamManagement } from "@/hooks/useStreamManagement";
 import { supabase } from "@/integrations/supabase/client";
