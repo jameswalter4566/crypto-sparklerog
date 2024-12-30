@@ -1,6 +1,6 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Search, Rocket, Compass, ArrowLeftRight, Twitter, Star, Video, Menu } from "lucide-react";
+import { Coins, Search, Rocket, Compass, Twitter, Star, Video, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,13 @@ export const Header = ({ onSearch, isLoading }: {
   const menuItems: MenuItem[] = [
     {
       title: "SMART",
-      icon: ArrowLeftRight,
+      icon: () => (
+        <img 
+          src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+          alt="Smart Menu"
+          className="w-6 h-6 object-contain"
+        />
+      ),
       path: "/swap",
       isSpecial: true,
     },
