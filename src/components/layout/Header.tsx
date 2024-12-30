@@ -96,11 +96,11 @@ export const Header = ({ onSearch, isLoading }: {
           onClick={() => handleNavigation(item.path, item.isExternal)}
           className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
         >
-          <item.icon className="h-4 w-4" />
+          <item.icon className="h-5 w-5" /> {/* Increased icon size from h-4 w-4 to h-5 w-5 */}
           <span className="hidden sm:inline">{item.title}</span>
         </Button>
       ))}
-      <div className="ml-4 w-[300px]">
+      <div className="ml-2 w-[300px]"> {/* Reduced margin from ml-4 to ml-2 */}
         <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
       </div>
     </div>
