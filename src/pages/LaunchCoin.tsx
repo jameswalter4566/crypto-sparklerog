@@ -23,7 +23,7 @@ export default function LaunchCoin() {
             top: star.top,
             width: `${star.size}px`,
             height: `${star.size}px`,
-            '--particle-index': star.delay,
+            ['--particle-index' as string]: star.delay,
           }}
         />
       ))}
