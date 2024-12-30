@@ -21,14 +21,14 @@ export const WalletConnect = () => {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   };
 
-  const openPhantomApp = () => {
+  const openPhantomApp = async () => {
     const currentURL = encodeURIComponent(window.location.href);
     const phantomDeepLink = `https://phantom.app/ul/browse/${currentURL}`;
     
     // Check if Phantom is already installed
     // @ts-ignore
     if (window.solana?.isPhantom) {
-      connectWallet();
+      await connectWallet();
     } else {
       // If not installed, open deep link
       window.location.href = phantomDeepLink;
@@ -88,7 +88,7 @@ export const WalletConnect = () => {
       if (!solana?.isPhantom) {
         toast.error("Please install Phantom wallet");
         if (isMobileDevice()) {
-          openPhantomApp();
+          await openPhantomApp();
           return;
         } else {
           window.open("https://phantom.app/", "_blank");
