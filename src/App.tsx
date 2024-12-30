@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { MouseTrailer } from "@/components/effects/MouseTrailer";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
@@ -157,7 +158,7 @@ const App = () => {
           <Sonner position="top-right" />
         </div>
         <BrowserRouter>
-          <div className="min-h-screen flex w-full bg-black text-white">
+          <div className="min-h-screen flex flex-col w-full bg-black text-white">
             <main className="flex-1 overflow-x-hidden">
               <Header onSearch={handleSearch} isLoading={isLoading} />
               <div className="h-24"></div>
@@ -173,6 +174,7 @@ const App = () => {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
+            <Footer />
           </div>
         </BrowserRouter>
       </TooltipProvider>
