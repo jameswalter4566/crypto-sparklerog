@@ -167,8 +167,10 @@ export const Header = ({ onSearch, isLoading }: {
           </div>
           <WalletConnect />
         </div>
-        <div className="w-full max-w-4xl mx-auto">
-          <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
+        <div className="fixed top-[4.5rem] left-0 right-0 z-[9999] px-4">
+          <div className="w-full max-w-4xl mx-auto">
+            <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
+          </div>
         </div>
       </div>
     </header>
