@@ -51,17 +51,19 @@ export default function NewCoins() {
 
   return (
     <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
-      {/* Grid background decoration */}
-      <div className="fixed inset-0 pointer-events-none" 
-           style={{
-             backgroundImage: `
-               linear-gradient(#FEC6A115 1px, transparent 1px),
-               linear-gradient(90deg, #FEC6A115 1px, transparent 1px)
-             `,
-             backgroundSize: '40px 40px',
-             filter: 'blur(0.5px)',
-             zIndex: 0
-           }} 
+      {/* Grid background decoration with glow effect */}
+      <div 
+        className="fixed inset-0 pointer-events-none" 
+        style={{
+          backgroundImage: `
+            linear-gradient(#FEC6A115 1px, transparent 1px),
+            linear-gradient(90deg, #FEC6A115 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px',
+          filter: 'blur(0.5px)',
+          zIndex: 0,
+          animation: 'glow-pulse 2s ease-in-out infinite'
+        }} 
       />
       <div className="relative z-10 p-4 sm:p-6">
         <CoinGrid coins={coins} isLoading={isLoading} title="New Coins" />
