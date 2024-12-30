@@ -17,10 +17,10 @@ export default function LaunchCoin() {
     const generateStars = () => {
       const newStars = Array.from({ length: 50 }, (_, index) => ({
         id: index,
-        size: Math.random() * 3 + 1,
+        size: Math.random() * 4 + 2, // Slightly larger stars
         top: Math.random() * 100,
         left: Math.random() * 100,
-        delay: Math.random() * 5,
+        delay: Math.random() * 3, // Reduced delay range for faster initial appearance
       }));
       setStars(newStars);
     };
@@ -38,7 +38,7 @@ export default function LaunchCoin() {
       {stars.map((star) => (
         <div
           key={star.id}
-          className="absolute rounded-full bg-white opacity-50 particle"
+          className="absolute rounded-full bg-white opacity-70 particle"
           style={{
             width: `${star.size}px`,
             height: `${star.size}px`,

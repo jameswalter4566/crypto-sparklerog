@@ -76,7 +76,8 @@ h4 { @apply text-lg md:text-xl font-bold; }
 }
 
 .particle {
-  opacity: 0.3;
-  animation: float 10s ease-in-out infinite;
+  opacity: 0.7;
+  animation: float 6s ease-in-out infinite;
   animation-delay: calc(var(--particle-index) * -0.5s);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
