@@ -85,7 +85,7 @@ export const Header = ({ onSearch, isLoading }: {
       <img 
         src="/smartlogoresized.png" 
         alt="Smart Logo"
-        className="w-40 h-40 object-contain cursor-pointer"
+        className="w-24 h-24 object-contain cursor-pointer"
         onClick={() => navigate('/swap')}
       />
       {menuItems.map((item) => (
@@ -96,26 +96,26 @@ export const Header = ({ onSearch, isLoading }: {
           onClick={() => handleNavigation(item.path, item.isExternal)}
           className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
         >
-          <item.icon className="h-5 w-5" />
+          <item.icon className="h-4 w-4" />
           <span className="hidden sm:inline">{item.title}</span>
         </Button>
       ))}
-      <div className="ml-2 w-[600px]"> {/* Doubled width from 300px to 600px */}
+      <div className="ml-2 w-[600px]">
         <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
       </div>
     </div>
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-28 bg-black border-b border-primary/20 z-[9999] shadow-lg select-none">
-      <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-3">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-black border-b border-primary/20 z-[9999] shadow-lg select-none">
+      <div className="flex flex-col gap-2 md:gap-2 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
+            <div className="h-10 w-10 overflow-hidden rounded-full bg-primary/10">
               <img 
                 src="/swaplogoofficial.jpg" 
                 alt="Logo" 
-                className={`h-14 w-14 object-contain cursor-pointer
+                className={`h-10 w-10 object-contain cursor-pointer
                   ${isSpinning ? 'animate-logo-spin' : ''}
                   transition-all duration-300 hover:scale-105
                   shadow-[0_0_20px_rgba(249,115,22,0.5)]`}
@@ -133,7 +133,7 @@ export const Header = ({ onSearch, isLoading }: {
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-6 w-6" />
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black border-r border-primary/20">
@@ -147,7 +147,7 @@ export const Header = ({ onSearch, isLoading }: {
                       <img 
                         src="/smartlogoresized.png" 
                         alt="Smart Logo"
-                        className="w-40 h-40 object-contain"
+                        className="w-24 h-24 object-contain"
                       />
                       SMART
                     </Button>
@@ -159,7 +159,7 @@ export const Header = ({ onSearch, isLoading }: {
                         onClick={() => handleNavigation(item.path, item.isExternal)}
                         className="w-full justify-start gap-4 font-bold tracking-wide text-lg"
                       >
-                        <item.icon className="h-5 w-5" />
+                        <item.icon className="h-4 w-4" />
                         {item.title}
                       </Button>
                     ))}
