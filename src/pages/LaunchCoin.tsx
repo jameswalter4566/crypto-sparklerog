@@ -2,26 +2,28 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function LaunchCoin() {
-  // Generate an array of 50 stars with random positions
+  // Generate an array of 50 stars with random positions and animation delays
   const stars = Array.from({ length: 50 }, (_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
     size: Math.random() * 2 + 1, // Random size between 1-3px
+    delay: Math.random() * 100, // Random delay for animation
   }));
 
   return (
     <div className="relative min-h-screen p-6 overflow-hidden">
-      {/* Static stars */}
+      {/* Slowly moving stars */}
       {stars.map((star) => (
         <div
           key={star.id}
-          className="absolute bg-white rounded-full opacity-70"
+          className="absolute bg-white rounded-full opacity-70 particle"
           style={{
             left: star.left,
             top: star.top,
             width: `${star.size}px`,
             height: `${star.size}px`,
+            '--particle-index': star.delay,
           }}
         />
       ))}
