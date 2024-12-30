@@ -22,8 +22,17 @@ export const WalletConnect = () => {
   };
 
   const openPhantomApp = () => {
-    const phantomDeepLink = `https://phantom.app/ul/browse/${window.location.href}`;
-    window.location.href = phantomDeepLink;
+    const currentURL = encodeURIComponent(window.location.href);
+    const phantomDeepLink = `https://phantom.app/ul/browse/${currentURL}`;
+    
+    // Check if Phantom is already installed
+    // @ts-ignore
+    if (window.solana?.isPhantom) {
+      connectWallet();
+    } else {
+      // If not installed, open deep link
+      window.location.href = phantomDeepLink;
+    }
   };
 
   const fetchBalance = async (address: string) => {
@@ -80,10 +89,11 @@ export const WalletConnect = () => {
         toast.error("Please install Phantom wallet");
         if (isMobileDevice()) {
           openPhantomApp();
+          return;
         } else {
           window.open("https://phantom.app/", "_blank");
+          return;
         }
-        return;
       }
 
       const response = await solana.connect({ onlyIfTrusted: false });
@@ -192,7 +202,7 @@ export const WalletConnect = () => {
         displayName={displayName}
         avatarUrl={avatarUrl}
         balance={balance}
-        onConnect={connectWallet}
+        onConnect={isMobileDevice() ? openPhantomApp : connectWallet}
         onDisconnect={disconnectWallet}
       />
       {!connected && <Disclaimer />}
