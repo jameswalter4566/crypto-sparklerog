@@ -1,12 +1,13 @@
 import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
-export default {
+const config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
   prefix: "",
   theme: {
@@ -25,12 +26,12 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#F97316",
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#FEC6A1",
-          foreground: "#000000",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -44,14 +45,19 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
-        card: {
-          DEFAULT: "#1C1C1C",
-          foreground: "#ffffff",
-        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
         "accordion-down": {
@@ -62,16 +68,14 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(-10px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
         "glow-pulse": {
-          "0%, 100%": { 
-            boxShadow: "0 0 20px rgba(249,115,22,0.4), 0 0 40px rgba(249,115,22,0.2)"
+          "0%, 100%": {
+            opacity: "1",
+            boxShadow: "0 0 20px rgba(249, 115, 22, 0.7)"
           },
-          "50%": { 
-            boxShadow: "0 0 30px rgba(249,115,22,0.6), 0 0 60px rgba(249,115,22,0.3)"
+          "50%": {
+            opacity: "0.6",
+            boxShadow: "0 0 40px rgba(249, 115, 22, 0.9)"
           }
         },
         marquee: {
@@ -83,7 +87,7 @@ export default {
           '100%': { transform: 'translateX(0%)' }
         },
         "slide-up": {
-          "0%": { 
+          "0%": {
             opacity: "0",
             transform: "translateY(20px)"
           },
@@ -107,23 +111,32 @@ export default {
             transform: "translateX(200%) translateY(-100vh)",
             opacity: "0"
           }
+        },
+        "twinkle": {
+          "0%, 100%": {
+            opacity: "1"
+          },
+          "50%": {
+            opacity: "0.3"
+          }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.5s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "marquee": 'marquee 40s linear infinite',
         "marquee2": 'marquee2 40s linear infinite',
         "slide-up": "slide-up 0.3s ease-out",
-        "rocket": "rocket 8s ease-in-out infinite"
+        "rocket": "rocket 8s ease-in-out infinite",
+        "twinkle": "twinkle 4s ease-in-out infinite"
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        menu: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
+export default config;

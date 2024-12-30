@@ -1,27 +1,30 @@
-import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function LaunchCoin() {
-  // Generate an array of 50 stars with random positions
-  const stars = Array.from({ length: 50 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    size: Math.random() * 2 + 1, // Random size between 1-3px
-  }));
+  const [stars] = useState(() =>
+    Array.from({ length: 50 }, () => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      size: `${Math.random() * 3 + 1}px`,
+      animationDelay: `${Math.random() * 10}s`,
+    }))
+  );
 
   return (
-    <div className="relative min-h-screen p-6 overflow-hidden">
-      {/* Static stars */}
-      {stars.map((star) => (
+    <div className="min-h-screen bg-black text-white p-8 relative overflow-hidden">
+      {/* Stars background */}
+      {stars.map((star, index) => (
         <div
-          key={star.id}
-          className="absolute bg-white rounded-full opacity-70"
+          key={index}
+          className="absolute bg-white rounded-full animate-twinkle"
           style={{
             left: star.left,
             top: star.top,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
+            width: star.size,
+            height: star.size,
+            animationDelay: star.animationDelay,
           }}
         />
       ))}
@@ -40,16 +43,40 @@ export default function LaunchCoin() {
       {/* Main content */}
       <Link to="/" className="relative z-10 text-primary hover:text-primary/90 inline-flex items-center gap-2 mb-8">
         <ArrowLeft className="h-4 w-4" />
-        go back
+        Back to Home
       </Link>
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[50vh] text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-          Coin Launch Feature
-        </h1>
-        <p className="text-xl md:text-2xl text-muted-foreground">
-          Releasing 1/01/2025
+      <div className="relative z-10 max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8">Launch Your Coin</h1>
+        <p className="text-lg text-gray-300 mb-8">
+          Ready to launch your own cryptocurrency? Follow these steps to get started.
         </p>
+
+        <div className="space-y-8">
+          <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+            <h2 className="text-xl font-semibold mb-4">Step 1: Prepare Your Token</h2>
+            <p className="text-gray-300">
+              Ensure you have all the necessary information about your token:
+              name, symbol, total supply, and tokenomics.
+            </p>
+          </div>
+
+          <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+            <h2 className="text-xl font-semibold mb-4">Step 2: Deploy Smart Contract</h2>
+            <p className="text-gray-300">
+              Deploy your token's smart contract to the blockchain. Make sure to
+              audit your code for security.
+            </p>
+          </div>
+
+          <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+            <h2 className="text-xl font-semibold mb-4">Step 3: List Your Token</h2>
+            <p className="text-gray-300">
+              Submit your token for listing on our platform. We'll review it and
+              make it available for trading.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
