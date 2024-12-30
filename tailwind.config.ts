@@ -91,6 +91,22 @@ export default {
             opacity: "1",
             transform: "translateY(0)"
           }
+        },
+        "rocket": {
+          "0%": { 
+            transform: "translateX(-100%) translateY(100vh)",
+            opacity: "0"
+          },
+          "10%": {
+            opacity: "1"
+          },
+          "90%": {
+            opacity: "1"
+          },
+          "100%": { 
+            transform: "translateX(200%) translateY(-100vh)",
+            opacity: "0"
+          }
         }
       },
       animation: {
@@ -100,7 +116,8 @@ export default {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "marquee": 'marquee 40s linear infinite',
         "marquee2": 'marquee2 40s linear infinite',
-        "slide-up": "slide-up 0.3s ease-out"
+        "slide-up": "slide-up 0.3s ease-out",
+        "rocket": "rocket 8s ease-in-out infinite"
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

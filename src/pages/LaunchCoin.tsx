@@ -26,6 +26,17 @@ export default function LaunchCoin() {
         />
       ))}
 
+      {/* Animated Rocket */}
+      <div className="absolute w-12 h-12 animate-rocket">
+        <div className="relative transform -rotate-45">
+          <div className="w-8 h-16 bg-primary rounded-t-full" /> {/* Rocket body */}
+          <div className="absolute bottom-0 left-1/2 w-4 h-4 -translate-x-1/2 bg-secondary" /> {/* Rocket window */}
+          <div className="absolute bottom-0 left-0 w-4 h-4 bg-primary -translate-y-full transform -rotate-45" /> {/* Left fin */}
+          <div className="absolute bottom-0 right-0 w-4 h-4 bg-primary -translate-y-full transform rotate-45" /> {/* Right fin */}
+          <div className="absolute -bottom-2 left-1/2 w-2 h-4 -translate-x-1/2 bg-orange-600 animate-pulse" /> {/* Rocket flame */}
+        </div>
+      </div>
+
       {/* Main content */}
       <Link to="/" className="relative z-10 text-primary hover:text-primary/90 inline-flex items-center gap-2 mb-8">
         <ArrowLeft className="h-4 w-4" />
