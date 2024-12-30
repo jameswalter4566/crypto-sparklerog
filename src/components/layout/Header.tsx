@@ -83,7 +83,7 @@ export const Header = ({ onSearch, isLoading }: {
   const MenuContent = () => (
     <div className="flex items-center gap-1">
       <img 
-        src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+        src="/smartlogoresized.png" 
         alt="Smart Logo"
         className="w-40 h-40 object-contain cursor-pointer"
         onClick={() => navigate('/swap')}
@@ -142,7 +142,7 @@ export const Header = ({ onSearch, isLoading }: {
                       className="w-full justify-start gap-2 font-bold tracking-wide text-lg"
                     >
                       <img 
-                        src="/u1251571754_httpss.mj.runNDgmnMU3t0A_Using_this_style_font_I__48ced42d-1039-497d-8917-25bd7bef1f53_1.png" 
+                        src="/smartlogoresized.png" 
                         alt="Smart Logo"
                         className="w-40 h-40 object-contain"
                       />
