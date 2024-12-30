@@ -159,7 +159,7 @@ const App = () => {
         <BrowserRouter>
           <div className="flex flex-col min-h-screen bg-black text-white">
             <Header onSearch={handleSearch} isLoading={isLoading} />
-            <main className="flex-1 mt-24">
+            <main className="flex-1 mt-28">
               <Routes>
                 <Route path="/" element={<NewCoins />} />
                 <Route path="/explore" element={<Explore />} />

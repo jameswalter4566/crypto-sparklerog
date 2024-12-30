@@ -104,8 +104,8 @@ export const Header = ({ onSearch, isLoading }: {
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-24 bg-black/90 backdrop-blur-md border-b border-primary/20 z-[9999] shadow-lg select-none">
-      <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-2">
+    <header className="fixed top-0 left-0 right-0 h-28 bg-black border-b border-primary/20 z-[9999] shadow-lg select-none">
+      <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
@@ -133,7 +133,7 @@ export const Header = ({ onSearch, isLoading }: {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black/90 backdrop-blur-lg border-r border-primary/20">
+                <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black border-r border-primary/20">
                   <nav className="flex flex-col gap-4 mt-8">
                     <Button
                       variant="ghost"
