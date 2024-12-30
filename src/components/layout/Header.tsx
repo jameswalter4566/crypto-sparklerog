@@ -114,7 +114,7 @@ export const Header = ({ onSearch, isLoading }: {
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
               <img 
-                src="/u1251571754_httpss.mj.run7UlNVv_PHZg_Create_a_HD_version_of_t_e4c06ff0-02a0-4364-bbe7-c72d5d148770_3.png" 
+                src="/swaplogoofficial.jpg" 
                 alt="Logo" 
                 className={`h-14 w-14 object-contain cursor-pointer
                   ${isSpinning ? 'animate-logo-spin' : ''}
