@@ -75,8 +75,8 @@ export default {
           }
         },
         marquee: {
-          '0%': { transform: 'translateX(0%)' },
-          '100%': { transform: 'translateX(-100%)' }
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100vw)' }
         },
         marquee2: {
           '0%': { transform: 'translateX(100%)' },
@@ -98,7 +98,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
-        "marquee": 'marquee 40s linear infinite',
+        "marquee": 'marquee 15s linear infinite',
         "marquee2": 'marquee2 40s linear infinite',
         "slide-up": "slide-up 0.3s ease-out"
       },

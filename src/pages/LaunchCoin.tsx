@@ -35,6 +35,16 @@ export default function LaunchCoin() {
         go back
       </Link>
 
+      {/* Rocket animation */}
+      <div className="absolute w-12 h-12 animate-[marquee_15s_linear_infinite] z-10">
+        <div className="relative w-full h-full">
+          <div className="absolute w-8 h-12 bg-primary rounded-full transform -rotate-45">
+            <div className="absolute bottom-0 left-1/2 w-4 h-6 bg-secondary -translate-x-1/2 rounded-b-full" />
+            <div className="absolute -top-2 left-1/2 w-4 h-4 bg-primary -translate-x-1/2 rounded-full" />
+          </div>
+        </div>
+      </div>
+
       {stars.map((star) => (
         <div
           key={star.id}
