@@ -104,7 +104,7 @@ export const Header = ({ onSearch, isLoading }: {
   );
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-24 md:h-24 bg-black/50 backdrop-blur-sm z-50">
+    <header className="fixed top-0 left-0 right-0 h-24 bg-black/90 backdrop-blur-md border-b border-primary/20 z-[9999] shadow-lg">
       <div className="flex flex-col gap-2 md:gap-4 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -171,6 +171,6 @@ export const Header = ({ onSearch, isLoading }: {
           <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
         </div>
       </div>
-    </div>
+    </header>
   );
 };
