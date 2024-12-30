@@ -18,7 +18,7 @@ export function StreamLayout({
   return (
     <div className={cn(
       "bg-background flex flex-col",
-      isPreview ? "h-full" : "fixed inset-0 z-50"
+      isPreview ? "h-full" : "fixed inset-0 z-50 pt-28" // Added pt-28 for header spacing
     )}>
       {header}
       <div className="flex-1 flex flex-col md:flex-row min-h-0">
