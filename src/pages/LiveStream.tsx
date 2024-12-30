@@ -4,7 +4,6 @@ import { Video } from "lucide-react";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { StreamView } from "@/components/stream/StreamView";
 import { StreamGrid } from "@/components/stream/StreamGrid";
-import { useActiveStreams } from "@/hooks/useActiveStreams";
 import { StreamPreview } from "@/components/stream/StreamPreview";
 import { useStreamManagement } from "@/hooks/useStreamManagement";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,9 +71,13 @@ const LiveStream = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col items-center gap-6 mb-8">
         <h1 className="text-3xl font-bold">Live Streams</h1>
-        <Button onClick={handleStartStreamClick} size="lg">
+        <Button 
+          onClick={handleStartStreamClick} 
+          size="lg"
+          className="w-full sm:w-auto min-w-[200px] flex items-center justify-center"
+        >
           <Video className="w-5 h-5 mr-2" />
           Start Streaming
         </Button>
