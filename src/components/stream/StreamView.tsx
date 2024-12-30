@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { useMockViewers } from "@/hooks/useMockViewers";
 
 interface StreamViewProps {
   streamId: string;
@@ -34,6 +35,7 @@ export function StreamView({
 }: StreamViewProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [viewerCount, setViewerCount] = useState(0);
+  const mockViewers = useMockViewers(isStreamer);
 
   // Initialize stream or join as viewer
   useEffect(() => {
@@ -47,7 +49,7 @@ export function StreamView({
             id: streamId,
             username: username,
             title: title,
-            viewer_count: 0,
+            viewer_count: mockViewers, // Initialize with mock viewers
             wallet_address: walletAddress,
           });
 
@@ -98,7 +100,27 @@ export function StreamView({
 
       cleanupStream();
     };
-  }, [streamId, username, title, isStreamer, isPreview, walletAddress]);
+  }, [streamId, username, title, isStreamer, isPreview, walletAddress, mockViewers]);
+
+  // Update viewer count in database when mock viewers change
+  useEffect(() => {
+    if (!isStreamer || isPreview) return;
+
+    const updateViewerCount = async () => {
+      try {
+        const { error } = await supabase
+          .from("active_streams")
+          .update({ viewer_count: mockViewers })
+          .eq("id", streamId);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating viewer count:", error);
+      }
+    };
+
+    updateViewerCount();
+  }, [mockViewers, streamId, isStreamer, isPreview]);
 
   // Subscribe to viewer count updates
   useEffect(() => {
@@ -115,7 +137,6 @@ export function StreamView({
           filter: `id=eq.${streamId}`
         },
         (payload: RealtimePostgresChangesPayload<ActiveStream>) => {
-          // Check if payload.new exists and has the expected shape
           if (payload.new && 'viewer_count' in payload.new) {
             setViewerCount(payload.new.viewer_count ?? 0);
           }
@@ -149,7 +170,7 @@ export function StreamView({
           username={username}
           title={title}
           avatarUrl={avatarUrl}
-          viewerCount={viewerCount}
+          viewerCount={isStreamer ? mockViewers : viewerCount}
           onClose={handleClose}
           onEndStream={isStreamer ? handleClose : undefined}
           isStreamer={isStreamer}
