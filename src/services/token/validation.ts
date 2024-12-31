@@ -7,41 +7,39 @@ export interface TokenValidationConfig {
   initialSupply?: number;
 }
 
-export const validateTokenConfig = (config: TokenValidationConfig) => {
-  if (!config.name || config.name.length < 2) {
-    throw new Error("Token name must be at least 2 characters long");
+export function validateTokenConfig(config: TokenValidationConfig): void {
+  if (!config.name || config.name.trim().length === 0) {
+    throw new Error("Token name is required");
   }
 
-  if (!config.symbol || config.symbol.length < 2 || config.symbol.length > 10) {
-    throw new Error("Token symbol must be between 2 and 10 characters");
+  if (!config.symbol || config.symbol.trim().length === 0) {
+    throw new Error("Token symbol is required");
   }
 
-  if (!config.description || config.description.length < 10) {
-    throw new Error("Token description must be at least 10 characters long");
+  if (!config.description || config.description.trim().length === 0) {
+    throw new Error("Token description is required");
   }
 
-  if (config.decimals !== undefined && (config.decimals < 0 || config.decimals > 9)) {
-    throw new Error("Token decimals must be between 0 and 9");
-  }
-
-  if (config.initialSupply !== undefined && config.initialSupply <= 0) {
-    throw new Error("Initial supply must be greater than 0");
+  if (config.decimals !== undefined) {
+    if (config.decimals < 0 || config.decimals > 9) {
+      throw new Error("Decimals must be between 0 and 9");
+    }
   }
 
   if (config.image) {
-    validateTokenImage(config.image);
+    validateImageFile(config.image);
   }
-};
+}
 
-export const validateTokenImage = (file: File) => {
-  const MAX_SIZE = 1024 * 1024; // 1MB
+function validateImageFile(file: File): void {
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
   if (file.size > MAX_SIZE) {
-    throw new Error("Image file size must be less than 1MB");
+    throw new Error("Image file size must be less than 5MB");
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error("Image must be JPEG, PNG, or GIF format");
+    throw new Error("Image must be in JPEG, PNG, or GIF format");
   }
-};
+}

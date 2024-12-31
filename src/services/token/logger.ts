@@ -1,37 +1,47 @@
 type LogLevel = 'info' | 'warn' | 'error';
 
-interface LogEntry {
-  timestamp: string;
+interface LogMessage {
   level: LogLevel;
   message: string;
+  timestamp: string;
   data?: any;
 }
 
-export class TokenLogger {
-  private static log(level: LogLevel, message: string, data?: any) {
-    const entry: LogEntry = {
-      timestamp: new Date().toISOString(),
+class Logger {
+  private logToConsole(level: LogLevel, message: string, data?: any) {
+    const logMessage: LogMessage = {
       level,
       message,
-      data
+      timestamp: new Date().toISOString(),
+      data,
     };
 
-    console.log(JSON.stringify(entry));
-    return entry;
+    switch (level) {
+      case 'info':
+        console.log(`[TOKEN] ${message}`, data || '');
+        break;
+      case 'warn':
+        console.warn(`[TOKEN] ${message}`, data || '');
+        break;
+      case 'error':
+        console.error(`[TOKEN] ${message}`, data || '');
+        break;
+    }
+
+    return logMessage;
   }
 
-  static info(message: string, data?: any) {
-    return this.log('info', message, data);
+  info(message: string, data?: any) {
+    return this.logToConsole('info', message, data);
   }
 
-  static warn(message: string, data?: any) {
-    return this.log('warn', message, data);
+  warn(message: string, data?: any) {
+    return this.logToConsole('warn', message, data);
   }
 
-  static error(message: string, error?: any) {
-    return this.log('error', message, {
-      error: error?.message || error,
-      stack: error?.stack
-    });
+  error(message: string, data?: any) {
+    return this.logToConsole('error', message, data);
   }
 }
+
+export const TokenLogger = new Logger();

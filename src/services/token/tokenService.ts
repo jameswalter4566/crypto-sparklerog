@@ -8,10 +8,11 @@ import {
 } from "@solana/web3.js";
 import { 
   TOKEN_PROGRAM_ID,
-  createInitializeMintInstruction,
-  createAssociatedTokenAccountInstruction,
-  createMintToInstruction,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  getMint,
+  createInitializeMintInstruction as splCreateInitializeMintInstruction,
+  createAssociatedTokenAccountInstruction as splCreateAssociatedTokenAccountInstruction,
+  createMintToInstruction as splCreateMintToInstruction,
 } from "@solana/spl-token";
 import { toast } from "sonner";
 import { validateTokenConfig, TokenValidationConfig } from "./validation";
@@ -76,7 +77,7 @@ export class TokenService {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      const initMintIx = createInitializeMintInstruction(
+      const initMintIx = splCreateInitializeMintInstruction(
         mint.publicKey,
         config.decimals || 9,
         walletPubKey,
@@ -94,7 +95,7 @@ export class TokenService {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      const createTokenAccountIx = createAssociatedTokenAccountInstruction(
+      const createTokenAccountIx = splCreateAssociatedTokenAccountInstruction(
         walletPubKey,
         ata[0],
         walletPubKey,
@@ -106,7 +107,7 @@ export class TokenService {
       const decimals = config.decimals || 9;
       const adjustedSupply = BigInt(initialSupply) * BigInt(10 ** decimals);
 
-      const mintToIx = createMintToInstruction(
+      const mintToIx = splCreateMintToInstruction(
         mint.publicKey,
         ata[0],
         walletPubKey,
@@ -162,7 +163,7 @@ export class TokenService {
     
     while (retries < this.MAX_CONFIRMATION_RETRIES) {
       try {
-        const { value } = await Promise.race([
+        const confirmation = await Promise.race([
           this.connection.confirmTransaction(txId, commitment),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error("Transaction confirmation timeout")), 
@@ -170,8 +171,8 @@ export class TokenService {
           )
         ]);
 
-        if (value?.err) {
-          throw new Error(`Transaction failed: ${JSON.stringify(value.err)}`);
+        if (confirmation?.value?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
         }
 
         return;
