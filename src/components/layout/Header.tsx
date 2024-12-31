@@ -81,7 +81,7 @@ export const Header = ({ onSearch, isLoading }: {
   };
 
   const SmartLogo = () => (
-    <div className="flex items-center space-x-0.5 font-bold text-2xl">
+    <div className="flex items-center space-x-[1px] font-bold text-2xl">
       {['S', 'M', 'A', 'R', 'T'].map((letter, index) => (
         <span
           key={index}
