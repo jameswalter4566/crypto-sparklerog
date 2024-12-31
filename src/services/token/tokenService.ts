@@ -4,6 +4,7 @@ import {
   Transaction, 
   SystemProgram,
   Keypair,
+  Commitment,
 } from "@solana/web3.js";
 import { 
   TOKEN_PROGRAM_ID,
@@ -13,14 +14,10 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { toast } from "sonner";
+import { validateTokenConfig, TokenValidationConfig } from "./validation";
+import { TokenLogger } from "./logger";
 
-export interface TokenConfig {
-  name: string;
-  symbol: string;
-  description: string;
-  image?: File;
-  decimals?: number;
-  initialSupply?: number;
+export interface TokenConfig extends TokenValidationConfig {
   telegramLink?: string;
   websiteLink?: string;
   twitterLink?: string;
@@ -28,37 +25,49 @@ export interface TokenConfig {
 
 export class TokenService {
   private connection: Connection;
+  private readonly MAX_CONFIRMATION_RETRIES = 3;
+  private readonly CONFIRMATION_TIMEOUT = 30000; // 30 seconds
 
   constructor() {
-    this.connection = new Connection(import.meta.env.VITE_SOLANA_RPC_URL, "confirmed");
+    this.connection = new Connection(
+      import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      "confirmed"
+    );
   }
 
   async createToken(config: TokenConfig): Promise<string> {
     try {
+      // Validate config
+      validateTokenConfig(config);
+      TokenLogger.info("Token configuration validated", { config });
+
+      // Validate wallet
       // @ts-ignore
       if (!window.solana?.isPhantom) {
-        throw new Error("Phantom wallet not found!");
+        throw new Error("Please install Phantom wallet to create tokens");
       }
 
       // @ts-ignore
       const wallet = window.solana;
       if (!wallet.publicKey) {
-        throw new Error("Please connect your wallet first!");
+        throw new Error("Please connect your Phantom wallet to continue");
       }
 
-      console.log("Creating token with config:", config);
+      TokenLogger.info("Wallet validated", { publicKey: wallet.publicKey.toString() });
 
       // Convert wallet.publicKey to PublicKey instance
       const walletPubKey = new PublicKey(wallet.publicKey.toString());
 
       // Generate the mint
       const mint = Keypair.generate();
-      console.log("Generated mint address:", mint.publicKey.toString());
+      TokenLogger.info("Generated mint keypair", { 
+        mintAddress: mint.publicKey.toString() 
+      });
 
-      // Calculate rent exempt amount for the mint
+      // Calculate rent exempt amount
       const rentExemptAmount = await this.connection.getMinimumBalanceForRentExemption(82);
 
-      // Create the token mint account
+      // Create instructions
       const createAccountIx = SystemProgram.createAccount({
         fromPubkey: walletPubKey,
         newAccountPubkey: mint.publicKey,
@@ -67,7 +76,6 @@ export class TokenService {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      // Initialize the mint
       const initMintIx = createInitializeMintInstruction(
         mint.publicKey,
         config.decimals || 9,
@@ -86,7 +94,6 @@ export class TokenService {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // Create the token account
       const createTokenAccountIx = createAssociatedTokenAccountInstruction(
         walletPubKey,
         ata[0],
@@ -94,20 +101,20 @@ export class TokenService {
         mint.publicKey
       );
 
-      // Calculate initial supply with decimals
+      // Calculate initial supply with BigInt
       const initialSupply = config.initialSupply || 1000000000;
-      const adjustedSupply = initialSupply * Math.pow(10, config.decimals || 9);
+      const decimals = config.decimals || 9;
+      const adjustedSupply = BigInt(initialSupply) * BigInt(10 ** decimals);
 
-      // Create mint to instruction
       const mintToIx = createMintToInstruction(
         mint.publicKey,
         ata[0],
         walletPubKey,
-        adjustedSupply,
+        Number(adjustedSupply), // Convert back to number as the API expects it
         []
       );
 
-      // Combine all instructions into a single transaction
+      // Build transaction
       const transaction = new Transaction().add(
         createAccountIx,
         initMintIx,
@@ -115,32 +122,70 @@ export class TokenService {
         mintToIx
       );
 
-      // Get latest blockhash
       const { blockhash } = await this.connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = walletPubKey;
 
-      // Sign the transaction with the mint account
+      // Sign with mint account
       transaction.sign(mint);
 
       // Request wallet signature
       const signedTx = await wallet.signTransaction(transaction);
 
-      // Send and confirm transaction
+      // Send and confirm with enhanced checks
       const txId = await this.connection.sendRawTransaction(signedTx.serialize());
-      await this.connection.confirmTransaction(txId);
+      TokenLogger.info("Transaction sent", { txId });
 
-      console.log("Token created successfully:", {
-        mint: mint.publicKey.toString()
+      await this.confirmTransactionWithRetry(txId);
+      TokenLogger.info("Transaction confirmed", { txId });
+
+      // Save metadata
+      await this.saveTokenMetadata(mint.publicKey.toString(), config);
+      TokenLogger.info("Token metadata saved", { 
+        mintAddress: mint.publicKey.toString() 
       });
 
-      // Save token metadata to Supabase
-      await this.saveTokenMetadata(mint.publicKey.toString(), config);
-
+      toast.success("Token created successfully!");
       return mint.publicKey.toString();
     } catch (error) {
-      console.error("Error creating token:", error);
+      TokenLogger.error("Error creating token", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create token");
       throw error;
+    }
+  }
+
+  private async confirmTransactionWithRetry(
+    txId: string,
+    commitment: Commitment = 'finalized'
+  ): Promise<void> {
+    let retries = 0;
+    
+    while (retries < this.MAX_CONFIRMATION_RETRIES) {
+      try {
+        const { value } = await Promise.race([
+          this.connection.confirmTransaction(txId, commitment),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Transaction confirmation timeout")), 
+            this.CONFIRMATION_TIMEOUT)
+          )
+        ]);
+
+        if (value?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(value.err)}`);
+        }
+
+        return;
+      } catch (error) {
+        retries++;
+        TokenLogger.warn(`Confirmation attempt ${retries} failed`, { txId, error });
+        
+        if (retries >= this.MAX_CONFIRMATION_RETRIES) {
+          throw new Error("Failed to confirm transaction after multiple attempts");
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
   }
 
@@ -151,7 +196,6 @@ export class TokenService {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      // Upload image if provided
       let imageUrl = null;
       if (config.image) {
         const { data: uploadData, error: uploadError } = await supabase
@@ -159,7 +203,10 @@ export class TokenService {
           .from('token-images')
           .upload(`${mintAddress}/${config.image.name}`, config.image);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          TokenLogger.error("Failed to upload token image", uploadError);
+          throw uploadError;
+        }
         
         const { data: { publicUrl } } = supabase
           .storage
@@ -169,7 +216,6 @@ export class TokenService {
         imageUrl = publicUrl;
       }
 
-      // Save token data
       const { error } = await supabase
         .from('coins')
         .insert({
@@ -186,9 +232,12 @@ export class TokenService {
           chat_url: config.telegramLink ? [config.telegramLink] : null,
         });
 
-      if (error) throw error;
+      if (error) {
+        TokenLogger.error("Failed to save token metadata", error);
+        throw error;
+      }
     } catch (error) {
-      console.error("Error saving token metadata:", error);
+      TokenLogger.error("Error in saveTokenMetadata", error);
       toast.error("Failed to save token metadata");
       throw error;
     }
