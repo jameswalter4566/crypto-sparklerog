@@ -91,6 +91,10 @@ export default {
             opacity: "1",
             transform: "translateY(0)"
           }
+        },
+        pulse: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.5', transform: 'scale(1.1)' }
         }
       },
       animation: {
