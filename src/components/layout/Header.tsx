@@ -81,7 +81,7 @@ export const Header = ({ onSearch, isLoading }: {
   };
 
   const SmartLogo = () => (
-    <div className="flex items-center space-x-1 font-bold text-2xl">
+    <div className="flex items-center space-x-0.5 font-bold text-2xl">
       {['S', 'M', 'A', 'R', 'T'].map((letter, index) => (
         <span
           key={index}
@@ -102,12 +102,6 @@ export const Header = ({ onSearch, isLoading }: {
 
   const MenuContent = () => (
     <div className="flex items-center gap-1">
-      <img 
-        src="/smartlogoresized.png" 
-        alt="Smart Logo"
-        className="w-24 h-24 object-contain cursor-pointer"
-        onClick={() => navigate('/swap')}
-      />
       <SmartLogo />
       {menuItems.map((item) => (
         <Button
@@ -165,11 +159,6 @@ export const Header = ({ onSearch, isLoading }: {
                       onClick={() => handleNavigation('/swap')}
                       className="w-full justify-start gap-2 font-bold tracking-wide text-lg"
                     >
-                      <img 
-                        src="/smartlogoresized.png" 
-                        alt="Smart Logo"
-                        className="w-24 h-24 object-contain"
-                      />
                       <SmartLogo />
                     </Button>
                     {menuItems.map((item) => (
