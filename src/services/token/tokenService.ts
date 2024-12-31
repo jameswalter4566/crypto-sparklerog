@@ -7,9 +7,9 @@ import {
 } from "@solana/web3.js";
 import { 
   TOKEN_PROGRAM_ID,
+  createInitializeMintInstruction,
+  createAssociatedTokenAccountInstruction,
   createMintToInstruction,
-  createInitializeMintAccountInstruction,
-  createAssociatedTokenAccountIdempotentInstruction,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { toast } from "sonner";
@@ -68,11 +68,12 @@ export class TokenService {
       });
 
       // Initialize the mint
-      const initMintIx = createInitializeMintAccountInstruction(
+      const initMintIx = createInitializeMintInstruction(
         mint.publicKey,
         config.decimals || 9,
         walletPubKey,
         walletPubKey,
+        TOKEN_PROGRAM_ID
       );
 
       // Calculate ATA address
@@ -86,7 +87,7 @@ export class TokenService {
       );
 
       // Create the token account
-      const createTokenAccountIx = createAssociatedTokenAccountIdempotentInstruction(
+      const createTokenAccountIx = createAssociatedTokenAccountInstruction(
         walletPubKey,
         ata[0],
         walletPubKey,
