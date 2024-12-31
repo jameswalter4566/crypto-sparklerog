@@ -7,17 +7,13 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import { 
-  createInitializeMint,
-  createAccount,
-  createMint,
-  createAssociatedTokenAccount,
-  mintTo,
-  getAssociatedTokenAddress as getAssociatedTokenAddr,
   TOKEN_PROGRAM_ID,
+  createInitializeMintInstruction,
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddress,
+  mintTo,
 } from "@solana/spl-token";
 import { toast } from "sonner";
-
-const HELIUS_RPC = import.meta.env.VITE_SOLANA_RPC_URL;
 
 export interface TokenConfig {
   name: string;
@@ -35,7 +31,7 @@ export class TokenService {
   private connection: Connection;
 
   constructor() {
-    this.connection = new Connection(HELIUS_RPC, "confirmed");
+    this.connection = new Connection(import.meta.env.VITE_SOLANA_RPC_URL, "confirmed");
   }
 
   async createToken(config: TokenConfig): Promise<string> {
@@ -60,73 +56,76 @@ export class TokenService {
       const mint = Keypair.generate();
       console.log("Generated mint address:", mint.publicKey.toString());
 
-      // Create the token mint
-      const mintRent = await this.connection.getMinimumBalanceForRentExemption(82);
-      const createMintTx = new Transaction().add(
-        SystemProgram.createAccount({
-          fromPubkey: walletPubKey,
-          newAccountPubkey: mint.publicKey,
-          space: 82,
-          lamports: mintRent,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        createInitializeMint(
-          mint.publicKey,
-          config.decimals || 9,
-          walletPubKey,
-          walletPubKey,
-          TOKEN_PROGRAM_ID
-        )
+      // Calculate rent exempt amount for the mint
+      const rentExemptAmount = await this.connection.getMinimumBalanceForRentExemption(82);
+
+      // Create the token mint account
+      const createAccountIx = SystemProgram.createAccount({
+        fromPubkey: walletPubKey,
+        newAccountPubkey: mint.publicKey,
+        lamports: rentExemptAmount,
+        space: 82,
+        programId: TOKEN_PROGRAM_ID,
+      });
+
+      // Initialize the mint
+      const initMintIx = createInitializeMintInstruction(
+        mint.publicKey,
+        config.decimals || 9,
+        walletPubKey,
+        walletPubKey,
+        TOKEN_PROGRAM_ID
       );
 
       // Get the token account
-      const associatedTokenAccount = await getAssociatedTokenAddr(
+      const associatedTokenAccount = await getAssociatedTokenAddress(
         mint.publicKey,
         walletPubKey
       );
 
       // Create the token account
-      const createATATx = new Transaction().add(
-        await createAssociatedTokenAccount(
-          this.connection,
-          walletPubKey,
-          mint.publicKey,
-          walletPubKey
-        )
+      const createTokenAccountIx = createAssociatedTokenAccountInstruction(
+        walletPubKey,
+        associatedTokenAccount,
+        walletPubKey,
+        mint.publicKey
       );
 
       // Calculate initial supply with decimals
       const initialSupply = config.initialSupply || 1000000000;
       const adjustedSupply = initialSupply * Math.pow(10, config.decimals || 9);
 
-      // Mint to token account
-      const mintToTx = new Transaction().add(
-        mintTo({
-          mint: mint.publicKey,
-          destination: associatedTokenAccount,
-          amount: adjustedSupply,
-          authority: walletPubKey,
-        })
+      // Create mint to instruction
+      const mintToIx = mintTo(
+        mint.publicKey,
+        associatedTokenAccount,
+        walletPubKey,
+        adjustedSupply,
+        []
       );
 
-      // Get latest blockhash and sign transactions
+      // Combine all instructions into a single transaction
+      const transaction = new Transaction().add(
+        createAccountIx,
+        initMintIx,
+        createTokenAccountIx,
+        mintToIx
+      );
+
+      // Get latest blockhash
       const { blockhash } = await this.connection.getLatestBlockhash();
-      createMintTx.recentBlockhash = blockhash;
-      createMintTx.feePayer = walletPubKey;
-      createATATx.recentBlockhash = blockhash;
-      createATATx.feePayer = walletPubKey;
-      mintToTx.recentBlockhash = blockhash;
-      mintToTx.feePayer = walletPubKey;
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubKey;
 
-      // Sign and send transactions
-      const signedCreateMintTx = await wallet.signTransaction(createMintTx);
-      const signedCreateATATx = await wallet.signTransaction(createATATx);
-      const signedMintToTx = await wallet.signTransaction(mintToTx);
+      // Sign the transaction with the mint account
+      transaction.sign(mint);
 
-      // Send transactions
-      await this.connection.sendRawTransaction(signedCreateMintTx.serialize());
-      await this.connection.sendRawTransaction(signedCreateATATx.serialize());
-      await this.connection.sendRawTransaction(signedMintToTx.serialize());
+      // Request wallet signature
+      const signedTx = await wallet.signTransaction(transaction);
+
+      // Send and confirm transaction
+      const txId = await this.connection.sendRawTransaction(signedTx.serialize());
+      await this.connection.confirmTransaction(txId);
 
       console.log("Token created successfully:", {
         mint: mint.publicKey.toString()
