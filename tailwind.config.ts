@@ -105,6 +105,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         menu: ["Inter", "system-ui", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
     },
   },

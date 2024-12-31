@@ -85,7 +85,7 @@ export const Header = ({ onSearch, isLoading }: {
       {['S', 'M', 'A', 'R', 'T'].map((letter, index) => (
         <span
           key={index}
-          className="animate-glow-pulse text-white"
+          className="animate-glow-pulse text-white font-['Poppins']"
           style={{
             textShadow: `
               0 0 7px #F97316,
