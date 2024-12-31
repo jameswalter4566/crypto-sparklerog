@@ -7,10 +7,10 @@ import {
 } from "@solana/web3.js";
 import { 
   TOKEN_PROGRAM_ID,
-  createInitializeMintInstruction,
-  createAssociatedTokenAccountInstruction,
-  getAssociatedTokenAddress,
-  mintTo,
+  createMintToInstruction,
+  createInitializeMintAccountInstruction,
+  createAssociatedTokenAccountIdempotentInstruction,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { toast } from "sonner";
 
@@ -68,24 +68,27 @@ export class TokenService {
       });
 
       // Initialize the mint
-      const initMintIx = createInitializeMintInstruction(
+      const initMintIx = createInitializeMintAccountInstruction(
         mint.publicKey,
         config.decimals || 9,
         walletPubKey,
         walletPubKey,
-        TOKEN_PROGRAM_ID
       );
 
-      // Get the token account
-      const associatedTokenAccount = await getAssociatedTokenAddress(
-        mint.publicKey,
-        walletPubKey
+      // Calculate ATA address
+      const ata = await PublicKey.findProgramAddress(
+        [
+          walletPubKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          mint.publicKey.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
       // Create the token account
-      const createTokenAccountIx = createAssociatedTokenAccountInstruction(
+      const createTokenAccountIx = createAssociatedTokenAccountIdempotentInstruction(
         walletPubKey,
-        associatedTokenAccount,
+        ata[0],
         walletPubKey,
         mint.publicKey
       );
@@ -95,9 +98,9 @@ export class TokenService {
       const adjustedSupply = initialSupply * Math.pow(10, config.decimals || 9);
 
       // Create mint to instruction
-      const mintToIx = mintTo(
+      const mintToIx = createMintToInstruction(
         mint.publicKey,
-        associatedTokenAccount,
+        ata[0],
         walletPubKey,
         adjustedSupply,
         []
