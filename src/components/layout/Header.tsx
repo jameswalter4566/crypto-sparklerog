@@ -1,19 +1,11 @@
 import { WalletConnect } from "@/components/WalletConnect";
 import { TokenSearchForm } from "@/components/coin/TokenSearchForm";
-import { Coins, Search, Rocket, Compass, Twitter, Star, Video, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface MenuItem {
-  title: string;
-  icon: React.ComponentType<any>;
-  path: string;
-  isSpecial?: boolean;
-  isExternal?: boolean;
-}
+import { SmartLogo } from "./SmartLogo";
+import { NavigationMenu } from "./NavigationMenu";
+import { MobileMenu } from "./MobileMenu";
 
 export const Header = ({
   onSearch,
@@ -35,105 +27,10 @@ export const Header = ({
     }, 1000);
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      title: "New Coins",
-      icon: Coins,
-      path: "/",
-    },
-    {
-      title: "Featured",
-      icon: Star,
-      path: "/featured",
-    },
-    {
-      title: "Explore",
-      icon: Compass,
-      path: "/explore",
-    },
-    {
-      title: "Search",
-      icon: Search,
-      path: "/search",
-    },
-    {
-      title: "Launch",
-      icon: Rocket,
-      path: "/launch",
-    },
-    {
-      title: "Live Stream",
-      icon: Video,
-      path: "/live-stream",
-    },
-    {
-      title: "Community Updates",
-      icon: Twitter,
-      path: "https://x.com/SwapSolDotFun",
-      isExternal: true,
-    },
-  ];
-
-  const handleNavigation = (path: string, isExternal?: boolean) => {
-    if (isExternal) {
-      window.open(path, '_blank');
-    } else {
-      navigate(path);
-      setIsOpen(false);
-    }
-  };
-
-  const SmartLogo = () => (
-    <div className="flex items-center gap-3">
-      {/* Glowing Orb */}
-      <div 
-        className="w-4 h-4 rounded-full bg-primary"
-        style={{
-          boxShadow: `
-            0 0 7px #F97316,
-            0 0 10px #F97316,
-            0 0 21px #F97316,
-            0 0 42px #F97316
-          `,
-          animation: 'pulse 2s infinite'
-        }}
-      />
-      {/* SMART Text */}
-      <div className="flex items-center space-x-[1px] font-bold text-2xl">
-        {['S', 'M', 'A', 'R', 'T'].map((letter, index) => (
-          <span
-            key={index}
-            className="animate-glow-pulse text-white font-['Poppins']"
-            style={{
-              textShadow: `
-                0 0 7px #F97316,
-                0 0 10px #F97316,
-                0 0 21px #F97316
-              `
-            }}
-          >
-            {letter}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-
   const MenuContent = () => (
     <div className="flex items-center gap-1">
       <SmartLogo />
-      {menuItems.map((item) => (
-        <Button
-          key={item.title}
-          variant="ghost"
-          size="sm"
-          onClick={() => handleNavigation(item.path, item.isExternal)}
-          className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
-        >
-          <item.icon className="h-4 w-4" />
-          <span className="hidden sm:inline">{item.title}</span>
-        </Button>
-      ))}
+      <NavigationMenu />
       <div className="ml-2 w-[600px]">
         <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
       </div>
@@ -164,37 +61,7 @@ export const Header = ({
 
             {/* Mobile Menu */}
             <div className="md:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-black border-r border-primary/20">
-                  <nav className="flex flex-col gap-4 mt-8">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      onClick={() => handleNavigation('/swap')}
-                      className="w-full justify-start gap-2 font-bold tracking-wide text-lg"
-                    >
-                      <SmartLogo />
-                    </Button>
-                    {menuItems.map((item) => (
-                      <Button
-                        key={item.title}
-                        variant="ghost"
-                        size="lg"
-                        onClick={() => handleNavigation(item.path, item.isExternal)}
-                        className="w-full justify-start gap-4 font-bold tracking-wide text-lg"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.title}
-                      </Button>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
+              <MobileMenu isOpen={isOpen} setIsOpen={setIsOpen} />
             </div>
           </div>
           <WalletConnect />
