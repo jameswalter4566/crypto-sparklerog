@@ -5,10 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { tokenService } from "@/services/token/tokenService";
 
 export default function LaunchCoin() {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -18,6 +18,8 @@ export default function LaunchCoin() {
     telegramLink: "",
     websiteLink: "",
     twitterLink: "",
+    initialSupply: 1000000000,
+    decimals: 9
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,19 +42,48 @@ export default function LaunchCoin() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement coin creation logic
-      console.log("Form submitted with data:", formData);
-      toast({
-        title: "Success!",
-        description: "Your coin is being created. Please wait...",
+      // @ts-ignore
+      if (!window.solana?.isPhantom) {
+        toast.error("Please install Phantom wallet");
+        return;
+      }
+
+      // @ts-ignore
+      if (!window.solana?.isConnected) {
+        toast.error("Please connect your wallet first");
+        return;
+      }
+
+      const mintAddress = await tokenService.createToken({
+        name: formData.name,
+        symbol: formData.ticker.toUpperCase(),
+        description: formData.description,
+        image: formData.image,
+        initialSupply: formData.initialSupply,
+        decimals: formData.decimals,
+        telegramLink: formData.telegramLink,
+        websiteLink: formData.websiteLink,
+        twitterLink: formData.twitterLink,
+      });
+
+      toast.success("Token created successfully!");
+      console.log("Token created with mint address:", mintAddress);
+      
+      // Reset form
+      setFormData({
+        name: "",
+        ticker: "",
+        description: "",
+        image: null,
+        telegramLink: "",
+        websiteLink: "",
+        twitterLink: "",
+        initialSupply: 1000000000,
+        decimals: 9
       });
     } catch (error) {
-      console.error("Error creating coin:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create coin. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error creating token:", error);
+      toast.error("Failed to create token. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -136,11 +167,36 @@ export default function LaunchCoin() {
                       className="hidden"
                       accept="image/*,video/*"
                       onChange={handleFileChange}
-                      required
                     />
                   </label>
                 </div>
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="initialSupply">Initial Supply</Label>
+              <Input
+                id="initialSupply"
+                type="number"
+                placeholder="1000000000"
+                value={formData.initialSupply}
+                onChange={(e) => setFormData(prev => ({ ...prev, initialSupply: parseInt(e.target.value) }))}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="decimals">Decimals</Label>
+              <Input
+                id="decimals"
+                type="number"
+                placeholder="9"
+                value={formData.decimals}
+                onChange={(e) => setFormData(prev => ({ ...prev, decimals: parseInt(e.target.value) }))}
+                required
+                min="0"
+                max="9"
+              />
             </div>
 
             <div>
