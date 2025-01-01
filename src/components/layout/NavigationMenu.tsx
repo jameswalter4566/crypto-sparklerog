@@ -48,7 +48,7 @@ export const NavigationMenu = ({ onClose }: { onClose?: () => void }) => {
           className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
         >
           <item.icon className="h-4 w-4" />
-          <span className="hidden sm:inline">{item.title}</span>
+          <span>{item.title}</span>
         </Button>
       ))}
     </>
