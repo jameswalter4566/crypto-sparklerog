@@ -64,7 +64,7 @@ export default function LaunchCoin() {
           Coin Launch Feature
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground">
-          Releasing 1/01/2025
+          Releasing 01/10/2025
         </p>
       </div>
     </div>
