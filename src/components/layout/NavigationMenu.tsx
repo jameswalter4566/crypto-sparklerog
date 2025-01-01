@@ -23,7 +23,7 @@ export const NavigationMenu = ({ onClose }: { onClose?: () => void }) => {
     { 
       title: "Community Updates", 
       icon: Twitter, 
-      path: "https://x.com/SwapSolDotFun",
+      path: "https://x.com/Smarttdotfun",
       isExternal: true 
     },
   ];
