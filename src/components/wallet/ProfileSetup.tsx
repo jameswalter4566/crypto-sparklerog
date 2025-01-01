@@ -116,15 +116,18 @@ export const ProfileSetup = ({ open, onOpenChange, walletAddress, onProfileSaved
               aria-label="Display name"
             />
           </div>
-          <Button
-            onClick={saveProfile}
-            disabled={loading || !displayName}
-            className="w-full"
-            aria-label={loading ? "Saving profile..." : "Save profile"}
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Profile
-          </Button>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500 text-center">Browser will refresh upon submission</p>
+            <Button
+              onClick={saveProfile}
+              disabled={loading || !displayName}
+              className="w-full"
+              aria-label={loading ? "Saving profile..." : "Save profile"}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Profile
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
