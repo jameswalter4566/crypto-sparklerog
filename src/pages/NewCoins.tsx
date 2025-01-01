@@ -3,6 +3,7 @@ import { CoinGrid } from "@/components/CoinGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
+import { WelcomeDialog } from "@/components/WelcomeDialog";
 
 const NewCoins = () => {
   const { toast } = useToast();
@@ -121,6 +122,7 @@ const NewCoins = () => {
   return (
     <div className="container mx-auto py-2 sm:py-4 max-w-[2000px] space-y-3 sm:space-y-4">
       <div className="p-4 sm:p-6">
+        <WelcomeDialog />
         <CoinGrid coins={coins} isLoading={isLoading} title="New Coins" />
       </div>
     </div>
