@@ -69,6 +69,11 @@ export const ProfileSetup = ({ open, onOpenChange, walletAddress, onProfileSaved
       toast.success("Profile saved successfully!");
       onProfileSaved(displayName, finalAvatarUrl);
       onOpenChange(false);
+      
+      // Add a small delay before refreshing to ensure the toast is visible
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error(error);
       toast.error("Error saving profile");
