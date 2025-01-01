@@ -63,7 +63,6 @@ export function NewCoinCard({
     };
   }, [id, marketCap]);
 
-  // Rainbow color effect
   useEffect(() => {
     const colors = ['#8B5CF6', '#D946EF', '#F97316', '#0EA5E9'];
     let colorIndex = 0;
@@ -93,16 +92,17 @@ export function NewCoinCard({
   };
 
   return (
-    <Link to={`/coin/${id}`} className="block transform transition-transform hover:scale-105 duration-300">
+    <Link to={`/coin/${id}`} className="block w-full">
       <Card 
         className={cn(
-          "hover:bg-gray-900 transition-colors h-full border-2 border-primary/50 relative"
+          "h-[400px] min-w-[280px] border-2 border-primary/50 relative transition-transform hover:scale-105 duration-300",
+          "hover:bg-gray-900"
         )}
         style={{ backgroundColor: cardColor }}
       >
-        <CardHeader className="p-3 sm:p-5">
-          <div className="flex flex-col items-center gap-3 sm:gap-5">
-            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 bg-gray-800">
+        <CardHeader className="p-4">
+          <div className="flex flex-col items-center">
+            <Avatar className="h-24 w-24 bg-gray-800">
               {!imageError && imageUrl ? (
                 <AvatarImage 
                   src={imageUrl}
@@ -121,10 +121,10 @@ export function NewCoinCard({
             </Avatar>
           </div>
         </CardHeader>
-        <CardContent className="p-3 sm:p-5">
-          <div className="flex flex-col items-center gap-2 sm:gap-4">
-            <CardTitle className="text-base sm:text-lg">
-              <div className="truncate max-w-[140px] sm:max-w-[180px] text-center" title={name || "Unnamed Coin"}>
+        <CardContent className="p-4">
+          <div className="flex flex-col items-center gap-4">
+            <CardTitle className="text-lg">
+              <div className="truncate max-w-[200px] text-center" title={name || "Unnamed Coin"}>
                 {name || "Unnamed Coin"}
               </div>
             </CardTitle>
@@ -134,7 +134,7 @@ export function NewCoinCard({
             </div>
 
             {description && (
-              <p className="text-xs text-gray-400 line-clamp-2 text-center mt-2">
+              <p className="text-sm text-gray-400 line-clamp-2 text-center mt-2 px-2">
                 {description}
               </p>
             )}

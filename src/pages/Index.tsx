@@ -22,10 +22,10 @@ const Index = () => {
   const [searchResults, setSearchResults] = useState<CoinMetadata[]>([]);
 
   return (
-    <>
+    <div className="min-h-screen w-full bg-background">
       <AnimatedBackground />
       <MovingBanners />
-      <div className="container mx-auto py-2 px-2 sm:py-4 sm:px-4 max-w-[2000px] space-y-3 sm:space-y-4">
+      <div className="container mx-auto py-6 relative z-10">
         <WelcomeDialog />
         {searchResults.length > 0 && (
           <div className="flex justify-end mb-4">
@@ -41,7 +41,7 @@ const Index = () => {
         )}
         <CoinGrid />
       </div>
-    </>
+    </div>
   );
 };
 
