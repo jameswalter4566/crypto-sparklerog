@@ -142,7 +142,7 @@ export const WalletConnect = () => {
             await loadProfile(address);
           }
 
-          toast.success("Reconnected to wallet!");
+          // Removed the "Reconnected to wallet!" toast notification
         } catch (error) {
           console.error("[WalletConnect] Error reconnecting:", error);
           localStorage.removeItem("phantomConnected");
