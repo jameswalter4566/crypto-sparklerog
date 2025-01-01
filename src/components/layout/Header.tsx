@@ -41,7 +41,7 @@ export const Header = ({
     <header className="fixed top-0 left-0 right-0 h-16 bg-black border-b border-primary/20 z-[9999] shadow-lg select-none">
       <div className="flex flex-col gap-2 md:gap-2 h-full px-4 py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pl-8">
             <div className="h-20 w-20 overflow-hidden rounded-full bg-primary/10">
               <img 
                 src="/swaplogoofficial.jpg" 
