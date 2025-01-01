@@ -34,6 +34,7 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
 
     try {
       const result = await onSearch(mintAddress.trim());
+      console.log("Search result:", result);
       if (result) {
         setPreviewCoin(result);
         setShowPreview(true);
