@@ -35,9 +35,17 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
     try {
       const result = await onSearch(mintAddress.trim());
       console.log("Search result:", result);
+      
       if (result) {
-        setPreviewCoin(result);
-        setShowPreview(true);
+        // If we're in the header (isMobileHeader is defined), navigate directly
+        if (isMobileHeader !== undefined) {
+          navigate(`/coin/${result.id}`);
+          setMintAddress("");
+        } else {
+          // Otherwise show preview (for the search page)
+          setPreviewCoin(result);
+          setShowPreview(true);
+        }
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -84,7 +92,8 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
         </Button>
       </form>
 
-      {showPreview && previewCoin && (
+      {/* Only show preview if we're not in the header and have a preview to show */}
+      {!isMobileHeader && showPreview && previewCoin && (
         <Card 
           className="absolute top-full mt-2 w-full z-[9999] bg-card border-2 border-primary/20 cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={handleCoinSelect}
