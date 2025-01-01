@@ -29,12 +29,23 @@ export function NewCoinCard({
 }: NewCoinCardProps) {
   const [marketCap, setMarketCap] = useState<number | null>(initialMarketCap);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [currentColor, setCurrentColor] = useState('#F97316');
   
   const cardColor = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * cardColors.length);
     return cardColors[randomIndex];
   }, []);
+
+  useEffect(() => {
+    // Prefetch the image
+    if (imageUrl && !imageError) {
+      const img = new Image();
+      img.src = imageUrl;
+      img.onload = () => setImageLoaded(true);
+      img.onerror = () => setImageError(true);
+    }
+  }, [imageUrl]);
 
   useEffect(() => {
     const channel = supabase
@@ -104,12 +115,24 @@ export function NewCoinCard({
           <div className="flex flex-col items-center">
             <Avatar className="h-24 w-24 bg-gray-800">
               {!imageError && imageUrl ? (
-                <AvatarImage 
-                  src={imageUrl}
-                  alt={name || "Unknown Coin"}
-                  className="object-cover"
-                  onError={handleImageError}
-                />
+                <>
+                  {!imageLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800 animate-pulse">
+                      <Coins className="h-12 w-12 text-primary/50" />
+                    </div>
+                  )}
+                  <AvatarImage 
+                    src={imageUrl}
+                    alt={name || "Unknown Coin"}
+                    className={cn(
+                      "object-cover transition-opacity duration-300",
+                      imageLoaded ? "opacity-100" : "opacity-0"
+                    )}
+                    onError={handleImageError}
+                    onLoad={() => setImageLoaded(true)}
+                    loading="lazy"
+                  />
+                </>
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-gray-800">
                   <Coins className="h-12 w-12 text-primary" />
