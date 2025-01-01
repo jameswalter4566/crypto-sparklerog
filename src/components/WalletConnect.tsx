@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { usePhantomConnection } from "@/hooks/usePhantomConnection";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileSetup } from "./wallet/ProfileSetup";
 import { Settings } from "./wallet/Settings";
 import { ConnectButton } from "./wallet/ConnectButton";
-import { usePhantomMobile } from "@/hooks/usePhantomMobile";
-import { useWalletBalance } from "@/hooks/useWalletBalance";
 
 export const WalletConnect = () => {
   const [connected, setConnected] = useState(false);
@@ -13,9 +12,7 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   
-  const { isMobileDevice, openPhantomApp } = usePhantomMobile();
   const { balance, fetchBalance } = useWalletBalance();
 
   const loadProfile = async (address: string) => {
@@ -47,124 +44,24 @@ export const WalletConnect = () => {
     }
   };
 
-  const connectWallet = async () => {
-    if (isConnecting) return;
-    setIsConnecting(true);
-    
-    try {
-      console.log("Starting wallet connection...");
-      // @ts-ignore
-      const { solana } = window;
-
-      if (!solana?.isPhantom) {
-        console.log("Phantom not detected, handling mobile/desktop differently");
-        if (isMobileDevice()) {
-          console.log("Mobile device detected, opening Phantom app...");
-          await openPhantomApp();
-          return;
-        } else {
-          console.log("Desktop device detected, opening Phantom website...");
-          window.open("https://phantom.app/", "_blank");
-          return;
-        }
-      }
-
-      console.log("Phantom detected, attempting connection...");
-      const response = await solana.connect({ onlyIfTrusted: false });
-      const address = response.publicKey.toString();
-      console.log("Connection successful:", address);
-      handleSuccessfulConnection(address);
-    } catch (error) {
-      console.error("[WalletConnect] Error connecting wallet:", error);
-      toast.error("Error connecting wallet");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleSuccessfulConnection = async (address: string) => {
-    console.log("Handling successful connection for address:", address);
-    setWalletAddress(address);
-    setConnected(true);
-    await fetchBalance(address);
-    toast.success("Wallet connected!");
-    await loadProfile(address);
-
-    localStorage.setItem("phantomConnected", "true");
-    localStorage.setItem("walletAddress", address);
-  };
-
-  const disconnectWallet = async () => {
-    try {
-      // @ts-ignore
-      const { solana } = window;
-
-      if (solana) {
-        await solana.disconnect();
-        setConnected(false);
-        setWalletAddress(null);
-        setShowProfileSetup(false);
-        setDisplayName(null);
-        setAvatarUrl(null);
-
-        localStorage.removeItem("phantomConnected");
-        localStorage.removeItem("walletAddress");
-        localStorage.removeItem("userProfile");
-
-        toast.success("Wallet disconnected!");
-      }
-    } catch (error) {
-      console.error("[WalletConnect] Error disconnecting wallet:", error);
-      toast.error("Error disconnecting wallet");
-    }
-  };
-
   const handleProfileSaved = (newDisplayName: string, newAvatarUrl: string | null) => {
     setDisplayName(newDisplayName);
     setAvatarUrl(newAvatarUrl);
     setShowProfileSetup(false);
-
     localStorage.setItem(
       "userProfile",
       JSON.stringify({ displayName: newDisplayName, avatarUrl: newAvatarUrl })
     );
   };
 
+  const { isConnecting, connectWallet, disconnectWallet } = usePhantomConnection(async (address) => {
+    setWalletAddress(address);
+    setConnected(true);
+    await fetchBalance(address);
+    await loadProfile(address);
+  });
+
   useEffect(() => {
-    const initializeWallet = async () => {
-      console.log("Initializing wallet...");
-      // @ts-ignore
-      const { solana } = window;
-
-      const wasConnected = localStorage.getItem("phantomConnected") === "true";
-      const savedWalletAddress = localStorage.getItem("walletAddress");
-      const savedProfile = localStorage.getItem("userProfile");
-
-      if (wasConnected && solana?.isPhantom && savedWalletAddress) {
-        try {
-          console.log("Attempting to reconnect to wallet...");
-          const response = await solana.connect({ onlyIfTrusted: true });
-          const address = response.publicKey.toString();
-          handleSuccessfulConnection(address);
-
-          if (savedProfile) {
-            const parsedProfile = JSON.parse(savedProfile);
-            setDisplayName(parsedProfile.displayName || null);
-            setAvatarUrl(parsedProfile.avatarUrl || null);
-          } else {
-            await loadProfile(address);
-          }
-        } catch (error) {
-          console.error("[WalletConnect] Error reconnecting:", error);
-          localStorage.removeItem("phantomConnected");
-          localStorage.removeItem("walletAddress");
-          localStorage.removeItem("userProfile");
-        }
-      }
-    };
-
-    initializeWallet();
-
     const balanceInterval = setInterval(() => {
       if (walletAddress) {
         fetchBalance(walletAddress);
