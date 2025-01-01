@@ -46,6 +46,8 @@ export const Header = ({
                 />
               </div>
               
+              <SmartLogo />
+              
               {/* Desktop Menu */}
               <div className="hidden md:flex overflow-x-auto">
                 <NavigationMenu />
