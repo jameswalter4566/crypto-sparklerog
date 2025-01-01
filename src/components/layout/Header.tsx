@@ -42,11 +42,11 @@ export const Header = ({
       <div className="flex flex-col gap-2 md:gap-2 h-full px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 overflow-hidden rounded-full bg-primary/10">
+            <div className="h-20 w-20 overflow-hidden rounded-full bg-primary/10">
               <img 
                 src="/swaplogoofficial.jpg" 
                 alt="Logo" 
-                className={`h-10 w-10 object-contain cursor-pointer
+                className={`h-20 w-20 object-contain cursor-pointer
                   ${isSpinning ? 'animate-logo-spin' : ''}
                   transition-all duration-300 hover:scale-105
                   shadow-[0_0_20px_rgba(249,115,22,0.5)]`}
