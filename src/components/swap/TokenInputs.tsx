@@ -81,16 +81,12 @@ export const TokenInputs = ({
       </div>
 
       <div className="text-sm text-gray-400 flex items-center gap-2">
-        {isLoading ? (
+        {isLoading && (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
             Fetching quote...
           </>
-        ) : priceQuote ? (
-          `Estimated ${mode === 'buy' ? 'output' : 'SOL received'}: ${mode === 'buy' ? 
-            priceQuote.toFixed(6) + ' tokens' : 
-            priceQuote.toFixed(6) + ' SOL'}`
-        ) : null}
+        )}
       </div>
     </div>
   );
