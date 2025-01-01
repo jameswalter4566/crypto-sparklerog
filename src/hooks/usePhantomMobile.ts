@@ -7,24 +7,39 @@ export const usePhantomMobile = () => {
 
   const openPhantomApp = async () => {
     try {
+      // Check if Phantom is already installed and available
       // @ts-ignore
       if (window.solana?.isPhantom) {
-        // @ts-ignore
-        const response = await window.solana.connect();
-        return response;
+        try {
+          // @ts-ignore
+          const response = await window.solana.connect();
+          console.log("Direct connection successful:", response);
+          return response;
+        } catch (connError) {
+          console.log("Direct connection failed, trying deep link...");
+        }
       }
 
-      // If Phantom is not installed, create a deep link to the app store
-      const encodedUrl = encodeURIComponent(window.location.href);
-      // We're using a basic deep link since we can't generate an encryption key on the client
-      const phantomDeepLink = `https://phantom.app/ul/browse/${encodedUrl}`;
+      // If direct connection fails or Phantom isn't detected, try deep linking
+      const dappUrl = encodeURIComponent(window.location.href);
+      const phantomDeepLink = `https://phantom.app/ul/connect?app_url=${dappUrl}&dapp_encryption_public_key=null&redirect_link=${dappUrl}`;
       
-      window.location.href = phantomDeepLink;
+      console.log("Opening Phantom deep link:", phantomDeepLink);
       
-      // Return a promise that resolves when the deep link is opened
-      return new Promise<void>((resolve) => {
-        resolve();
-      });
+      // For iOS, we need to use window.location.href
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = phantomDeepLink;
+      } else {
+        // For Android, we can try to open in a new window first
+        const newWindow = window.open(phantomDeepLink, '_blank');
+        if (!newWindow) {
+          // If blocked by popup blocker, fallback to location.href
+          window.location.href = phantomDeepLink;
+        }
+      }
+      
+      // Return a promise that resolves immediately since we're redirecting
+      return Promise.resolve();
     } catch (error) {
       console.error("Error connecting to Phantom mobile:", error);
       toast.error("Failed to connect to Phantom. Please try again.");

@@ -13,6 +13,7 @@ export const WalletConnect = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   
   const { isMobileDevice, openPhantomApp } = usePhantomMobile();
   const { balance, fetchBalance } = useWalletBalance();
@@ -47,31 +48,42 @@ export const WalletConnect = () => {
   };
 
   const connectWallet = async () => {
+    if (isConnecting) return;
+    setIsConnecting(true);
+    
     try {
+      console.log("Starting wallet connection...");
       // @ts-ignore
       const { solana } = window;
 
       if (!solana?.isPhantom) {
-        toast.error("Please install Phantom wallet");
+        console.log("Phantom not detected, handling mobile/desktop differently");
         if (isMobileDevice()) {
+          console.log("Mobile device detected, opening Phantom app...");
           await openPhantomApp();
           return;
         } else {
+          console.log("Desktop device detected, opening Phantom website...");
           window.open("https://phantom.app/", "_blank");
           return;
         }
       }
 
+      console.log("Phantom detected, attempting connection...");
       const response = await solana.connect({ onlyIfTrusted: false });
       const address = response.publicKey.toString();
+      console.log("Connection successful:", address);
       handleSuccessfulConnection(address);
     } catch (error) {
       console.error("[WalletConnect] Error connecting wallet:", error);
       toast.error("Error connecting wallet");
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   const handleSuccessfulConnection = async (address: string) => {
+    console.log("Handling successful connection for address:", address);
     setWalletAddress(address);
     setConnected(true);
     await fetchBalance(address);
@@ -120,6 +132,7 @@ export const WalletConnect = () => {
 
   useEffect(() => {
     const initializeWallet = async () => {
+      console.log("Initializing wallet...");
       // @ts-ignore
       const { solana } = window;
 
@@ -129,6 +142,7 @@ export const WalletConnect = () => {
 
       if (wasConnected && solana?.isPhantom && savedWalletAddress) {
         try {
+          console.log("Attempting to reconnect to wallet...");
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
           handleSuccessfulConnection(address);
@@ -140,8 +154,6 @@ export const WalletConnect = () => {
           } else {
             await loadProfile(address);
           }
-
-          // Removed the "Reconnected to wallet!" toast notification
         } catch (error) {
           console.error("[WalletConnect] Error reconnecting:", error);
           localStorage.removeItem("phantomConnected");
