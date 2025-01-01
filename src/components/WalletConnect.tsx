@@ -52,18 +52,16 @@ export const WalletConnect = () => {
       const { solana } = window;
 
       if (!solana?.isPhantom) {
+        toast.error("Please install Phantom wallet");
         if (isMobileDevice()) {
-          console.log("Mobile device detected, opening Phantom app");
           await openPhantomApp();
           return;
         } else {
-          toast.error("Please install Phantom wallet");
           window.open("https://phantom.app/", "_blank");
           return;
         }
       }
 
-      console.log("Attempting to connect to Phantom wallet");
       const response = await solana.connect({ onlyIfTrusted: false });
       const address = response.publicKey.toString();
       handleSuccessfulConnection(address);
@@ -74,7 +72,6 @@ export const WalletConnect = () => {
   };
 
   const handleSuccessfulConnection = async (address: string) => {
-    console.log("Successfully connected to wallet:", address);
     setWalletAddress(address);
     setConnected(true);
     await fetchBalance(address);
@@ -132,7 +129,6 @@ export const WalletConnect = () => {
 
       if (wasConnected && solana?.isPhantom && savedWalletAddress) {
         try {
-          console.log("Attempting to reconnect to wallet");
           const response = await solana.connect({ onlyIfTrusted: true });
           const address = response.publicKey.toString();
           handleSuccessfulConnection(address);
@@ -144,6 +140,8 @@ export const WalletConnect = () => {
           } else {
             await loadProfile(address);
           }
+
+          // Removed the "Reconnected to wallet!" toast notification
         } catch (error) {
           console.error("[WalletConnect] Error reconnecting:", error);
           localStorage.removeItem("phantomConnected");
