@@ -171,7 +171,7 @@ export const VoiceChat = ({ coinId }: VoiceChatProps) => {
                 : !walletConnected
                   ? "Please connect your wallet to join voice chat"
                   : !userProfile
-                    ? "Please set up your profile to join voice chat"
+                    ? "Please set up your profile to join voice chat and REFRESH Once Created!"
                     : "Join the voice chat to discuss with other traders"}
             </p>
           </div>
