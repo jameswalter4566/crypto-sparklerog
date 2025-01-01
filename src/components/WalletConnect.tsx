@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileSetup } from "./wallet/ProfileSetup";
 import { Settings } from "./wallet/Settings";
 import { ConnectButton } from "./wallet/ConnectButton";
-import { Disclaimer } from "./wallet/Disclaimer";
 import { usePhantomMobile } from "@/hooks/usePhantomMobile";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 
@@ -173,7 +172,6 @@ export const WalletConnect = () => {
         onConnect={connectWallet}
         onDisconnect={disconnectWallet}
       />
-      {!connected && <Disclaimer />}
       {walletAddress && (
         <Settings
           walletAddress={walletAddress}
