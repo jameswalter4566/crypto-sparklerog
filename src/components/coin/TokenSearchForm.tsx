@@ -41,6 +41,8 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
       }
     } catch (error) {
       console.error("Search error:", error);
+      setShowPreview(false);
+      setPreviewCoin(null);
     }
   };
 
@@ -84,7 +86,7 @@ export const TokenSearchForm = ({ onSearch, isLoading, isMobileHeader }: TokenSe
 
       {showPreview && previewCoin && (
         <Card 
-          className="absolute top-full mt-2 w-full z-50 bg-card border-2 border-primary/20 cursor-pointer hover:bg-accent/50 transition-colors"
+          className="absolute top-full mt-2 w-full z-[9999] bg-card border-2 border-primary/20 cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={handleCoinSelect}
         >
           <div className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
