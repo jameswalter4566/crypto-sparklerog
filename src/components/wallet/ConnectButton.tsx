@@ -22,18 +22,20 @@ export const ConnectButton = ({
   if (connected) {
     return (
       <div className="flex items-center gap-4">
-        {balance !== null && (
-          <div className="text-purple-500 font-medium text-lg">
-            {balance.toFixed(2)} SOL
+        <div className="flex flex-col items-end">
+          {balance !== null && (
+            <div className="text-primary font-medium">
+              {balance.toFixed(2)} SOL
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <ProfileAvatar displayName={displayName} avatarUrl={avatarUrl} size="sm" />
+            <span className="text-white text-sm">{displayName || "Unknown User"}</span>
           </div>
-        )}
-        <div className="flex items-center gap-2">
-          <ProfileAvatar displayName={displayName} avatarUrl={avatarUrl} size="sm" />
-          <span className="text-white">{displayName || "Unknown User"}</span>
         </div>
         <button
           onClick={onDisconnect}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors text-sm"
         >
           <LogOut className="w-4 h-4" />
           Disconnect
@@ -45,14 +47,14 @@ export const ConnectButton = ({
   return (
     <button
       onClick={onConnect}
-      className="hover:opacity-80 transition-opacity"
+      className="hover:opacity-80 transition-opacity flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
     >
       <img
         src="/1200x1200.png"
         alt="Phantom Wallet"
-        className="w-10 h-10 rounded-full"
+        className="w-6 h-6 rounded-full"
       />
-      <span className="sr-only">Connect Phantom Wallet</span>
+      <span className="text-primary text-sm font-medium">Connect Wallet</span>
     </button>
   );
 };

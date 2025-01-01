@@ -30,9 +30,10 @@ export const Header = ({
   return (
     <header className="fixed top-0 left-0 right-0 bg-black border-b border-primary/20 z-[9999] shadow-lg select-none">
       <div className="max-w-[2000px] mx-auto">
-        <div className="flex flex-col gap-2 px-2 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 px-4 py-3">
+          {/* Top Row - Logo, Navigation, and Wallet */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
               <div className="h-10 w-10 overflow-hidden rounded-full bg-primary/10">
                 <img 
                   src="/swaplogoofficial.jpg" 
@@ -56,17 +57,15 @@ export const Header = ({
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-xl mx-4">
-              <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
+            {/* Wallet Connect - Always visible */}
+            <div className="flex-shrink-0">
+              <WalletConnect />
             </div>
-
-            <WalletConnect />
           </div>
 
-          {/* Mobile Search Bar */}
-          <div className="md:hidden w-full">
-            <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={false} />
+          {/* Search Bar Row */}
+          <div className="w-full max-w-2xl mx-auto">
+            <TokenSearchForm onSearch={onSearch} isLoading={isLoading} isMobileHeader={isMobile} />
           </div>
         </div>
       </div>
