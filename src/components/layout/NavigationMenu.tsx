@@ -38,19 +38,19 @@ export const NavigationMenu = ({ onClose }: { onClose?: () => void }) => {
   };
 
   return (
-    <div className="flex flex-wrap gap-1 items-center justify-center">
+    <>
       {menuItems.map((item) => (
         <Button
           key={item.title}
           variant="ghost"
           size="sm"
           onClick={() => handleNavigation(item.path, item.isExternal)}
-          className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary whitespace-nowrap px-2 py-1"
+          className="flex items-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 hover:text-primary"
         >
           <item.icon className="h-4 w-4" />
           <span className="hidden sm:inline">{item.title}</span>
         </Button>
       ))}
-    </div>
+    </>
   );
 };
