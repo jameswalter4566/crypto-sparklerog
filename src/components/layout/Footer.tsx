@@ -22,7 +22,7 @@ export const Footer = () => {
             </Link>
           </div>
           <div className="text-gray-400 text-sm">
-            © 2024 Smart Trade Technologies. All rights reserved.
+            © 2024 Trump Trade Technologies. All rights reserved.
           </div>
         </div>
       </div>
