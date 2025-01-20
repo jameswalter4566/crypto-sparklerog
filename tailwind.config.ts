@@ -25,11 +25,11 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#ea384c", // Changed from orange to patriotic red
-          foreground: "#ffffff",
+          DEFAULT: "#ea384c",
+          foreground: "#000000",
         },
         secondary: {
-          DEFAULT: "#1EAEDB", // Changed to bright blue
+          DEFAULT: "#1EAEDB",
           foreground: "#ffffff",
         },
         destructive: {
@@ -45,8 +45,8 @@ export default {
           foreground: "hsl(var(--accent-foreground))",
         },
         card: {
-          DEFAULT: "#1C1C1C",
-          foreground: "#ffffff",
+          DEFAULT: "#ffffff",
+          foreground: "#000000",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
