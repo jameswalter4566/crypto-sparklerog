@@ -27,10 +27,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
     try {
       // @ts-ignore
       const { solana } = window;
-      if (!solana?.isPhantom) {
-        console.error('Phantom wallet not found');
-        return;
-      }
+      if (!solana?.isPhantom) return;
 
       const response = await solana.connect();
       const userPublicKey = response.publicKey;
@@ -53,13 +50,10 @@ export const useSwap = (defaultTokenAddress?: string) => {
     if (value && tokenAddress && isValidSolanaAddress(tokenAddress)) {
       setIsQuoteLoading(true);
       try {
-        const quote = await fetchPriceQuote(tokenAddress, value);
-        if (!quote) {
-          console.error('No price quote received');
-          toast.error('Failed to fetch price quote. Please try again.');
-          return;
+        const price = await fetchPriceQuote(tokenAddress, value);
+        if (price) {
+          setPriceQuote(Number(price) * Number(value));
         }
-        setPriceQuote(Number(quote) * Number(value));
       } catch (error) {
         console.error('Price quote error:', error);
         toast.error('Failed to fetch price quote. Please try again.');
@@ -74,13 +68,10 @@ export const useSwap = (defaultTokenAddress?: string) => {
     if (amount && validateAmount(amount) && value && isValidSolanaAddress(value)) {
       setIsQuoteLoading(true);
       try {
-        const quote = await fetchPriceQuote(value, amount);
-        if (!quote) {
-          console.error('No price quote received');
-          toast.error('Failed to fetch price quote. Please try again.');
-          return;
+        const price = await fetchPriceQuote(value, amount);
+        if (price) {
+          setPriceQuote(Number(price) * Number(amount));
         }
-        setPriceQuote(Number(quote) * Number(amount));
       } catch (error) {
         console.error('Price quote error:', error);
         toast.error('Failed to fetch price quote. Please try again.');
@@ -108,7 +99,6 @@ export const useSwap = (defaultTokenAddress?: string) => {
 
     setIsLoading(true);
     try {
-      // @ts-ignore
       if (!window.solana?.isPhantom) {
         throw new Error('Please install the Phantom wallet extension');
       }
@@ -116,13 +106,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       const response = await window.solana.connect();
       const userPublicKey = response.publicKey;
 
-      const swapResult = await executeSwap(tokenAddress, amount, userPublicKey.toString());
-      
-      if (!swapResult || !swapResult.swapTransaction) {
-        throw new Error('Failed to create swap transaction');
-      }
-
-      const { swapTransaction } = swapResult;
+      const { swapTransaction } = await executeSwap(tokenAddress, amount, userPublicKey.toString());
       const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
       let transaction;
@@ -173,7 +157,6 @@ export const useSwap = (defaultTokenAddress?: string) => {
 
     setIsLoading(true);
     try {
-      // @ts-ignore
       if (!window.solana?.isPhantom) {
         throw new Error('Please install the Phantom wallet extension');
       }
@@ -181,13 +164,7 @@ export const useSwap = (defaultTokenAddress?: string) => {
       const response = await window.solana.connect();
       const userPublicKey = response.publicKey;
 
-      const sellResult = await executeSell(tokenAddress, amount, userPublicKey.toString());
-      
-      if (!sellResult || !sellResult.swapTransaction) {
-        throw new Error('Failed to create sell transaction');
-      }
-
-      const { swapTransaction } = sellResult;
+      const { swapTransaction } = await executeSell(tokenAddress, amount, userPublicKey.toString());
       const transactionBuffer = Buffer.from(swapTransaction, 'base64');
       
       let transaction;
