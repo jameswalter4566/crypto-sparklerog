@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { fetchFromPumpApi } from "../_shared/pump-api.ts";
 import { mapPumpApiToCoinData } from "../_shared/coin-mapper.ts";
-import { CoinData } from "../_shared/types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +16,6 @@ serve(async (req) => {
   }
 
   try {
-    // Only allow GET requests
     if (req.method !== 'GET') {
       throw new Error('Method not allowed');
     }
@@ -26,7 +24,13 @@ serve(async (req) => {
     const tokenAddress = url.searchParams.get('id');
 
     if (!tokenAddress) {
-      throw new Error('Token ID is required');
+      return new Response(
+        JSON.stringify({ error: 'Token ID is required' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log('Processing request for token:', tokenAddress);
@@ -40,68 +44,54 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check existing data first
+    // First check if we have the coin in our database
     const { data: existingData, error: dbError } = await supabase
       .from('coins')
       .select('*')
       .eq('id', tokenAddress)
-      .single();
+      .maybeSingle();
 
     if (dbError && dbError.code !== 'PGRST116') {
       console.error('Database error:', dbError);
       throw dbError;
     }
 
-    // Fetch fresh data from API
-    console.log('Fetching fresh data from Pump API for token:', tokenAddress);
-    
-    try {
-      const searchData = await fetchFromPumpApi('/coins', {
-        searchTerm: tokenAddress,
-        limit: 50,
-        sort: 'market_cap',
-        order: 'DESC',
-        includeNsfw: false
-      });
-
-      if (!Array.isArray(searchData)) {
-        console.error('Unexpected response format:', searchData);
-        throw new Error('API response is not an array');
-      }
-
-      console.log('Found', searchData.length, 'tokens in search results');
-      
-      const matchingToken = searchData.find(item => 
-        item.mint?.toLowerCase() === tokenAddress.toLowerCase()
+    if (existingData) {
+      console.log('Found existing coin data:', existingData);
+      return new Response(
+        JSON.stringify(existingData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-      
-      if (!matchingToken) {
-        console.log('No matching token found in search results');
-        if (existingData) {
-          console.log('Returning existing data as fallback');
-          return new Response(
-            JSON.stringify(existingData),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        throw new Error('Token not found');
+    }
+
+    // If not in database, fetch from Pump API
+    console.log('Fetching from Pump API for token:', tokenAddress);
+    try {
+      const pumpData = await fetchFromPumpApi(`/coins/${tokenAddress}`, {});
+
+      if (!pumpData || !pumpData.mint) {
+        console.error('Invalid or empty response from Pump API:', pumpData);
+        return new Response(
+          JSON.stringify({ error: 'Token not found or invalid response from API' }),
+          { 
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
 
-      const coinData = mapPumpApiToCoinData(matchingToken);
+      const coinData = mapPumpApiToCoinData(pumpData);
 
-      // Update database with new data
+      // Insert the new coin data into our database
       const { error: upsertError } = await supabase
         .from('coins')
         .upsert({
           ...coinData,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id',
-          ignoreDuplicates: false
         });
 
       if (upsertError) {
-        console.error('Error upserting data to Supabase:', upsertError);
+        console.error('Error upserting data:', upsertError);
         throw upsertError;
       }
 
@@ -113,15 +103,16 @@ serve(async (req) => {
     } catch (apiError) {
       console.error('API error:', apiError);
       
-      if (existingData) {
-        console.log('Returning existing data as fallback');
-        return new Response(
-          JSON.stringify(existingData),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      throw apiError;
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to fetch token data',
+          details: apiError instanceof Error ? apiError.message : 'Unknown error'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
   } catch (error) {
@@ -130,8 +121,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
-        details: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
+        details: error instanceof Error ? error.stack : undefined
       }),
       {
         status: 500,
