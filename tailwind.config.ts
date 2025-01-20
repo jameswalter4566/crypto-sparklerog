@@ -25,12 +25,12 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#F97316",
+          DEFAULT: "#ea384c", // Changed from orange to patriotic red
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#FEC6A1",
-          foreground: "#000000",
+          DEFAULT: "#1EAEDB", // Changed to bright blue
+          foreground: "#ffffff",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -68,10 +68,10 @@ export default {
         },
         "glow-pulse": {
           "0%, 100%": { 
-            textShadow: "0 0 7px #F97316, 0 0 10px #F97316, 0 0 21px #F97316"
+            textShadow: "0 0 7px #ea384c, 0 0 10px #ea384c, 0 0 21px #ea384c"
           },
           "50%": { 
-            textShadow: "0 0 14px #F97316, 0 0 20px #F97316, 0 0 42px #F97316"
+            textShadow: "0 0 14px #ea384c, 0 0 20px #ea384c, 0 0 42px #ea384c"
           }
         },
         "logo-spin": {
