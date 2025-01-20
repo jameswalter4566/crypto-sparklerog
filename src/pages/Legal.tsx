@@ -33,7 +33,7 @@ const Legal = () => {
             <h2 className="text-2xl font-bold mb-4 text-primary">Terms and Conditions</h2>
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">Introduction</h3>
-              <p>These Terms and Conditions ("Terms") govern your use of the Platform provided by Smart Trade Technologies. By accessing or using our Platform, you agree to be bound by these Terms.</p>
+              <p>These Terms and Conditions ("Terms") govern your use of the Platform provided by Trump Trade Technologies. By accessing or using our Platform, you agree to be bound by these Terms.</p>
 
               <h3 className="text-xl font-semibold">Eligibility</h3>
               <ul className="list-disc pl-6 space-y-2">
