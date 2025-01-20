@@ -44,8 +44,8 @@ export const Header = ({
           <div className="flex items-center gap-2 pl-8">
             <div className="h-20 w-20 overflow-hidden rounded-full bg-primary/10">
               <img 
-                src="/june-donald-trump-president-united-states-portrait-orange-face-hair-clip-art-icon-isolated-red-background-republican-186436485.webp" 
-                alt="Trump Logo" 
+                src="/swaplogoofficial.jpg" 
+                alt="Logo" 
                 className={`h-20 w-20 object-contain cursor-pointer
                   ${isSpinning ? 'animate-logo-spin' : ''}
                   transition-all duration-300 hover:scale-105
