@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { priceColors } from '@/constants/colors';
 
 const messages = [
+  "Trump Trade: The Greatest Trading Platform on Solana!",
   "Join a voice Channel now! Don't be shy",
   "Stay Updated with new platform updates! Click Community Updates and follow us on X!",
 ];
