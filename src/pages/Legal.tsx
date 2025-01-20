@@ -10,7 +10,7 @@ const Legal = () => {
             <h2 className="text-2xl font-bold mb-4 text-primary">Privacy Policy</h2>
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">Introduction</h3>
-              <p>Smart Trade Technologies ("Company," "we," "our," or "us") values your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Solana-based meme coin cryptocurrency trading platform ("Platform"). By using our Platform, you consent to the practices described in this Privacy Policy.</p>
+              <p>Trump Trade Technologies ("Company," "we," "our," or "us") values your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Solana-based meme coin cryptocurrency trading platform ("Platform"). By using our Platform, you consent to the practices described in this Privacy Policy.</p>
               
               <h3 className="text-xl font-semibold">Information We Collect</h3>
               <ul className="list-disc pl-6 space-y-2">
